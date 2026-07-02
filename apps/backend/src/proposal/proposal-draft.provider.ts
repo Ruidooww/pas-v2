@@ -49,7 +49,9 @@ function buildExecutiveSummary(analysis: CustomerAnalysisResult): ProposalDraftS
   return {
     sectionId: "executive-summary",
     title: "Executive summary",
-    body: `${analysis.customerName} should prioritize ${capability} to address ${painPoint}. This draft is for internal review before customer delivery.`,
+    body:
+      analysis.narrativeSummary ||
+      `${analysis.customerName} should prioritize ${capability} to address ${painPoint}. This draft is for internal review before customer delivery.`,
     traces: mergeTraces([
       tracesForItems(analysis.painPoints, analysis),
       tracesForItems(analysis.recommendedCapabilities, analysis)
