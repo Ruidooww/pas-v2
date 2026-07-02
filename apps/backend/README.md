@@ -62,3 +62,17 @@ Audit endpoint:
 - `GET /api/internal/audit/events`
 
 Internal APIs require `Authorization: Bearer <token>`. Bootstrap admin creation only runs when `AUTH_BOOTSTRAP_ADMIN_USERNAME` and `AUTH_BOOTSTRAP_ADMIN_PASSWORD` are provided by the local environment.
+
+Feedback endpoints:
+
+- `POST /api/internal/feedback`
+- `GET /api/internal/feedback`
+- `PATCH /api/internal/feedback/:feedbackId`
+
+Regression endpoints:
+
+- `POST /api/internal/regression-runs`
+- `GET /api/internal/regression-runs/:runId`
+- `GET /api/internal/regression-runs/:runId/report`
+
+Regression reports mark `canGoLive=false` when the 50-question set is incomplete or any case fails.

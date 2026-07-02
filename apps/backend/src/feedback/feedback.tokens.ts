@@ -1,0 +1,2 @@
+export const FEEDBACK_SERVICE = Symbol("FEEDBACK_SERVICE");
+export const REGRESSION_SERVICE = Symbol("REGRESSION_SERVICE");
