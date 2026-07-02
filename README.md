@@ -133,6 +133,21 @@ AUTH_BOOTSTRAP_ADMIN_DISPLAY_NAME=
 
 Do not commit real JWT secrets or initial passwords. If `JWT_SECRET` is not set, the backend uses an ephemeral process secret and existing tokens become invalid after restart.
 
+## Feedback And Regression Boundary
+
+PAS V0 stores feedback and regression evidence through backend APIs:
+
+```text
+POST /api/internal/feedback
+GET /api/internal/feedback
+PATCH /api/internal/feedback/:feedbackId
+POST /api/internal/regression-runs
+GET /api/internal/regression-runs/:runId
+GET /api/internal/regression-runs/:runId/report
+```
+
+Feedback covers QA answers, customer analysis, proposal drafts, and export files. Regression runs only allow full go-live when exactly the real 50-question set is represented and every case passes. Fewer than 50 cases returns `canGoLive=false` with `REGRESSION_QUESTION_SET_INCOMPLETE`.
+
 ## Compose Skeleton
 
 `docker-compose.yml` defines the four PAS-owned services and their network/volume contract.
