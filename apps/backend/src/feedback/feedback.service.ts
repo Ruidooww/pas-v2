@@ -1,12 +1,22 @@
 import { ForbiddenException, NotFoundException } from "@nestjs/common";
 import type { AuditLogService } from "../audit/audit-log.service";
 import type { AuthenticatedUser } from "../auth/auth.types";
+import type { PersistenceSink } from "../persistence/persistence-sink";
 import type { FeedbackRecord, SubmitFeedbackRequest, UpdateFeedbackStatusRequest } from "./feedback.types";
 
 export class FeedbackService {
   private readonly feedback = new Map<string, FeedbackRecord>();
 
-  constructor(private readonly auditLog: AuditLogService) {}
+  constructor(
+    private readonly auditLog: AuditLogService,
+    private readonly sink?: PersistenceSink
+  ) {}
+
+  seed(records: FeedbackRecord[]): void {
+    for (const record of records) {
+      if (!this.feedback.has(record.feedbackId)) this.feedback.set(record.feedbackId, record);
+    }
+  }
 
   submitFeedback(user: AuthenticatedUser, request: SubmitFeedbackRequest): FeedbackRecord {
     const record: FeedbackRecord = {
@@ -17,6 +27,7 @@ export class FeedbackService {
       createdAt: new Date().toISOString()
     };
     this.feedback.set(record.feedbackId, record);
+    this.sink?.mirrorFeedback(record);
     this.auditLog.record({
       action: "feedback",
       actorUserId: user.userId,
@@ -51,6 +62,7 @@ export class FeedbackService {
       resolutionNote: request.resolutionNote
     };
     this.feedback.set(feedbackId, updated);
+    this.sink?.mirrorFeedback(updated);
     this.auditLog.record({
       action: "feedback",
       actorUserId: user.userId,

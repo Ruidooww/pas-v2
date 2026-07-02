@@ -1,7 +1,16 @@
+import type { PersistenceSink } from "../persistence/persistence-sink";
 import type { ExportFormatRecord, ExportJob, ExportJobStatus } from "./export.types";
 
 export class ExportJobStoreService {
   private readonly jobs = new Map<string, ExportJob>();
+
+  constructor(private readonly sink?: PersistenceSink) {}
+
+  seed(jobs: ExportJob[]): void {
+    for (const job of jobs) {
+      if (!this.jobs.has(job.jobId)) this.jobs.set(job.jobId, job);
+    }
+  }
 
   create(sourcePackageId: string, customerId: string): ExportJob {
     const now = new Date().toISOString();
@@ -15,6 +24,7 @@ export class ExportJobStoreService {
       updatedAt: now
     };
     this.jobs.set(job.jobId, job);
+    this.sink?.mirrorExportJob(job);
     return cloneJob(job);
   }
 
@@ -35,6 +45,7 @@ export class ExportJobStoreService {
       updatedAt: new Date().toISOString()
     };
     this.jobs.set(jobId, updated);
+    this.sink?.mirrorExportJob(updated);
     return cloneJob(updated);
   }
 
@@ -51,6 +62,7 @@ export class ExportJobStoreService {
       updatedAt: new Date().toISOString()
     };
     this.jobs.set(jobId, updated);
+    this.sink?.mirrorExportJob(updated);
     return cloneJob(updated);
   }
 }

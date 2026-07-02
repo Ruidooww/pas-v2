@@ -1,0 +1,77 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// V0 persistence: write-through snapshots of the in-memory stores.
+// Hot path stays in memory; every mutation is mirrored here and the
+// stores hydrate from these tables at boot. V1 replaces the hot path
+// with full repositories.
+
+model User {
+  id           String   @id
+  username     String   @unique
+  displayName  String   @map("display_name")
+  role         String
+  passwordHash String   @map("password_hash")
+  active       Boolean  @default(true)
+  createdAt    DateTime @map("created_at")
+
+  @@map("users")
+}
+
+model AuditEvent {
+  auditId    String   @id @map("audit_id")
+  event      String
+  payload    Json
+  occurredAt DateTime @map("occurred_at")
+
+  @@index([event])
+  @@index([occurredAt])
+  @@map("audit_events")
+}
+
+model ProposalJobSnapshot {
+  jobId      String   @id @map("job_id")
+  userId     String?  @map("user_id")
+  customerId String   @map("customer_id")
+  status     String
+  data       Json
+  createdAt  DateTime @map("created_at")
+  updatedAt  DateTime @map("updated_at")
+
+  @@index([userId])
+  @@index([customerId])
+  @@map("proposal_job_snapshots")
+}
+
+model ExportJobSnapshot {
+  jobId           String   @id @map("job_id")
+  userId          String?  @map("user_id")
+  sourcePackageId String   @map("source_package_id")
+  customerId      String   @map("customer_id")
+  status          String
+  data            Json
+  createdAt       DateTime @map("created_at")
+  updatedAt       DateTime @map("updated_at")
+
+  @@index([userId])
+  @@index([customerId])
+  @@map("export_job_snapshots")
+}
+
+model FeedbackSnapshot {
+  feedbackId String   @id @map("feedback_id")
+  userId     String   @map("user_id")
+  status     String
+  data       Json
+  createdAt  DateTime @map("created_at")
+  updatedAt  DateTime @map("updated_at")
+
+  @@index([userId])
+  @@map("feedback_snapshots")
+}

@@ -1,0 +1,1 @@
+export const PERSISTENCE_SINK = Symbol("PERSISTENCE_SINK");

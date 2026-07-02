@@ -1,3 +1,4 @@
+import type { PersistenceSink } from "../persistence/persistence-sink";
 import type {
   ExportPackage,
   ProposalDraft,
@@ -9,6 +10,14 @@ import type {
 
 export class ProposalJobStoreService {
   private readonly jobs = new Map<string, ProposalJob>();
+
+  constructor(private readonly sink?: PersistenceSink) {}
+
+  seed(jobs: ProposalJob[]): void {
+    for (const job of jobs) {
+      if (!this.jobs.has(job.jobId)) this.jobs.set(job.jobId, job);
+    }
+  }
 
   create(request: ProposalGenerationRequest): ProposalJob {
     const now = nowIso();
@@ -28,6 +37,7 @@ export class ProposalJobStoreService {
       updatedAt: now
     };
     this.jobs.set(job.jobId, job);
+    this.sink?.mirrorProposalJob(job);
     return cloneJob(job);
   }
 
@@ -59,6 +69,7 @@ export class ProposalJobStoreService {
       updatedAt: now
     };
     this.jobs.set(jobId, retried);
+    this.sink?.mirrorProposalJob(retried);
     return cloneJob(retried);
   }
 
@@ -74,6 +85,7 @@ export class ProposalJobStoreService {
       updatedAt: record.at
     };
     this.jobs.set(jobId, updated);
+    this.sink?.mirrorProposalJob(updated);
     return cloneJob(updated);
   }
 
@@ -93,6 +105,7 @@ export class ProposalJobStoreService {
       updatedAt: now
     };
     this.jobs.set(jobId, completed);
+    this.sink?.mirrorProposalJob(completed);
     return cloneJob(completed);
   }
 
@@ -121,6 +134,7 @@ export class ProposalJobStoreService {
       failureReason
     };
     this.jobs.set(jobId, failed);
+    this.sink?.mirrorProposalJob(failed);
     return cloneJob(failed);
   }
 }

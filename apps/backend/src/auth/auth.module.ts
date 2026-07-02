@@ -20,6 +20,8 @@ import { InternalApiAuthGuard } from "./internal-api-auth.guard";
 import { JwtTokenService } from "./jwt-token.service";
 import { PasswordHasher } from "./password-hasher";
 import { InMemoryUserStore } from "./user-store.service";
+import type { PersistenceSink } from "../persistence/persistence-sink";
+import { PERSISTENCE_SINK } from "../persistence/persistence.tokens";
 
 @Module({
   controllers: [AuthController],
@@ -31,7 +33,12 @@ import { InMemoryUserStore } from "./user-store.service";
     },
     {
       provide: USER_STORE,
-      useFactory: (): InMemoryUserStore => new InMemoryUserStore()
+      useFactory: async (sink: PersistenceSink): Promise<InMemoryUserStore> => {
+        const store = new InMemoryUserStore(sink);
+        store.seed(await sink.loadUsers());
+        return store;
+      },
+      inject: [PERSISTENCE_SINK]
     },
     {
       provide: PASSWORD_HASHER,

@@ -1,4 +1,6 @@
 import { Module } from "@nestjs/common";
+import type { PersistenceSink } from "../persistence/persistence-sink";
+import { PERSISTENCE_SINK } from "../persistence/persistence.tokens";
 import { CustomerAnalysisModule } from "../customer-analysis/customer-analysis.module";
 import { CUSTOMER_ANALYSIS_SERVICE } from "../customer-analysis/customer-analysis.tokens";
 import type { CustomerAnalysisService } from "../customer-analysis/customer-analysis.service";
@@ -25,7 +27,12 @@ import type { ProposalDraftProvider } from "./proposal.types";
     },
     {
       provide: PROPOSAL_JOB_STORE,
-      useFactory: (): ProposalJobStoreService => new ProposalJobStoreService()
+      useFactory: async (sink: PersistenceSink): Promise<ProposalJobStoreService> => {
+        const store = new ProposalJobStoreService(sink);
+        store.seed(await sink.loadProposalJobs());
+        return store;
+      },
+      inject: [PERSISTENCE_SINK]
     },
     {
       provide: PROPOSAL_DRAFT_PROVIDER,
