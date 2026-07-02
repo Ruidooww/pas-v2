@@ -1,7 +1,14 @@
+import type { PersistenceSink } from "../persistence/persistence-sink";
 import type { AuditEvent, AuditRecordInput } from "./audit.types";
 
 export class AuditLogService {
   private readonly events: AuditEvent[] = [];
+
+  constructor(private readonly sink?: PersistenceSink) {}
+
+  seed(events: AuditEvent[]): void {
+    this.events.push(...events);
+  }
 
   record(input: AuditRecordInput): AuditEvent {
     const event: AuditEvent = {
@@ -10,6 +17,7 @@ export class AuditLogService {
       occurredAt: input.occurredAt || new Date().toISOString()
     };
     this.events.push(event);
+    this.sink?.mirrorAudit(event);
     return event;
   }
 

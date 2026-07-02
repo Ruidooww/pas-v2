@@ -1,4 +1,6 @@
 import { Module } from "@nestjs/common";
+import type { PersistenceSink } from "../persistence/persistence-sink";
+import { PERSISTENCE_SINK } from "../persistence/persistence.tokens";
 import { AuditModule } from "../audit/audit.module";
 import { AUDIT_LOG } from "../audit/audit.tokens";
 import type { AuditLogService } from "../audit/audit-log.service";
@@ -14,8 +16,12 @@ import { RegressionService } from "./regression.service";
   providers: [
     {
       provide: FEEDBACK_SERVICE,
-      useFactory: (auditLog: AuditLogService): FeedbackService => new FeedbackService(auditLog),
-      inject: [AUDIT_LOG]
+      useFactory: async (auditLog: AuditLogService, sink: PersistenceSink): Promise<FeedbackService> => {
+        const service = new FeedbackService(auditLog, sink);
+        service.seed(await sink.loadFeedback());
+        return service;
+      },
+      inject: [AUDIT_LOG, PERSISTENCE_SINK]
     },
     {
       provide: REGRESSION_SERVICE,

@@ -33,14 +33,16 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 COPY apps/backend/package.json apps/backend/package.json
 COPY apps/frontend/package.json apps/frontend/package.json
+COPY apps/backend/prisma apps/backend/prisma
 
-RUN pnpm install --prod --frozen-lockfile --filter pas-backend...
+RUN pnpm install --prod --frozen-lockfile --filter pas-backend...  && pnpm --filter pas-backend exec prisma generate
 
 COPY --from=builder /app/apps/backend/dist apps/backend/dist
+COPY --from=builder /app/apps/backend/templates apps/backend/templates
 
 WORKDIR /app/apps/backend
 
 HEALTHCHECK --interval=10s --timeout=3s --retries=12 --start-period=20s \
   CMD node -e "fetch('http://127.0.0.1:' + (process.env.PORT || 3000) + '/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
-CMD ["node", "dist/main.js"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main.js"]

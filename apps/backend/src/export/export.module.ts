@@ -1,4 +1,6 @@
 import { Module } from "@nestjs/common";
+import type { PersistenceSink } from "../persistence/persistence-sink";
+import { PERSISTENCE_SINK } from "../persistence/persistence.tokens";
 import { FilesModule } from "../files/files.module";
 import { FILES_SERVICE } from "../files/files.tokens";
 import type { FilesService } from "../files/files.service";
@@ -32,7 +34,12 @@ import { TemplateExportRenderer, type TemplateExportRendererConfig } from "./tem
     },
     {
       provide: EXPORT_JOB_STORE,
-      useFactory: (): ExportJobStoreService => new ExportJobStoreService()
+      useFactory: async (sink: PersistenceSink): Promise<ExportJobStoreService> => {
+        const store = new ExportJobStoreService(sink);
+        store.seed(await sink.loadExportJobs());
+        return store;
+      },
+      inject: [PERSISTENCE_SINK]
     },
     {
       provide: EXPORT_AUDIT_LOG,

@@ -24,6 +24,8 @@ export type CustomerAnalysisResult = {
   entryAngles: CustomerAnalysisItem[];
   recommendedCapabilities: CustomerAnalysisItem[];
   evidence: QaCitation[];
+  narrativeSummary?: string;
+  narrativeSource?: "llm" | "rule_based";
 };
 
 export type CustomerAnalysisConfig = {

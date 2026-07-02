@@ -1,4 +1,5 @@
 import type { CrmClient, CrmCustomerContext } from "../crm/crm.types";
+import type { LlmClientPort } from "../llm/llm.types";
 import type { QaCitation } from "../qa/qa.types";
 import type { KnowledgeChunk } from "../ragflow/knowledge-chunk";
 import type { RagflowClient } from "../ragflow/ragflow.client";
@@ -15,7 +16,8 @@ export class CustomerAnalysisService {
     private readonly crmClient: CrmClient,
     private readonly ragflowClient: RagflowClient,
     private readonly auditLog: CustomerAnalysisAuditLogService,
-    private readonly config: CustomerAnalysisConfig
+    private readonly config: CustomerAnalysisConfig,
+    private readonly llmClient?: LlmClientPort
   ) {}
 
   async analyze(request: CustomerAnalysisRequest): Promise<CustomerAnalysisResult> {
@@ -55,6 +57,10 @@ export class CustomerAnalysisService {
       evidence
     };
 
+    const narrative = await this.buildNarrative(customer, result);
+    result.narrativeSummary = narrative.summary;
+    result.narrativeSource = narrative.source;
+
     this.auditLog.record({
       event: "customer_analysis_completed",
       analysisId,
@@ -65,6 +71,46 @@ export class CustomerAnalysisService {
 
     return result;
   }
+
+  // LLM refines the rule-based analysis into a short narrative; any LLM
+  // failure degrades to the rule-based summary so the analysis flow never
+  // blocks on the provider.
+  private async buildNarrative(
+    customer: CrmCustomerContext,
+    result: CustomerAnalysisResult
+  ): Promise<{ summary: string; source: "llm" | "rule_based" }> {
+    const ruleBased = buildRuleBasedNarrative(result);
+    if (!this.llmClient) {
+      return { summary: ruleBased, source: "rule_based" };
+    }
+
+    try {
+      const completion = await this.llmClient.complete({
+        system:
+          "你是安全行业售前分析助手。基于给定的客户信息与分析要点，输出不超过150字的客户情况综述。只使用给定信息，不得编造产品能力或客户事实。",
+        prompt: JSON.stringify({
+          customerName: customer.name,
+          industry: customer.industry,
+          painPoints: result.painPoints.map((item) => item.title),
+          risks: result.risks.map((item) => item.title),
+          entryAngles: result.entryAngles.map((item) => item.title),
+          recommendedCapabilities: result.recommendedCapabilities.map((item) => item.title),
+          evidenceTitles: result.evidence.map((item) => item.title)
+        }),
+        temperature: 0.3,
+        maxTokens: 400
+      });
+      return { summary: completion.content, source: completion.mode === "real" ? "llm" : "rule_based" };
+    } catch {
+      return { summary: ruleBased, source: "rule_based" };
+    }
+  }
+}
+
+function buildRuleBasedNarrative(result: CustomerAnalysisResult): string {
+  const painPoint = result.painPoints[0]?.title || "待确认核心痛点";
+  const capability = result.recommendedCapabilities[0]?.title || "IP-Guard 基础能力";
+  return `${result.customerName}当前关注${painPoint}，建议围绕${capability}组织售前方案与试点验证。`;
 }
 
 function buildRetrievalQuery(customer: CrmCustomerContext): string {
