@@ -79,6 +79,18 @@ POST /api/internal/customer-analysis/analyze
 
 The analysis reads customer context through `CrmModule` and evidence through `RagflowModule`. Key judgments are marked as evidence-backed or inferred, so downstream proposal generation can avoid presenting assumptions as facts.
 
+## Proposal Generation Boundary
+
+PAS V0 proposal generation creates review-required drafts and a stable export handoff package:
+
+```text
+POST /api/internal/proposals/generate
+GET /api/internal/proposals/:jobId
+POST /api/internal/proposals/:jobId/retry
+```
+
+The generated `ProposalDraft` is not a customer-ready final proposal. `ExportPackage` is the only downstream contract for docx/pptx/xlsx generation, so export modules do not repeat proposal business logic.
+
 ## Compose Skeleton
 
 `docker-compose.yml` defines the four PAS-owned services and their network/volume contract.

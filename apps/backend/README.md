@@ -33,3 +33,11 @@ Customer analysis endpoint:
 - `POST /api/internal/customer-analysis/analyze`
 
 Customer analysis uses fixed structure and marks each judgment as `evidence` or `inferred`.
+
+Proposal generation endpoints:
+
+- `POST /api/internal/proposals/generate`
+- `GET /api/internal/proposals/:jobId`
+- `POST /api/internal/proposals/:jobId/retry`
+
+Proposal generation returns a review-required `ProposalDraft` plus an `ExportPackage` for downstream docx/pptx/xlsx export.
