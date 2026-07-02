@@ -91,7 +91,7 @@ export class RagflowClient {
     }
 
     const payload = response.json ? await response.json() : {};
-    return extractChunks(payload).map(mapKnowledgeChunk);
+    return extractChunks(payload).map(mapKnowledgeChunk).filter(isKnowledgeChunk);
   }
 
   private createHeaders(options: { json?: boolean } = {}): Record<string, string> {
@@ -117,7 +117,7 @@ function extractChunks(payload: unknown): Record<string, unknown>[] {
   return chunks.filter(isRecord);
 }
 
-function mapKnowledgeChunk(chunk: Record<string, unknown>): KnowledgeChunk {
+function mapKnowledgeChunk(chunk: Record<string, unknown>): KnowledgeChunk | undefined {
   const chunkId = stringValue(chunk.id) || stringValue(chunk.chunk_id) || stringValue(chunk.chunkId);
   const documentId = stringValue(chunk.document_id) || stringValue(chunk.documentId);
   const title =
@@ -126,7 +126,7 @@ function mapKnowledgeChunk(chunk: Record<string, unknown>): KnowledgeChunk {
     stringValue(chunk.title) ||
     documentId;
 
-  return {
+  const knowledgeChunk = {
     chunkId,
     documentId,
     title,
@@ -134,6 +134,18 @@ function mapKnowledgeChunk(chunk: Record<string, unknown>): KnowledgeChunk {
     score: numberValue(chunk.similarity) ?? numberValue(chunk.score) ?? Number.NaN,
     source: stringValue(chunk.source) || title
   };
+  return isKnowledgeChunk(knowledgeChunk) ? knowledgeChunk : undefined;
+}
+
+function isKnowledgeChunk(chunk: KnowledgeChunk | undefined): chunk is KnowledgeChunk {
+  return Boolean(
+    chunk?.chunkId &&
+      chunk.documentId &&
+      chunk.title &&
+      chunk.content &&
+      chunk.source &&
+      Number.isFinite(chunk.score)
+  );
 }
 
 function asRecord(value: unknown): Record<string, unknown> {

@@ -5,17 +5,43 @@ import type { ExportService } from "./export.service";
 import type { ExportCreateRequest } from "./export.types";
 
 describe("ExportController", () => {
+  const request = {
+    user: {
+      userId: "authenticated-user",
+      username: "user@example.com",
+      displayName: "Authenticated User",
+      role: "presales" as const
+    }
+  };
+
   it("rejects requests without an export package id", async () => {
     const service = {
       createExport: vi.fn()
     } as unknown as ExportService;
     const controller = new ExportController(service);
 
-    await expect(controller.create({ exportPackage: undefined as never })).rejects.toBeInstanceOf(BadRequestException);
+    await expect(controller.create(request, { exportPackage: undefined as never })).rejects.toBeInstanceOf(BadRequestException);
     expect(service.createExport).not.toHaveBeenCalled();
   });
 
-  it("delegates export creation, status lookup, and download", async () => {
+  it("rejects unsupported export formats before creating a job", async () => {
+    const service = {
+      createExport: vi.fn()
+    } as unknown as ExportService;
+    const controller = new ExportController(service);
+    const body = {
+      exportPackage: {
+        packageId: "export-package-1",
+        customerId: "demo-huaxin-manufacturing"
+      },
+      formats: ["pdf"]
+    } as unknown as ExportCreateRequest;
+
+    await expect(controller.create(request, body)).rejects.toBeInstanceOf(BadRequestException);
+    expect(service.createExport).not.toHaveBeenCalled();
+  });
+
+  it("delegates export creation, status lookup, and download using the authenticated user", async () => {
     const job = {
       jobId: "export-job-1",
       sourcePackageId: "export-package-1",
@@ -43,14 +69,17 @@ describe("ExportController", () => {
         customerId: "demo-huaxin-manufacturing"
       },
       formats: ["docx" as const],
-      userId: "user-1"
+      userId: "spoofed-user"
     } as unknown as ExportCreateRequest;
 
-    await expect(controller.create(body)).resolves.toEqual(job);
+    await expect(controller.create(request, body)).resolves.toEqual(job);
     expect(controller.getJob("export-job-1")).toEqual(job);
-    await expect(controller.download("export-job-1", "docx", "downloader-1")).resolves.toEqual(download);
-    expect(service.createExport).toHaveBeenCalledWith(body);
+    await expect(controller.download(request, "export-job-1", "docx")).resolves.toEqual(download);
+    expect(service.createExport).toHaveBeenCalledWith({
+      ...body,
+      userId: "authenticated-user"
+    });
     expect(service.getJobOrThrow).toHaveBeenCalledWith("export-job-1");
-    expect(service.download).toHaveBeenCalledWith("export-job-1", "docx", "downloader-1");
+    expect(service.download).toHaveBeenCalledWith("export-job-1", "docx", "authenticated-user");
   });
 });

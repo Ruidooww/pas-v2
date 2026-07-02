@@ -34,5 +34,5 @@ export class InternalApiAuthGuard implements CanActivate {
 
 function requiresAuthentication(url: string): boolean {
   const [path = ""] = url.split("?");
-  return path.startsWith("/api/internal") || path === "/api/ragflow/search";
+  return path.startsWith("/api/internal") || path.startsWith("/api/crm") || path === "/api/ragflow/search";
 }

@@ -58,18 +58,53 @@ describe("RegressionService", () => {
     expect(run.failureReason).toBe("REGRESSION_CASES_FAILED");
   });
 
+  it("blocks go-live when the regression question set has more than 50 cases", () => {
+    const service = new RegressionService(new AuditLogService());
+    const run = service.createRun(createUser("admin"), {
+      name: "V0 oversized regression",
+      owner: "QA owner",
+      approver: "Business approver",
+      cases: createPassingCases(51)
+    });
+
+    expect(run.totalCases).toBe(51);
+    expect(run.canGoLive).toBe(false);
+    expect(run.gateStatus).toBe("blocked");
+    expect(run.failureReason).toBe("REGRESSION_QUESTION_SET_INVALID");
+  });
+
+  it("blocks go-live when regression question ids are duplicated", () => {
+    const service = new RegressionService(new AuditLogService());
+    const cases = createPassingCases(50);
+    const lastCase = cases[49];
+    if (!lastCase) {
+      throw new Error("test setup expected 50 cases");
+    }
+    cases[49] = {
+      ...lastCase,
+      questionId: "q-1"
+    };
+
+    const run = service.createRun(createUser("admin"), {
+      name: "V0 duplicate regression",
+      owner: "QA owner",
+      approver: "Business approver",
+      cases
+    });
+
+    expect(run.totalCases).toBe(50);
+    expect(run.canGoLive).toBe(false);
+    expect(run.gateStatus).toBe("blocked");
+    expect(run.failureReason).toBe("REGRESSION_QUESTION_SET_INVALID");
+  });
+
   it("produces an acceptance report when all 50 cases pass", () => {
     const service = new RegressionService(new AuditLogService());
     const run = service.createRun(createUser("admin"), {
       name: "V0 full regression",
       owner: "QA owner",
       approver: "Business approver",
-      cases: Array.from({ length: 50 }, (_, index) => ({
-        questionId: `q-${index + 1}`,
-        question: `Question ${index + 1}`,
-        expectedEvidence: `Evidence ${index + 1}`,
-        passed: true
-      }))
+      cases: createPassingCases(50)
     });
 
     const report = service.getReport(createUser("presales"), run.runId);
@@ -84,6 +119,15 @@ describe("RegressionService", () => {
     );
   });
 });
+
+function createPassingCases(count: number) {
+  return Array.from({ length: count }, (_, index) => ({
+    questionId: `q-${index + 1}`,
+    question: `Question ${index + 1}`,
+    expectedEvidence: `Evidence ${index + 1}`,
+    passed: true
+  }));
+}
 
 function createUser(role: AuthenticatedUser["role"]): AuthenticatedUser {
   return {

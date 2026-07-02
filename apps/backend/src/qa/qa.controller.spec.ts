@@ -3,6 +3,15 @@ import { describe, expect, it, vi } from "vitest";
 import { QaController } from "./qa.controller";
 import type { QaService } from "./qa.service";
 
+const request = {
+  user: {
+    userId: "authenticated-user",
+    username: "user@example.com",
+    displayName: "Authenticated User",
+    role: "sales" as const
+  }
+};
+
 describe("QaController", () => {
   it("rejects blank questions before calling service", async () => {
     const service = {
@@ -10,15 +19,15 @@ describe("QaController", () => {
     } as unknown as QaService;
     const controller = new QaController(service);
 
-    await expect(controller.ask({ query: " " })).rejects.toBeInstanceOf(BadRequestException);
+    await expect(controller.ask(request, { query: " " })).rejects.toBeInstanceOf(BadRequestException);
     expect(service.ask).not.toHaveBeenCalled();
   });
 
-  it("delegates valid QA requests to QaService", async () => {
+  it("delegates valid QA requests to QaService using the authenticated user", async () => {
     const response = {
       questionId: "qa-1",
       status: "answered",
-      answer: "需人工审核：answer",
+      answer: "Review required answer",
       citations: []
     };
     const service = {
@@ -26,10 +35,15 @@ describe("QaController", () => {
     } as unknown as QaService;
     const controller = new QaController(service);
 
-    await expect(controller.ask({ query: "如何保护图纸？", userId: "user-1" })).resolves.toEqual(response);
+    await expect(
+      controller.ask(request, {
+        query: "How does IP-Guard protect drawings?",
+        userId: "spoofed-user"
+      })
+    ).resolves.toEqual(response);
     expect(service.ask).toHaveBeenCalledWith({
-      query: "如何保护图纸？",
-      userId: "user-1"
+      query: "How does IP-Guard protect drawings?",
+      userId: "authenticated-user"
     });
   });
 });

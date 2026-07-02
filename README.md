@@ -131,7 +131,7 @@ AUTH_BOOTSTRAP_ADMIN_PASSWORD=
 AUTH_BOOTSTRAP_ADMIN_DISPLAY_NAME=
 ```
 
-Do not commit real JWT secrets or initial passwords. If `JWT_SECRET` is not set, the backend uses an ephemeral process secret and existing tokens become invalid after restart.
+Do not commit real JWT secrets or initial passwords. In `NODE_ENV=production`, `JWT_SECRET` is mandatory and backend startup fails if it is missing. Outside production, a missing `JWT_SECRET` falls back to an ephemeral process secret and existing tokens become invalid after restart.
 
 ## Feedback And Regression Boundary
 

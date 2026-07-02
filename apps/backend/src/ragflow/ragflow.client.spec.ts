@@ -106,6 +106,48 @@ describe("RagflowClient", () => {
     });
   });
 
+  it("drops retrieval chunks without auditable citation fields", async () => {
+    const fetcher = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        data: {
+          chunks: [
+            {
+              id: "chunk-1",
+              document_id: "doc-1",
+              document_name: "Product Manual",
+              content: "IP-guard content",
+              similarity: 0.82
+            },
+            {
+              id: "",
+              document_id: "doc-2",
+              document_name: "Missing chunk id",
+              content: "Incomplete content",
+              similarity: 0.75
+            },
+            {
+              id: "chunk-3",
+              document_id: "doc-3",
+              document_name: "Missing score",
+              content: "Incomplete content"
+            }
+          ]
+        }
+      })
+    });
+    const client = new RagflowClient(baseConfig, fetcher);
+
+    await expect(client.retrieveKnowledgeChunks({ datasetId: "pas-v0", query: "IP-guard" })).resolves.toEqual([
+      expect.objectContaining({
+        chunkId: "chunk-1",
+        documentId: "doc-1",
+        score: 0.82
+      })
+    ]);
+  });
+
   it("returns no retrieval chunks without network calls when client mode is disabled", async () => {
     const fetcher = vi.fn();
     const client = new RagflowClient({ ...baseConfig, clientMode: "disabled" }, fetcher);

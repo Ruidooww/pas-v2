@@ -53,6 +53,7 @@ export type RegressionGateStatus = "passed" | "failed" | "blocked";
 
 export type RegressionFailureReason =
   | "REGRESSION_QUESTION_SET_INCOMPLETE"
+  | "REGRESSION_QUESTION_SET_INVALID"
   | "REGRESSION_CASES_FAILED";
 
 export type RegressionRun = CreateRegressionRunRequest & {
