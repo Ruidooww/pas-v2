@@ -71,6 +71,10 @@ export class RagflowClient {
   }
 
   async retrieveKnowledgeChunks(params: RetrieveKnowledgeChunksRequest): Promise<KnowledgeChunk[]> {
+    if (this.config.clientMode === "disabled") {
+      return [];
+    }
+
     const response = await this.fetcher(`${this.config.baseUrl}/api/v1/retrieval`, {
       method: "POST",
       headers: this.createHeaders({ json: true }),

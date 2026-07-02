@@ -105,4 +105,12 @@ describe("RagflowClient", () => {
       dataset_ids: ["pas-v0"]
     });
   });
+
+  it("returns no retrieval chunks without network calls when client mode is disabled", async () => {
+    const fetcher = vi.fn();
+    const client = new RagflowClient({ ...baseConfig, clientMode: "disabled" }, fetcher);
+
+    await expect(client.retrieveKnowledgeChunks({ datasetId: "pas-v0", query: "IP-guard" })).resolves.toEqual([]);
+    expect(fetcher).not.toHaveBeenCalled();
+  });
 });

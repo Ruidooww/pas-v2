@@ -21,3 +21,9 @@ CRM backend endpoints:
 - `GET /api/crm/customers/:customerId/context`
 
 `CRM_CLIENT_MODE=mock` is the V0 default. External CRM mode is reserved until API documentation and test credentials are available.
+
+QA backend endpoint:
+
+- `POST /api/internal/qa/ask`
+
+QA uses the backend RAGFlow adapter and returns draft answers with citations. Draft answers must be treated as review-required output.
