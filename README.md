@@ -47,6 +47,18 @@ RAGFlow V0 dataset startup is tracked in:
 
 Runtime dataset ids and API keys belong in local environment files only.
 
+## CRM Boundary
+
+PAS V0 reads customer context through backend CRM adapter APIs. The default runtime mode is:
+
+```text
+CRM_CLIENT_MODE=mock
+```
+
+The mock mode is only a V0 demo profile source for customer analysis and proposal generation. Real CRM integration remains blocked until CRM API documentation, auth method, test account, and confirmed sample customer data are provided.
+
+Frontend and future Bot integrations must call PAS backend APIs only. They must not receive CRM credentials or call CRM systems directly.
+
 ## Compose Skeleton
 
 `docker-compose.yml` defines the four PAS-owned services and their network/volume contract.

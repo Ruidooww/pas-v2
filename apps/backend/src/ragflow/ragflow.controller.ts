@@ -2,7 +2,7 @@ import { BadRequestException, Body, Controller, Get, Inject, Post } from "@nestj
 import type { KnowledgeChunk } from "./knowledge-chunk";
 import { RagflowClient, type RagflowHealth } from "./ragflow.client";
 import type { RagflowConfig } from "./ragflow.config";
-import { RAGFLOW_CONFIG } from "./ragflow.tokens";
+import { RAGFLOW_CLIENT, RAGFLOW_CONFIG } from "./ragflow.tokens";
 
 type RagflowControllerConfig = Pick<RagflowConfig, "pasKbId">;
 
@@ -18,7 +18,7 @@ type SearchResponse = {
 @Controller("api/ragflow")
 export class RagflowController {
   constructor(
-    private readonly ragflowClient: RagflowClient,
+    @Inject(RAGFLOW_CLIENT) private readonly ragflowClient: RagflowClient,
     @Inject(RAGFLOW_CONFIG) private readonly config: RagflowControllerConfig
   ) {}
 
