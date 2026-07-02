@@ -15,9 +15,23 @@ describe("InternalApiAuthGuard", () => {
     await expect(guard.canActivate(createContext(request))).resolves.toBe(true);
   });
 
+  it("allows RAGFlow health checks without a token", async () => {
+    const { guard } = createGuard();
+    const request = { url: "/api/ragflow/health", headers: {} };
+
+    await expect(guard.canActivate(createContext(request))).resolves.toBe(true);
+  });
+
   it("rejects internal API paths without a bearer token", async () => {
     const { guard } = createGuard();
     const request = { url: "/api/internal/qa/ask", headers: {} };
+
+    await expect(guard.canActivate(createContext(request))).rejects.toBeInstanceOf(UnauthorizedException);
+  });
+
+  it("rejects RAGFlow search without a bearer token", async () => {
+    const { guard } = createGuard();
+    const request = { url: "/api/ragflow/search", headers: {} };
 
     await expect(guard.canActivate(createContext(request))).rejects.toBeInstanceOf(UnauthorizedException);
   });
