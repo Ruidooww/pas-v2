@@ -49,3 +49,16 @@ Export endpoints:
 - `GET /api/internal/exports/:jobId/files/:format`
 
 Export tasks accept `ExportPackage`, track each requested format independently, and save/read files only through `FilesModule`. Until company templates are placed under `EXPORT_TEMPLATE_ROOT`, the renderer returns explicit template errors instead of producing fake files.
+
+Auth endpoints:
+
+- `POST /api/auth/login`
+- `GET /api/me`
+- `POST /api/internal/auth/users`
+- `POST /api/internal/auth/users/import`
+
+Audit endpoint:
+
+- `GET /api/internal/audit/events`
+
+Internal APIs require `Authorization: Bearer <token>`. Bootstrap admin creation only runs when `AUTH_BOOTSTRAP_ADMIN_USERNAME` and `AUTH_BOOTSTRAP_ADMIN_PASSWORD` are provided by the local environment.
