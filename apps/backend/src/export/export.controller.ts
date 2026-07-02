@@ -1,4 +1,5 @@
-import { BadRequestException, Body, Controller, Get, Inject, NotFoundException, Param, Post, Query } from "@nestjs/common";
+import { BadRequestException, Body, Controller, Get, Inject, NotFoundException, Param, Post, Req } from "@nestjs/common";
+import type { AuthenticatedUser } from "../auth/auth.types";
 import { EXPORT_SERVICE } from "./export.tokens";
 import {
   ExportFileNotReadyError,
@@ -7,17 +8,25 @@ import {
 } from "./export.service";
 import type { ExportCreateRequest, ExportDownloadResponse, ExportFormat, ExportJob } from "./export.types";
 
+type RequestWithUser = {
+  user: AuthenticatedUser;
+};
+
 @Controller("api/internal/exports")
 export class ExportController {
   constructor(@Inject(EXPORT_SERVICE) private readonly exportService: ExportService) {}
 
   @Post()
-  async create(@Body() body: ExportCreateRequest): Promise<ExportJob> {
+  async create(@Req() request: RequestWithUser, @Body() body: ExportCreateRequest): Promise<ExportJob> {
     if (!body.exportPackage?.packageId) {
       throw new BadRequestException("exportPackage.packageId is required");
     }
 
-    return this.exportService.createExport(body);
+    return this.exportService.createExport({
+      ...body,
+      formats: parseFormats(body.formats),
+      userId: request.user.userId
+    });
   }
 
   @Get(":jobId")
@@ -31,13 +40,13 @@ export class ExportController {
 
   @Get(":jobId/files/:format")
   async download(
+    @Req() request: RequestWithUser,
     @Param("jobId") jobId: string,
-    @Param("format") format: string,
-    @Query("userId") userId?: string
+    @Param("format") format: string
   ): Promise<ExportDownloadResponse> {
     const parsedFormat = parseFormat(format);
     try {
-      return await this.exportService.download(jobId, parsedFormat, userId);
+      return await this.exportService.download(jobId, parsedFormat, request.user.userId);
     } catch (error) {
       throw mapExportError(error);
     }
@@ -50,6 +59,10 @@ function parseFormat(format: string): ExportFormat {
   }
 
   throw new BadRequestException("format must be one of docx, pptx, xlsx");
+}
+
+function parseFormats(formats: ExportCreateRequest["formats"]): ExportFormat[] | undefined {
+  return formats?.map(parseFormat);
 }
 
 function mapExportError(error: unknown): Error {

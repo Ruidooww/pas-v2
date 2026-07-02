@@ -4,15 +4,24 @@ import { CustomerAnalysisController } from "./customer-analysis.controller";
 import type { CustomerAnalysisService } from "./customer-analysis.service";
 
 describe("CustomerAnalysisController", () => {
+  const request = {
+    user: {
+      userId: "authenticated-user",
+      username: "user@example.com",
+      displayName: "Authenticated User",
+      role: "presales" as const
+    }
+  };
+
   it("rejects missing customer id", async () => {
     const service = { analyze: vi.fn() } as unknown as CustomerAnalysisService;
     const controller = new CustomerAnalysisController(service);
 
-    await expect(controller.analyze({ customerId: " " })).rejects.toBeInstanceOf(BadRequestException);
+    await expect(controller.analyze(request, { customerId: " " })).rejects.toBeInstanceOf(BadRequestException);
     expect(service.analyze).not.toHaveBeenCalled();
   });
 
-  it("delegates valid requests to CustomerAnalysisService", async () => {
+  it("delegates valid requests to CustomerAnalysisService using the authenticated user", async () => {
     const response = {
       analysisId: "ca-1",
       status: "completed",
@@ -28,14 +37,14 @@ describe("CustomerAnalysisController", () => {
     const controller = new CustomerAnalysisController(service);
 
     await expect(
-      controller.analyze({
+      controller.analyze(request, {
         customerId: "demo-huaxin-manufacturing",
-        userId: "user-1"
+        userId: "spoofed-user"
       })
     ).resolves.toEqual(response);
     expect(service.analyze).toHaveBeenCalledWith({
       customerId: "demo-huaxin-manufacturing",
-      userId: "user-1"
+      userId: "authenticated-user"
     });
   });
 });

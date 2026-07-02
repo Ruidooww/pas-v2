@@ -3,6 +3,7 @@ import type { AuditLogService } from "../audit/audit-log.service";
 import type { AuthenticatedUser } from "../auth/auth.types";
 import type {
   CreateRegressionRunRequest,
+  RegressionCaseInput,
   RegressionFailureReason,
   RegressionGateStatus,
   RegressionReport,
@@ -19,7 +20,7 @@ export class RegressionService {
     const totalCases = request.cases.length;
     const passedCases = request.cases.filter((item) => item.passed).length;
     const failedCases = totalCases - passedCases;
-    const gate = calculateGate(totalCases, failedCases);
+    const gate = calculateGate(request.cases, failedCases);
     const run: RegressionRun = {
       ...request,
       runId: createRunId(),
@@ -62,14 +63,21 @@ export class RegressionService {
   }
 }
 
-function calculateGate(totalCases: number, failedCases: number): {
+function calculateGate(cases: RegressionCaseInput[], failedCases: number): {
   gateStatus: RegressionGateStatus;
   failureReason?: RegressionFailureReason;
 } {
-  if (totalCases < 50) {
+  if (cases.length < 50) {
     return {
       gateStatus: "blocked",
       failureReason: "REGRESSION_QUESTION_SET_INCOMPLETE"
+    };
+  }
+
+  if (cases.length !== 50 || hasInvalidCaseIdentity(cases)) {
+    return {
+      gateStatus: "blocked",
+      failureReason: "REGRESSION_QUESTION_SET_INVALID"
     };
   }
 
@@ -83,6 +91,18 @@ function calculateGate(totalCases: number, failedCases: number): {
   return {
     gateStatus: "passed"
   };
+}
+
+function hasInvalidCaseIdentity(cases: RegressionCaseInput[]): boolean {
+  const questionIds = new Set<string>();
+  for (const item of cases) {
+    const questionId = item.questionId.trim();
+    if (!questionId || !item.question.trim() || !item.expectedEvidence.trim() || questionIds.has(questionId)) {
+      return true;
+    }
+    questionIds.add(questionId);
+  }
+  return false;
 }
 
 function assertRegressionManager(user: AuthenticatedUser): void {

@@ -64,9 +64,9 @@ $ragflow = Invoke-Json -Method "Get" -Path "/api/ragflow/health"
 Assert-Condition ($ragflow.status -in @("ok", "disabled")) "RAGFlow health failed: status=$($ragflow.status) kind=$($ragflow.errorKind) httpStatus=$($ragflow.httpStatus)"
 
 Write-Host "PAS V0 smoke: CRM mock customers"
-$customers = Invoke-Json -Method "Get" -Path "/api/crm/customers"
-Assert-Condition ($customers.Count -gt 0) "CRM customers empty"
-$customerId = $customers[0].customerId
+$customerList = Invoke-Json -Method "Get" -Path "/api/crm/customers" -Headers $headers
+Assert-Condition ($customerList.customers.Count -gt 0) "CRM customers empty"
+$customerId = $customerList.customers[0].customerId
 
 Write-Host "PAS V0 smoke: QA"
 $qa = Invoke-Json -Method "Post" -Path "/api/internal/qa/ask" -Headers $headers -Body @{

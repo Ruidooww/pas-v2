@@ -4,17 +4,26 @@ import { ProposalController } from "./proposal.controller";
 import type { ProposalService } from "./proposal.service";
 
 describe("ProposalController", () => {
+  const request = {
+    user: {
+      userId: "authenticated-user",
+      username: "user@example.com",
+      displayName: "Authenticated User",
+      role: "presales" as const
+    }
+  };
+
   it("rejects blank customer id before starting generation", async () => {
     const service = {
       generate: vi.fn()
     } as unknown as ProposalService;
     const controller = new ProposalController(service);
 
-    await expect(controller.generate({ customerId: " " })).rejects.toBeInstanceOf(BadRequestException);
+    await expect(controller.generate(request, { customerId: " " })).rejects.toBeInstanceOf(BadRequestException);
     expect(service.generate).not.toHaveBeenCalled();
   });
 
-  it("delegates proposal generation to ProposalService", async () => {
+  it("delegates proposal generation to ProposalService using the authenticated user", async () => {
     const response = {
       jobId: "proposal-job-1",
       status: "completed",
@@ -32,14 +41,14 @@ describe("ProposalController", () => {
     const controller = new ProposalController(service);
 
     await expect(
-      controller.generate({
+      controller.generate(request, {
         customerId: "demo-huaxin-manufacturing",
-        userId: "user-1"
+        userId: "spoofed-user"
       })
     ).resolves.toEqual(response);
     expect(service.generate).toHaveBeenCalledWith({
       customerId: "demo-huaxin-manufacturing",
-      userId: "user-1",
+      userId: "authenticated-user",
       humanInputs: undefined
     });
   });

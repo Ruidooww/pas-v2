@@ -13,6 +13,7 @@ RAGFlow backend endpoints:
 - `POST /api/ragflow/search`
 
 Frontend and Bot integrations must call these PAS backend endpoints instead of calling RAGFlow directly.
+`GET /api/ragflow/health` is public for readiness checks; `POST /api/ragflow/search` requires `Authorization: Bearer <token>`.
 
 CRM backend endpoints:
 
@@ -21,6 +22,7 @@ CRM backend endpoints:
 - `GET /api/crm/customers/:customerId/context`
 
 `CRM_CLIENT_MODE=mock` is the V0 default. External CRM mode is reserved until API documentation and test credentials are available.
+CRM endpoints require `Authorization: Bearer <token>` because mock records still model customer context.
 
 QA backend endpoint:
 

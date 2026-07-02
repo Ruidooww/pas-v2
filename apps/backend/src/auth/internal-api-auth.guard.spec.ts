@@ -29,6 +29,13 @@ describe("InternalApiAuthGuard", () => {
     await expect(guard.canActivate(createContext(request))).rejects.toBeInstanceOf(UnauthorizedException);
   });
 
+  it("rejects CRM customer context paths without a bearer token", async () => {
+    const { guard } = createGuard();
+    const request = { url: "/api/crm/customers/demo-huaxin-manufacturing/context", headers: {} };
+
+    await expect(guard.canActivate(createContext(request))).rejects.toBeInstanceOf(UnauthorizedException);
+  });
+
   it("rejects RAGFlow search without a bearer token", async () => {
     const { guard } = createGuard();
     const request = { url: "/api/ragflow/search", headers: {} };
