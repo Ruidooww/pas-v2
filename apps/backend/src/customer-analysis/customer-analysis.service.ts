@@ -100,7 +100,12 @@ export class CustomerAnalysisService {
         temperature: 0.3,
         maxTokens: 400
       });
-      return { summary: completion.content, source: completion.mode === "real" ? "llm" : "rule_based" };
+      if (completion.mode !== "real") {
+        // Mock completions echo the prompt — show the rule-based narrative
+        // instead of leaking mock output to the user.
+        return { summary: ruleBased, source: "rule_based" };
+      }
+      return { summary: completion.content, source: "llm" };
     } catch {
       return { summary: ruleBased, source: "rule_based" };
     }
