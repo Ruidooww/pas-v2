@@ -1,5 +1,5 @@
 import { Logger } from "@nestjs/common";
-import { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@prisma/client";
 import type { AuditEvent } from "../audit/audit.types";
 import type { UserRecord } from "../auth/auth.types";
 import type { ExportJob } from "../export/export.types";
@@ -17,7 +17,13 @@ export class PersistenceSink {
 
   constructor(databaseUrl: string | undefined = process.env.DATABASE_URL) {
     if (databaseUrl?.trim()) {
-      this.client = new PrismaClient();
+      // Lazy CJS require: the generated client only loads when persistence is
+      // enabled, so unit tests (sink disabled) never touch @prisma/client.
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { PrismaClient: PrismaClientCtor } = require("@prisma/client") as {
+        PrismaClient: new () => PrismaClient;
+      };
+      this.client = new PrismaClientCtor();
     }
   }
 
