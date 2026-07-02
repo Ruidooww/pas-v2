@@ -59,6 +59,16 @@ The mock mode is only a V0 demo profile source for customer analysis and proposa
 
 Frontend and future Bot integrations must call PAS backend APIs only. They must not receive CRM credentials or call CRM systems directly.
 
+## QA Boundary
+
+PAS V0 QA is exposed through backend API only:
+
+```text
+POST /api/internal/qa/ask
+```
+
+QA answers are draft outputs and must display that they require human review. When retrieval hits exist, answers must include real chunk citations from RAGFlow. When retrieval has no hits, PAS returns a no-hit failure reason instead of fabricating sources.
+
 ## Compose Skeleton
 
 `docker-compose.yml` defines the four PAS-owned services and their network/volume contract.
