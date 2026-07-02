@@ -40,6 +40,13 @@ RAGFLOW_BASE_URL=http://localhost:19380
 
 Never run `docker compose down -v` against the RAGFlow stack, and never delete the existing `ragflow_*` volumes.
 
+RAGFlow V0 dataset startup is tracked in:
+
+- `docs/ragflow/v0-dataset-cold-start.md`
+- `docs/ragflow/50-question-regression-template.md`
+
+Runtime dataset ids and API keys belong in local environment files only.
+
 ## Compose Skeleton
 
 `docker-compose.yml` defines the four PAS-owned services and their network/volume contract.
