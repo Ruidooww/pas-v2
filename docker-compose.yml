@@ -3,23 +3,30 @@ name: pas-v2
 services:
   pas-frontend:
     container_name: pas-frontend
+    image: ${PAS_FRONTEND_IMAGE:-local/pas-v2/pas-frontend:dev}
     build:
-      context: ./apps/frontend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: apps/frontend/Dockerfile
     depends_on:
       pas-backend:
-        condition: service_started
+        condition: service_healthy
     ports:
       - "${PAS_FRONTEND_PORT:-18000}:80"
     networks:
       - pas
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
     restart: unless-stopped
 
   pas-backend:
     container_name: pas-backend
+    image: ${PAS_BACKEND_IMAGE:-local/pas-v2/pas-backend:dev}
     build:
-      context: ./apps/backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: apps/backend/Dockerfile
     environment:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: ${PAS_BACKEND_PORT_INTERNAL:-3000}
@@ -44,6 +51,16 @@ services:
       - "host.docker.internal:host-gateway"
     networks:
       - pas
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "node -e \"fetch('http://127.0.0.1:' + (process.env.PORT || 3000) + '/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
     restart: unless-stopped
 
   pas-postgres:
