@@ -3,10 +3,11 @@ import { describe, expect, it } from "vitest";
 import { App } from "./App";
 
 describe("App", () => {
-  it("renders the PAS shell heading", () => {
+  it("shows the login page when no token is stored", async () => {
+    localStorage.clear();
     render(<App />);
 
-    expect(screen.getByRole("heading", { name: "PAS" })).toBeTruthy();
-    expect(screen.getByText("Presales Assistance System")).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "PAS 售前辅助系统" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /登\s*录/ })).toBeTruthy();
   });
 });
