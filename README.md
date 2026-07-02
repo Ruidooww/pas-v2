@@ -170,6 +170,11 @@ When enabled, callback signatures are checked before the event is handled. Messa
 `docker-compose.yml` defines the four PAS-owned services and their network/volume contract.
 Application Dockerfiles and app code are intentionally left for the module implementation issues.
 
+Deployment, smoke, and rollback SOP:
+
+- `docs/deployment/v0-sop.md`
+- `scripts/smoke-v0.ps1`
+
 Validate the compose contract with:
 
 ```powershell
