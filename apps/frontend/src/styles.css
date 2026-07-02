@@ -1,0 +1,56 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #f4f7fb;
+  color: #101828;
+}
+
+.app-shell {
+  min-height: 100vh;
+  background: #f4f7fb;
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: auto;
+  min-height: 88px;
+  padding: 20px 32px;
+  background: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.app-header h1.ant-typography {
+  margin: 0;
+  line-height: 1;
+}
+
+.app-content {
+  padding: 32px;
+}
+
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.status-card {
+  min-height: 96px;
+  border-color: #e5e7eb;
+}
+
+.status-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  color: #1677ff;
+  background: #e6f4ff;
+  border-radius: 6px;
+}

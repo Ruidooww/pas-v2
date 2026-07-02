@@ -50,3 +50,9 @@ Validate the compose contract with:
 ```powershell
 docker compose config
 ```
+
+The portable repository command is:
+
+```powershell
+pnpm compose:config
+```

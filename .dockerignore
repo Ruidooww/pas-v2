@@ -1,0 +1,16 @@
+.git
+.github
+.worktrees
+backups
+external/ragflow
+node_modules
+**/node_modules
+**/dist
+**/.vite
+**/coverage
+**/*.log
+.env
+.env.*
+*.env
+*.key
+*.pem
