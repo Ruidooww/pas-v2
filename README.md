@@ -69,6 +69,16 @@ POST /api/internal/qa/ask
 
 QA answers are draft outputs and must display that they require human review. When retrieval hits exist, answers must include real chunk citations from RAGFlow. When retrieval has no hits, PAS returns a no-hit failure reason instead of fabricating sources.
 
+## Customer Analysis Boundary
+
+PAS V0 customer analysis uses fixed structure, not free-form agent orchestration:
+
+```text
+POST /api/internal/customer-analysis/analyze
+```
+
+The analysis reads customer context through `CrmModule` and evidence through `RagflowModule`. Key judgments are marked as evidence-backed or inferred, so downstream proposal generation can avoid presenting assumptions as facts.
+
 ## Compose Skeleton
 
 `docker-compose.yml` defines the four PAS-owned services and their network/volume contract.

@@ -27,3 +27,9 @@ QA backend endpoint:
 - `POST /api/internal/qa/ask`
 
 QA uses the backend RAGFlow adapter and returns draft answers with citations. Draft answers must be treated as review-required output.
+
+Customer analysis endpoint:
+
+- `POST /api/internal/customer-analysis/analyze`
+
+Customer analysis uses fixed structure and marks each judgment as `evidence` or `inferred`.

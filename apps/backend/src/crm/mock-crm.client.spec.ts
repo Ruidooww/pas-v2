@@ -7,13 +7,15 @@ describe("MockCrmClient", () => {
 
     const customers = await client.listCustomers();
 
-    expect(customers).toEqual([
+    expect(customers).toEqual(expect.arrayContaining([
       expect.objectContaining({
         customerId: "demo-huaxin-manufacturing",
         name: "华信精工",
         industry: "高端制造"
       })
-    ]);
+    ]));
+    expect(customers).toHaveLength(3);
+    expect(customers.map((customer) => customer.industry)).toEqual(["高端制造", "金融服务", "软件研发"]);
   });
 
   it("returns a reusable customer context", async () => {
