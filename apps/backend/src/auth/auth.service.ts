@@ -21,6 +21,13 @@ export class AuthService {
   ) {}
 
   async bootstrapAdmin(request: Omit<CreateUserRequest, "role">): Promise<PublicUser> {
+    // Idempotent: with persistence hydration the bootstrap admin may already
+    // exist on restart — reuse it instead of failing application boot.
+    const existing = this.userStore.findByUsername(request.username);
+    if (existing) {
+      return toPublicUser(existing);
+    }
+
     const passwordHash = await this.passwordHasher.hash(request.password);
     const user = this.userStore.createUser(
       {
