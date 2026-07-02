@@ -148,6 +148,23 @@ GET /api/internal/regression-runs/:runId/report
 
 Feedback covers QA answers, customer analysis, proposal drafts, and export files. Regression runs only allow full go-live when exactly the real 50-question set is represented and every case passes. Fewer than 50 cases returns `canGoLive=false` with `REGRESSION_QUESTION_SET_INCOMPLETE`.
 
+## Feishu Integration Boundary
+
+PAS V0 only reserves a Feishu Bot knowledge-base entrypoint:
+
+```text
+POST /api/integrations/feishu/events
+```
+
+The integration is disabled by default:
+
+```text
+FEISHU_BOT_ENABLED=false
+FEISHU_WEBHOOK_SECRET=
+```
+
+When enabled, callback signatures are checked before the event is handled. Message events call PAS `QaModule`; the Bot never calls RAGFlow directly. Until Feishu user mapping is implemented, the request uses a public knowledge identity and must not access private user-scoped knowledge.
+
 ## Compose Skeleton
 
 `docker-compose.yml` defines the four PAS-owned services and their network/volume contract.
