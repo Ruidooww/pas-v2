@@ -2,7 +2,7 @@ name: pas-v2
 
 services:
   pas-frontend:
-    container_name: pas-frontend
+    container_name: HYYN-frontend
     image: ${PAS_FRONTEND_IMAGE:-local/pas-v2/pas-frontend:dev}
     build:
       context: .
@@ -22,7 +22,7 @@ services:
     restart: unless-stopped
 
   pas-backend:
-    container_name: pas-backend
+    container_name: HYYN-backend
     image: ${PAS_BACKEND_IMAGE:-local/pas-v2/pas-backend:dev}
     build:
       context: .
@@ -78,7 +78,7 @@ services:
     restart: unless-stopped
 
   pas-postgres:
-    container_name: pas-postgres
+    container_name: HYYN-postgres
     image: postgres:16-alpine
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-pas}
@@ -96,7 +96,7 @@ services:
     restart: unless-stopped
 
   pas-redis:
-    container_name: pas-redis
+    container_name: HYYN-redis
     image: redis:7-alpine
     command: ["redis-server", "--appendonly", "yes"]
     volumes:

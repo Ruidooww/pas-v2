@@ -4,7 +4,8 @@ This SOP is the V0 handoff checklist for local or intranet deployment. It keeps 
 
 ## Hard Boundaries
 
-- PAS owns only four containers: `pas-frontend`, `pas-backend`, `pas-postgres`, `pas-redis`.
+- PAS owns only four containers: `HYYN-frontend`, `HYYN-backend`, `HYYN-postgres`, `HYYN-redis`.
+  The Docker Compose service names stay `pas-frontend`, `pas-backend`, `pas-postgres`, `pas-redis`.
 - RAGFlow stays external. PAS reaches it through `RAGFLOW_BASE_URL`.
 - Do not run `docker compose down -v` against RAGFlow.
 - Do not delete existing `ragflow_*` Docker volumes.
@@ -78,10 +79,8 @@ docker compose --env-file .env config --services
 Expected services:
 
 ```text
-pas-frontend
-pas-backend
-pas-postgres
-pas-redis
+services: pas-frontend, pas-backend, pas-postgres, pas-redis
+containers: HYYN-frontend, HYYN-backend, HYYN-postgres, HYYN-redis
 ```
 
 Pull and start:

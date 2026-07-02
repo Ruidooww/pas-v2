@@ -8,10 +8,10 @@ PAS v2 is the new implementation root for `C:\Users\Ruidoww\Documents\HYYA\AI\PA
 - Reuse only RAGFlow assets and integration experience.
 - Do not migrate old PAS E0-E5 application code.
 - Keep PAS-owned runtime services to four containers:
-  - `pas-frontend`
-  - `pas-backend`
-  - `pas-postgres`
-  - `pas-redis`
+  - service `pas-frontend`, container `HYYN-frontend`
+  - service `pas-backend`, container `HYYN-backend`
+  - service `pas-postgres`, container `HYYN-postgres`
+  - service `pas-redis`, container `HYYN-redis`
 
 ## Protected Local Assets
 

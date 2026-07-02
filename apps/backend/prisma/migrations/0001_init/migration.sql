@@ -86,4 +86,3 @@ CREATE INDEX "export_job_snapshots_customer_id_idx" ON "export_job_snapshots"("c
 
 -- CreateIndex
 CREATE INDEX "feedback_snapshots_user_id_idx" ON "feedback_snapshots"("user_id");
-
