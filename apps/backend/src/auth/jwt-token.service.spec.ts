@@ -12,7 +12,7 @@ const user: AuthenticatedUser = {
   userId: "user-1",
   username: "alice",
   displayName: "Alice",
-  role: "user",
+  role: "presales",
   active: true
 };
 
@@ -32,7 +32,7 @@ describe("JwtTokenService negative paths", () => {
 
   it("rejects a token with a tampered payload", () => {
     const service = new JwtTokenService(config);
-    const [header, payload, signature] = service.sign(user).split(".");
+    const [header = "", payload = "", signature = ""] = service.sign(user).split(".");
     const forgedPayload = Buffer.from(
       JSON.stringify({ ...decodeSegment(payload), role: "admin" }),
       "utf8"
@@ -50,7 +50,7 @@ describe("JwtTokenService negative paths", () => {
 
   it("rejects an alg-swapped header because signature no longer matches", () => {
     const service = new JwtTokenService(config);
-    const [, payload, signature] = service.sign(user).split(".");
+    const [, payload = "", signature = ""] = service.sign(user).split(".");
     const noneHeader = Buffer.from(JSON.stringify({ alg: "none", typ: "JWT" }), "utf8").toString(
       "base64url"
     );

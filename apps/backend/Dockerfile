@@ -37,6 +37,7 @@ COPY apps/frontend/package.json apps/frontend/package.json
 RUN pnpm install --prod --frozen-lockfile --filter pas-backend...
 
 COPY --from=builder /app/apps/backend/dist apps/backend/dist
+COPY --from=builder /app/apps/backend/templates apps/backend/templates
 
 WORKDIR /app/apps/backend
 
