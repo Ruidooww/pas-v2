@@ -76,3 +76,9 @@ Regression endpoints:
 - `GET /api/internal/regression-runs/:runId/report`
 
 Regression reports mark `canGoLive=false` when the 50-question set is incomplete or any case fails.
+
+Feishu integration endpoint:
+
+- `POST /api/integrations/feishu/events`
+
+`FEISHU_BOT_ENABLED=false` is the default. When enabled, callbacks require `x-feishu-timestamp`, `x-feishu-nonce`, and `x-feishu-signature`; message events are answered through `QaModule` only.
