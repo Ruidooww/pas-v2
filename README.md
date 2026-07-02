@@ -110,6 +110,29 @@ EXPORT_TEMPLATE_VERSION=v0-unconfigured
 
 If a required template file or field is missing, the affected format is marked failed with an explicit reason. Successful formats stay downloadable through their file keys.
 
+## Auth And Audit Boundary
+
+PAS V0 uses imported accounts, password login, and JWT:
+
+```text
+POST /api/auth/login
+GET /api/me
+POST /api/internal/auth/users
+POST /api/internal/auth/users/import
+GET /api/internal/audit/events
+```
+
+`/api/internal/*` routes require a Bearer token. Admin bootstrap is only enabled when local deployment env supplies these values:
+
+```text
+JWT_SECRET=
+AUTH_BOOTSTRAP_ADMIN_USERNAME=
+AUTH_BOOTSTRAP_ADMIN_PASSWORD=
+AUTH_BOOTSTRAP_ADMIN_DISPLAY_NAME=
+```
+
+Do not commit real JWT secrets or initial passwords. If `JWT_SECRET` is not set, the backend uses an ephemeral process secret and existing tokens become invalid after restart.
+
 ## Compose Skeleton
 
 `docker-compose.yml` defines the four PAS-owned services and their network/volume contract.
