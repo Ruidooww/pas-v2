@@ -12,8 +12,7 @@ const user: AuthenticatedUser = {
   userId: "user-1",
   username: "alice",
   displayName: "Alice",
-  role: "presales",
-  active: true
+  role: "presales"
 };
 
 describe("JwtTokenService negative paths", () => {
