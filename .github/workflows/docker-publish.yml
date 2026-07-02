@@ -42,15 +42,28 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Verify release inputs
+      - name: Resolve publish configuration
+        id: publish
         shell: bash
+        env:
+          REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
+          REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
         run: |
-          test -n "$REGISTRY_HOST"
-          test -n "$REGISTRY_NAMESPACE"
-          test -n "${{ secrets.REGISTRY_USERNAME }}"
-          test -n "${{ secrets.REGISTRY_PASSWORD }}"
+          if [ -z "$REGISTRY_HOST" ] || [ -z "$REGISTRY_NAMESPACE" ] || [ -z "$REGISTRY_USERNAME" ] || [ -z "$REGISTRY_PASSWORD" ]; then
+            if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+              echo "::error::Registry settings are incomplete. Configure REGISTRY_HOST, REGISTRY_NAMESPACE, REGISTRY_USERNAME, and REGISTRY_PASSWORD."
+              exit 1
+            fi
+
+            echo "::notice::Registry settings are incomplete; skipping image publish for this push."
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "publish=true" >> "$GITHUB_OUTPUT"
 
       - name: Login to OCI registry
+        if: steps.publish.outputs.publish == 'true'
         shell: bash
         run: |
           echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login "$REGISTRY_HOST" \
@@ -58,6 +71,7 @@ jobs:
             --password-stdin
 
       - name: Build and push images
+        if: steps.publish.outputs.publish == 'true'
         run: pnpm ci:images
         env:
           PUSH_IMAGES: "1"
