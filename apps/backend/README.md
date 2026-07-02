@@ -13,3 +13,11 @@ RAGFlow backend endpoints:
 - `POST /api/ragflow/search`
 
 Frontend and Bot integrations must call these PAS backend endpoints instead of calling RAGFlow directly.
+
+CRM backend endpoints:
+
+- `GET /api/crm/customers`
+- `GET /api/crm/customers/:customerId`
+- `GET /api/crm/customers/:customerId/context`
+
+`CRM_CLIENT_MODE=mock` is the V0 default. External CRM mode is reserved until API documentation and test credentials are available.
