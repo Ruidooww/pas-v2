@@ -61,7 +61,7 @@ Assert-Condition ($me.username -eq $login.user.username) "/api/me user mismatch"
 
 Write-Host "PAS V0 smoke: RAGFlow health"
 $ragflow = Invoke-Json -Method "Get" -Path "/api/ragflow/health"
-Assert-Condition ($ragflow.status -in @("ok", "disabled", "error")) "Unexpected RAGFlow health response"
+Assert-Condition ($ragflow.status -in @("ok", "disabled")) "RAGFlow health failed: status=$($ragflow.status) kind=$($ragflow.errorKind) httpStatus=$($ragflow.httpStatus)"
 
 Write-Host "PAS V0 smoke: CRM mock customers"
 $customers = Invoke-Json -Method "Get" -Path "/api/crm/customers"

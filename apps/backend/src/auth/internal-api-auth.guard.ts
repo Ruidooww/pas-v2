@@ -16,7 +16,7 @@ export class InternalApiAuthGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<RequestWithAuth>();
     const url = request.originalUrl || request.url || "";
-    if (!url.startsWith("/api/internal")) {
+    if (!requiresAuthentication(url)) {
       return true;
     }
 
@@ -30,4 +30,9 @@ export class InternalApiAuthGuard implements CanActivate {
       throw new UnauthorizedException("authentication failed");
     }
   }
+}
+
+function requiresAuthentication(url: string): boolean {
+  const [path = ""] = url.split("?");
+  return path.startsWith("/api/internal") || path === "/api/ragflow/search";
 }
