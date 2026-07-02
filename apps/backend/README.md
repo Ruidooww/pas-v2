@@ -41,3 +41,11 @@ Proposal generation endpoints:
 - `POST /api/internal/proposals/:jobId/retry`
 
 Proposal generation returns a review-required `ProposalDraft` plus an `ExportPackage` for downstream docx/pptx/xlsx export.
+
+Export endpoints:
+
+- `POST /api/internal/exports`
+- `GET /api/internal/exports/:jobId`
+- `GET /api/internal/exports/:jobId/files/:format`
+
+Export tasks accept `ExportPackage`, track each requested format independently, and save/read files only through `FilesModule`. Until company templates are placed under `EXPORT_TEMPLATE_ROOT`, the renderer returns explicit template errors instead of producing fake files.

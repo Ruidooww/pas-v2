@@ -91,6 +91,25 @@ POST /api/internal/proposals/:jobId/retry
 
 The generated `ProposalDraft` is not a customer-ready final proposal. `ExportPackage` is the only downstream contract for docx/pptx/xlsx generation, so export modules do not repeat proposal business logic.
 
+## Export Boundary
+
+PAS V0 export APIs accept `ExportPackage` and write generated files through `FilesModule`:
+
+```text
+POST /api/internal/exports
+GET /api/internal/exports/:jobId
+GET /api/internal/exports/:jobId/files/:format
+```
+
+Template inputs are configured with:
+
+```text
+EXPORT_TEMPLATE_ROOT=/data/pas-files/export-templates/v0
+EXPORT_TEMPLATE_VERSION=v0-unconfigured
+```
+
+If a required template file or field is missing, the affected format is marked failed with an explicit reason. Successful formats stay downloadable through their file keys.
+
 ## Compose Skeleton
 
 `docker-compose.yml` defines the four PAS-owned services and their network/volume contract.

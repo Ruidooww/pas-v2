@@ -34,6 +34,8 @@ services:
       REDIS_URL: ${REDIS_URL:-redis://pas-redis:6379}
       FILE_STORAGE_DRIVER: ${FILE_STORAGE_DRIVER:-local}
       FILE_STORAGE_ROOT: ${FILE_STORAGE_ROOT:-/data/pas-files}
+      EXPORT_TEMPLATE_ROOT: ${EXPORT_TEMPLATE_ROOT:-/data/pas-files/export-templates/v0}
+      EXPORT_TEMPLATE_VERSION: ${EXPORT_TEMPLATE_VERSION:-v0-unconfigured}
       RAGFLOW_BASE_URL: ${RAGFLOW_BASE_URL:-http://host.docker.internal:19380}
       RAGFLOW_CLIENT_MODE: ${RAGFLOW_CLIENT_MODE:-real}
       PAS_KB_ID: ${PAS_KB_ID:-}
