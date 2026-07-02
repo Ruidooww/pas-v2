@@ -15,7 +15,27 @@ export class ProposalJobStoreService {
 
   seed(jobs: ProposalJob[]): void {
     for (const job of jobs) {
-      if (!this.jobs.has(job.jobId)) this.jobs.set(job.jobId, job);
+      if (this.jobs.has(job.jobId)) continue;
+      // A job that was still running when the process stopped can never
+      // finish after a restart — surface it as failed and retryable.
+      if (job.status === "running") {
+        this.jobs.set(job.jobId, {
+          ...job,
+          status: "failed",
+          failureReason: "PROPOSAL_DRAFT_FAILED",
+          progress: [
+            ...job.progress,
+            {
+              step: "failed",
+              status: "failed",
+              message: "Generation was interrupted by a service restart; retry the job",
+              at: new Date().toISOString()
+            }
+          ]
+        });
+        continue;
+      }
+      this.jobs.set(job.jobId, job);
     }
   }
 
