@@ -1,0 +1,48 @@
+# Protected external assets and backups
+external/ragflow/
+backups/
+
+# Secrets and local environment files
+.env
+.env.*
+*.env
+*.key
+*.pem
+*.p12
+*.pfx
+!.env.example
+!**/.env.example
+
+# Node / frontend / backend build output
+node_modules/
+dist/
+build/
+coverage/
+.turbo/
+.vite/
+.next/
+out/
+
+# Package manager caches
+.pnpm-store/
+.npm/
+.yarn/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Runtime files
+tmp/
+temp/
+*.pid
