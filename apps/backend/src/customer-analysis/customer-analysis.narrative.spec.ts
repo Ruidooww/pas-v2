@@ -50,6 +50,7 @@ describe("CustomerAnalysisService narrative", () => {
     };
     const result = await buildService(llmClient).analyze({ customerId: "customer-1" });
     expect(result.narrativeSource).toBe("rule_based");
+    expect(result.narrativeSummary).not.toContain("[mock-llm]");
   });
 
   it("degrades to the rule-based narrative when the llm fails", async () => {
