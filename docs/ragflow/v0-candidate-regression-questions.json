@@ -4,349 +4,349 @@
     "category": "产品概述",
     "question": "IP-Guard 主要解决企业哪些信息安全和数据防泄漏问题？",
     "expected_intent": "回答应覆盖终端数据保护、外发管控、行为审计、权限控制等核心能力，并能说明适用业务场景。",
-    "review_status": "candidate"
+    "review_status": "approved"
   },
   {
     "question_id": "Q002",
     "category": "产品概述",
     "question": "IP-Guard 和单纯的杀毒软件、防火墙有什么区别？",
     "expected_intent": "回答应区分终端数据防泄漏、内部行为管控和边界安全产品的定位差异。",
-    "review_status": "candidate"
+    "review_status": "approved"
   },
   {
     "question_id": "Q003",
     "category": "透明加密",
     "question": "透明加密对员工日常打开、编辑、保存文档有什么影响？",
     "expected_intent": "回答应说明透明加密对授权用户的无感使用、未授权场景下的受控访问，以及业务连续性注意事项。",
-    "review_status": "candidate"
+    "review_status": "approved"
   },
   {
     "question_id": "Q004",
     "category": "透明加密",
     "question": "加密文件发给公司外部人员后，对方为什么可能打不开？",
     "expected_intent": "回答应覆盖加密文件脱离授权环境后的保护逻辑，以及外发审批或解密流程。",
-    "review_status": "candidate"
+    "review_status": "approved"
   },
   {
     "question_id": "Q005",
     "category": "透明加密",
     "question": "如果员工把加密文档复制到 U 盘或个人网盘，文件还能被保护吗？",
     "expected_intent": "回答应说明加密文件离开终端后的保护、移动存储或网络外发管控，以及审计能力。",
-    "review_status": "candidate"
+    "review_status": "approved"
   },
   {
     "question_id": "Q006",
     "category": "权限控制",
     "question": "IP-Guard 能否按部门、岗位或人员设置不同的文档访问权限？",
     "expected_intent": "回答应覆盖用户、部门、策略维度的权限配置，以及权限变更后的管理要求。",
-    "review_status": "candidate"
+    "review_status": "approved"
   },
   {
     "question_id": "Q007",
     "category": "权限控制",
     "question": "离职员工或外包人员的资料访问权限如何收回？",
     "expected_intent": "回答应覆盖账号/终端/策略回收、权限撤销、审计追踪和交接风险控制。",
-    "review_status": "candidate"
+    "review_status": "approved"
   },
   {
     "question_id": "Q008",
     "category": "权限控制",
     "question": "临时授权查看或编辑敏感文件应该怎么管控？",
     "expected_intent": "回答应说明临时策略、审批、时效控制和操作留痕。",
-    "review_status": "candidate"
+    "review_status": "approved"
   },
   {
     "question_id": "Q009",
     "category": "外发管控",
     "question": "客户需要把设计图纸或方案文档发给供应商，IP-Guard 怎么支持合规外发？",
     "expected_intent": "回答应覆盖外发申请、审批、解密或受控外发、记录留痕与风险提示。",
-    "review_status": "candidate"
+    "review_status": "approved"
   },
   {
     "question_id": "Q010",
     "category": "外发管控",
     "question": "邮件外发敏感附件时，系统能做哪些管控和审计？",
     "expected_intent": "回答应覆盖附件识别、策略限制、审批、拦截或记录，以及事后审计。",
-    "review_status": "candidate"
+    "review_status": "approved"
   },
   {
     "question_id": "Q011",
     "category": "外发管控",
     "question": "通过微信、QQ、网页上传等方式发送文件，能否被管控？",
     "expected_intent": "回答应覆盖常见外发通道管控能力、适用条件和可能需要确认的版本/策略范围。",
-    "review_status": "candidate"
+    "review_status": "approved"
   },
   {
     "question_id": "Q012",
     "category": "外发管控",
     "question": "如何发现员工批量外传资料的异常行为？",
     "expected_intent": "回答应覆盖行为审计、外发记录、异常频次或批量操作分析，以及告警/追溯。",
-    "review_status": "candidate"
+    "review_status": "approved"
   },
   {
     "question_id": "Q013",
     "category": "移动存储",
     "question": "IP-Guard 能否禁止或限制 U 盘、移动硬盘等外设使用？",
     "expected_intent": "回答应覆盖设备管控、读写权限、白名单/黑名单和审计记录。",
-    "review_status": "candidate"
+    "review_status": "approved"
   },
   {
     "question_id": "Q014",
     "category": "移动存储",
     "question": "业务部门必须使用指定 U 盘拷贝资料时，如何做到可控？",
     "expected_intent": "回答应覆盖指定设备授权、拷贝策略、文件范围控制和操作记录。",
-    "review_status": "candidate"
+    "review_status": "approved"
   },
   {
     "question_id": "Q015",
     "category": "打印与截图",
     "question": "系统能否管控打印、截屏、拍照等泄密风险？",
     "expected_intent": "回答应区分系统可管控的打印/截屏能力和线下拍照等需要制度或水印辅助的风险。",
-    "review_status": "candidate"
+    "review_status": "approved"
   },
   {
     "question_id": "Q016",
     "category": "打印与截图",
     "question": "打印敏感文件时能否记录是谁、什么时候、打印了什么？",
     "expected_intent": "回答应覆盖打印审计字段、权限策略和追溯方式。",
-    "review_status": "candidate"
+    "review_status": "approved"
   },
   {
     "question_id": "Q017",
     "category": "行为审计",
     "question": "IP-Guard 可以审计哪些终端操作行为？",
     "expected_intent": "回答应覆盖文件操作、外发、设备、打印、应用或网络相关行为，并说明审计用途。",
-    "review_status": "candidate"
+    "review_status": "approved"
   },
   {
     "question_id": "Q018",
     "category": "行为审计",
     "question": "出现泄密事件后，如何用 IP-Guard 做事后追溯？",
     "expected_intent": "回答应覆盖按人员、终端、文件、时间、通道检索日志和形成证据链。",
-    "review_status": "candidate"
+    "review_status": "approved"
   },
   {
     "question_id": "Q019",
     "category": "行为审计",
     "question": "管理者能否看到员工每天打开了哪些文件、复制了哪些文件？",
     "expected_intent": "回答应说明审计能力，同时提醒按权限、合规和最小必要原则查看。",
-    "review_status": "candidate"
+    "review_status": "approved"
   },
   {
     "question_id": "Q020",
     "category": "终端管理",
     "question": "IP-Guard 客户端部署到员工电脑后，员工能否自行卸载或关闭？",
     "expected_intent": "回答应覆盖客户端保护、防卸载或受控卸载机制，以及管理员策略。",
-    "review_status": "candidate"
+    "review_status": "approved"
   },
   {
     "question_id": "Q021",
     "category": "终端管理",
     "question": "如果员工电脑离线或出差，安全策略是否仍然生效？",
     "expected_intent": "回答应说明离线策略、本地策略缓存、回连同步和限制条件。",
-    "review_status": "candidate"
+    "review_status": "approved"
   },
   {
     "question_id": "Q022",
     "category": "终端管理",
     "question": "IP-Guard 对 Windows 终端和服务器终端的支持范围如何确认？",
     "expected_intent": "回答应要求根据版本兼容性、部署环境和客户系统清单确认。",
-    "review_status": "candidate"
+    "review_status": "approved"
   },
   {
     "question_id": "Q023",
     "category": "部署架构",
     "question": "IP-Guard 的典型部署架构包括哪些组件？",
     "expected_intent": "回答应覆盖管理端、服务端、客户端、数据库或存储等典型组成，并提醒以项目方案为准。",
-    "review_status": "candidate"
+    "review_status": "approved"
   },
   {
     "question_id": "Q024",
     "category": "部署架构",
     "question": "部署 IP-Guard 前需要客户提供哪些基础环境信息？",
     "expected_intent": "回答应覆盖终端数量、系统版本、网络区域、服务器资源、组织架构和安全策略需求。",
-    "review_status": "candidate"
+    "review_status": "approved"
   },
   {
     "question_id": "Q025",
     "category": "部署架构",
     "question": "多分支机构或跨地域办公场景如何部署和管理？",
     "expected_intent": "回答应覆盖集中管理、网络连通、策略分发、日志回传和带宽/稳定性注意事项。",
-    "review_status": "candidate"
+    "review_status": "approved"
   },
   {
     "question_id": "Q026",
     "category": "部署架构",
     "question": "IP-Guard 是否支持分阶段试点再全员推广？",
     "expected_intent": "回答应覆盖试点部门选择、策略灰度、问题收集、培训和推广路径。",
-    "review_status": "candidate"
+    "review_status": "approved"
   },
   {
     "question_id": "Q027",
     "category": "策略设计",
     "question": "首次上线时，策略应该直接强管控还是先审计观察？",
     "expected_intent": "回答应建议先审计和小范围试点，再逐步启用强管控，降低业务冲击。",
-    "review_status": "candidate"
+    "review_status": "approved"
   },
   {
     "question_id": "Q028",
     "category": "策略设计",
     "question": "如何避免安全策略影响研发、设计、财务等部门的正常工作？",
     "expected_intent": "回答应覆盖分部门策略、例外流程、试点验证和持续优化。",
-    "review_status": "candidate"
+    "review_status": "approved"
   },
   {
     "question_id": "Q029",
     "category": "策略设计",
     "question": "哪些文件类型或业务目录应该优先纳入保护？",
     "expected_intent": "回答应覆盖核心知识产权、图纸、源代码、合同、报价、客户资料等，并建议基于客户资产盘点确定。",
-    "review_status": "candidate"
+    "review_status": "approved"
   },
   {
     "question_id": "Q030",
     "category": "方案生成",
     "question": "给制造业客户做售前方案时，IP-Guard 应该突出哪些价值？",
     "expected_intent": "回答应覆盖图纸/工艺/报价/客户资料保护、外发审批、终端审计和泄密追溯。",
-    "review_status": "candidate"
+    "review_status": "approved"
   },
   {
     "question_id": "Q031",
     "category": "方案生成",
     "question": "给研发型企业做方案时，如何体现源代码和研发文档保护？",
     "expected_intent": "回答应覆盖代码、技术文档、研发资料的访问控制、外发限制和行为审计。",
-    "review_status": "candidate"
+    "review_status": "approved"
   },
   {
     "question_id": "Q032",
     "category": "方案生成",
     "question": "给财务或咨询类客户做方案时，如何体现敏感文档保护？",
     "expected_intent": "回答应覆盖合同、报表、客户资料、项目文档等敏感信息保护和外发管控。",
-    "review_status": "candidate"
+    "review_status": "approved"
   },
   {
     "question_id": "Q033",
     "category": "竞品对比",
     "question": "客户问 IP-Guard 相比普通文档加密软件有什么优势，应该怎么答？",
     "expected_intent": "回答应覆盖平台化管控、行为审计、外发审批、终端策略和管理闭环，避免无依据贬低竞品。",
-    "review_status": "candidate"
+    "review_status": "approved"
   },
   {
     "question_id": "Q034",
     "category": "竞品对比",
     "question": "客户已经有 OA 审批和网关，为什么还需要终端侧数据防护？",
     "expected_intent": "回答应说明 OA/网关与终端侧保护边界不同，终端文件操作和离线场景仍需要管控。",
-    "review_status": "candidate"
+    "review_status": "approved"
   },
   {
     "question_id": "Q035",
     "category": "合规与管理",
     "question": "IP-Guard 能帮助客户满足哪些数据安全管理要求？",
     "expected_intent": "回答应从数据分类分级、访问控制、操作审计、外发审批、责任追溯等角度回答，避免承诺具体合规认证。",
-    "review_status": "candidate"
+    "review_status": "approved"
   },
   {
     "question_id": "Q036",
     "category": "合规与管理",
     "question": "上线员工行为审计时，如何降低员工隐私和合规争议？",
     "expected_intent": "回答应建议制度告知、权限分级、最小必要查看、审计留痕和合法合规流程。",
-    "review_status": "candidate"
+    "review_status": "approved"
   },
   {
     "question_id": "Q037",
     "category": "实施服务",
     "question": "IP-Guard 项目实施通常分为哪些阶段？",
     "expected_intent": "回答应覆盖需求调研、环境准备、试点部署、策略配置、培训、验收和运维交接。",
-    "review_status": "candidate"
+    "review_status": "approved"
   },
   {
     "question_id": "Q038",
     "category": "实施服务",
     "question": "实施前需要和客户确认哪些关键策略？",
     "expected_intent": "回答应覆盖保护范围、外发流程、设备策略、审计范围、例外流程和管理员权限。",
-    "review_status": "candidate"
+    "review_status": "approved"
   },
   {
     "question_id": "Q039",
     "category": "实施服务",
     "question": "试点验收时应该看哪些效果指标？",
     "expected_intent": "回答应覆盖策略生效、业务影响、日志可查、外发流程、问题闭环和用户反馈。",
-    "review_status": "candidate"
+    "review_status": "approved"
   },
   {
     "question_id": "Q040",
     "category": "运维",
     "question": "系统上线后管理员日常需要做哪些运维工作？",
     "expected_intent": "回答应覆盖策略维护、账号和终端管理、日志审计、异常处理、备份和版本维护。",
-    "review_status": "candidate"
+    "review_status": "approved"
   },
   {
     "question_id": "Q041",
     "category": "运维",
     "question": "如果误拦截了正常业务文件外发，应该怎么处理？",
     "expected_intent": "回答应覆盖定位策略、查看日志、临时授权或策略调整、记录审批和复盘。",
-    "review_status": "candidate"
+    "review_status": "approved"
   },
   {
     "question_id": "Q042",
     "category": "运维",
     "question": "如果员工反馈文件打不开，管理员应该排查哪些方向？",
     "expected_intent": "回答应覆盖用户权限、终端客户端状态、策略匹配、文件来源、网络和日志排查。",
-    "review_status": "candidate"
+    "review_status": "approved"
   },
   {
     "question_id": "Q043",
     "category": "安全事件",
     "question": "发现疑似泄密后，IP-Guard 能提供哪些证据给管理层？",
     "expected_intent": "回答应覆盖人员、终端、文件、通道、时间、操作记录和相关审计报告。",
-    "review_status": "candidate"
+    "review_status": "approved"
   },
   {
     "question_id": "Q044",
     "category": "安全事件",
     "question": "如何追查某个文件被谁打开、复制、外发过？",
     "expected_intent": "回答应覆盖按文件名、文件标识、人员、终端和时间范围检索审计记录。",
-    "review_status": "candidate"
+    "review_status": "approved"
   },
   {
     "question_id": "Q045",
     "category": "集成边界",
     "question": "IP-Guard 是否需要和 AD、OA、邮件系统或网关集成？",
     "expected_intent": "回答应说明可按客户环境评估集成需求，区分必须项和可选增强项。",
-    "review_status": "candidate"
+    "review_status": "approved"
   },
   {
     "question_id": "Q046",
     "category": "集成边界",
     "question": "客户已有统一身份认证时，用户和组织架构如何同步？",
     "expected_intent": "回答应覆盖组织用户同步、权限映射、账号生命周期管理和集成前提确认。",
-    "review_status": "candidate"
+    "review_status": "approved"
   },
   {
     "question_id": "Q047",
     "category": "边界限制",
     "question": "哪些泄密风险不能只靠 IP-Guard 单独解决？",
     "expected_intent": "回答应客观说明线下拍照、口头泄密、制度缺失、未纳管终端等需要制度和其他技术配合。",
-    "review_status": "candidate"
+    "review_status": "approved"
   },
   {
     "question_id": "Q048",
     "category": "边界限制",
     "question": "如果客户要求百分百防止所有数据泄露，应该如何回应？",
     "expected_intent": "回答应避免绝对承诺，说明产品降低风险、增强可控和可追溯，并需要管理制度配合。",
-    "review_status": "candidate"
+    "review_status": "approved"
   },
   {
     "question_id": "Q049",
     "category": "报价与范围",
     "question": "售前报价前需要确认哪些规模和功能范围？",
     "expected_intent": "回答应覆盖终端数量、模块范围、部署方式、服务范围、实施复杂度和后续扩展。",
-    "review_status": "candidate"
+    "review_status": "approved"
   },
   {
     "question_id": "Q050",
     "category": "验收",
     "question": "V0 方案生成或知识库问答上线前，为什么必须做 50 题回归？",
     "expected_intent": "回答应覆盖检索命中、引用可靠、答案质量、人工审核和上线风险控制。",
-    "review_status": "candidate"
+    "review_status": "approved"
   }
 ]

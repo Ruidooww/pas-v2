@@ -10,6 +10,10 @@ type FetchResponse = {
 
 type Fetcher = (url: string, init?: RequestInit) => Promise<FetchResponse>;
 
+type RetrievalOptions = {
+  fallbackTuning?: boolean;
+};
+
 export type RagflowHealth =
   | {
       status: "disabled" | "ok";
@@ -75,15 +79,41 @@ export class RagflowClient {
       return [];
     }
 
+    const query = params.query.trim();
+    const topK = params.topK ?? 5;
+    const chunks = await this.retrieveWithQuery(params.datasetId, query, topK);
+    if (chunks.length > 0 || !this.shouldRetryWithFallback(query)) {
+      return chunks;
+    }
+
+    return this.retrieveWithQuery(params.datasetId, `${this.config.fallbackQueryPrefix} ${query}`, topK, {
+      fallbackTuning: true
+    });
+  }
+
+  private async retrieveWithQuery(
+    datasetId: string,
+    query: string,
+    topK: number,
+    options: RetrievalOptions = {}
+  ): Promise<KnowledgeChunk[]> {
+    const body: Record<string, unknown> = {
+      question: query,
+      dataset_ids: [datasetId],
+      keyword: this.config.keywordEnabled,
+      page: 1,
+      page_size: topK
+    };
+
+    if (options.fallbackTuning) {
+      body.similarity_threshold = 0;
+      body.vector_similarity_weight = 0.1;
+    }
+
     const response = await this.fetcher(`${this.config.baseUrl}/api/v1/retrieval`, {
       method: "POST",
       headers: this.createHeaders({ json: true }),
-      body: JSON.stringify({
-        question: params.query,
-        dataset_ids: [params.datasetId],
-        page: 1,
-        page_size: params.topK ?? 5
-      })
+      body: JSON.stringify(body)
     });
 
     if (!response.ok) {
@@ -92,6 +122,13 @@ export class RagflowClient {
 
     const payload = response.json ? await response.json() : {};
     return extractChunks(payload).map(mapKnowledgeChunk).filter(isKnowledgeChunk);
+  }
+
+  private shouldRetryWithFallback(query: string): boolean {
+    const prefix = this.config.fallbackQueryPrefix.trim();
+    return Boolean(
+      this.config.keywordEnabled && prefix && query && !query.toLowerCase().startsWith(prefix.toLowerCase())
+    );
   }
 
   private createHeaders(options: { json?: boolean } = {}): Record<string, string> {
@@ -111,6 +148,11 @@ export class RagflowClient {
 
 function extractChunks(payload: unknown): Record<string, unknown>[] {
   const root = asRecord(payload);
+  const code = numberValue(root.code);
+  if (code !== undefined && code !== 0) {
+    return [];
+  }
+
   const data = asRecord(root.data);
   const chunks = Array.isArray(data.chunks) ? data.chunks : [];
 

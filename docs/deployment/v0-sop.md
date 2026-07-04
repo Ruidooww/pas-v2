@@ -57,6 +57,8 @@ AUTH_BOOTSTRAP_ADMIN_DISPLAY_NAME=<initial admin display name>
 CRM_CLIENT_MODE=mock
 RAGFLOW_BASE_URL=http://host.docker.internal:19380
 RAGFLOW_CLIENT_MODE=real
+RAGFLOW_KEYWORD_ENABLED=true
+RAGFLOW_FALLBACK_QUERY_PREFIX=IP-Guard
 RAGFLOW_API_KEY=<local RAGFlow API key>
 PAS_KB_ID=<V0 PAS dataset id>
 QA_KB_ID=<V0 QA dataset id>
@@ -122,7 +124,7 @@ The smoke covers:
 - `POST /api/internal/exports`
 - `POST /api/internal/feedback`
 
-When the real 50-question set is not ready, use the candidate pool only for QA smoke and retrieval tuning:
+Run the approved 50-question pool for QA smoke and retrieval tuning:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\smoke-v0.ps1 `
@@ -130,10 +132,11 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\smoke-v0.ps1 `
   -Username "<initial admin username>" `
   -Password "<initial admin password>" `
   -CandidateQuestionFile ".\docs\ragflow\v0-candidate-regression-questions.json" `
-  -CandidateQuestionLimit 5
+  -CandidateQuestionLimit 50
 ```
 
-This does not satisfy the 50-question go-live gate.
+After the smoke summary reports `answered=50 no_hit=0 error=0`, submit the same 50 reviewed cases to
+`POST /api/internal/regression-runs` and verify `gateStatus=passed` plus `canGoLive=true`.
 
 Full V0 trial cannot be marked ready when:
 
