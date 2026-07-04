@@ -12,18 +12,16 @@ This document tracks the PAS V0 dataset startup workflow. It must not contain re
 
 ## Required Inputs
 
-The cold start remains blocked until these inputs are supplied:
+The V0 local closeout uses these approved inputs:
 
 | Input | Owner | Status | Notes |
 | --- | --- | --- | --- |
-| 30-50 curated source materials | User side | Blocked | Must be selected from approved product, sales, and delivery materials. |
-| New PAS V0 dataset ID | User side / RAGFlow operator | Blocked | Store as `PAS_KB_ID` in local `.env`. |
-| 50 real regression questions | User side | Blocked | Use customer-facing and presales-facing questions. |
+| 30-50 curated source materials | User side / RAGFlow operator | Done | The local V0 RAGFlow dataset has 50 selected IP-Guard materials. |
+| New PAS V0 dataset ID | User side / RAGFlow operator | Done locally | Store as `PAS_KB_ID` in local `.env`; do not commit dataset IDs. |
+| 50 real regression questions | User side | Approved | `docs/ragflow/v0-candidate-regression-questions.json` is marked `approved` for the V0 gate. |
 
-When the real 50-question list is not ready, use
-`docs/ragflow/v0-candidate-regression-questions.json` as a candidate review pool. Candidate questions are for QA smoke
-and retrieval tuning only; they do not satisfy the V0 go-live regression gate until a product or presales reviewer
-approves exactly 50 reviewed cases with evidence.
+If the approved 50-question set is replaced later, mark the replacement cases with reviewed evidence before using them
+as the V0 go-live regression gate input.
 
 ## Import Rules
 
@@ -39,6 +37,8 @@ Use local environment values:
 ```text
 RAGFLOW_BASE_URL=http://host.docker.internal:19380
 RAGFLOW_CLIENT_MODE=real
+RAGFLOW_KEYWORD_ENABLED=true
+RAGFLOW_FALLBACK_QUERY_PREFIX=IP-Guard
 RAGFLOW_API_KEY=<local secret>
 PAS_KB_ID=<new V0 dataset id>
 QA_KB_ID=<optional QA dataset id>
@@ -53,6 +53,11 @@ RAGFLOW_BASE_URL=http://localhost:19380
 The RAGFlow UI may be checked at `http://localhost:80` on the preserved local stack. The API endpoint
 `/api/v1/datasets` should return `401` when `RAGFLOW_API_KEY` is missing; that confirms the API route is reachable but
 does not prove PAS can retrieve knowledge chunks.
+
+Keep `RAGFLOW_KEYWORD_ENABLED=true` for the V0 Chinese IP-Guard dataset. It makes PAS send RAGFlow retrieval requests
+with `keyword=true`, which is required for broad Chinese presales questions that vector-only retrieval can miss. When
+RAGFlow returns no chunks or a non-zero business code, PAS retries once with `RAGFLOW_FALLBACK_QUERY_PREFIX` prepended
+and conservative keyword-biased retrieval tuning.
 
 ## Adapter Contract
 

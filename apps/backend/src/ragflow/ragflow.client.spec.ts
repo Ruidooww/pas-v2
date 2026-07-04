@@ -6,6 +6,8 @@ const baseConfig: RagflowConfig = {
   apiKey: "",
   baseUrl: "http://ragflow.local",
   clientMode: "real",
+  fallbackQueryPrefix: "IP-Guard",
+  keywordEnabled: true,
   pasKbId: "pas-v0",
   qaKbId: "qa-v0"
 };
@@ -102,7 +104,8 @@ describe("RagflowClient", () => {
     expect(init).toMatchObject({ method: "POST" });
     expect(JSON.parse(String(init?.body))).toMatchObject({
       question: "IP-guard",
-      dataset_ids: ["pas-v0"]
+      dataset_ids: ["pas-v0"],
+      keyword: true
     });
   });
 
@@ -146,6 +149,94 @@ describe("RagflowClient", () => {
         score: 0.82
       })
     ]);
+  });
+
+  it("retries retrieval with a keyword fallback when the first result has no chunks", async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          data: {
+            chunks: []
+          }
+        })
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          data: {
+            chunks: [
+              {
+                id: "chunk-1",
+                document_id: "doc-1",
+                document_keyword: "Product Whitepaper",
+                content: "IP-guard content",
+                similarity: 0.2
+              }
+            ]
+          }
+        })
+      });
+    const client = new RagflowClient(baseConfig, fetcher);
+
+    await expect(client.retrieveKnowledgeChunks({ datasetId: "pas-v0", query: "OA approval gateway" })).resolves.toEqual([
+      expect.objectContaining({
+        chunkId: "chunk-1",
+        documentId: "doc-1",
+        title: "Product Whitepaper"
+      })
+    ]);
+
+    const [, fallbackInit] = fetcher.mock.calls[1] ?? [];
+    expect(JSON.parse(String(fallbackInit?.body))).toMatchObject({
+      question: "IP-Guard OA approval gateway",
+      dataset_ids: ["pas-v0"],
+      keyword: true,
+      similarity_threshold: 0,
+      vector_similarity_weight: 0.1
+    });
+  });
+
+  it("retries retrieval when RAGFlow returns a non-zero business code", async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          code: 100,
+          data: null,
+          message: "AssertionError()"
+        })
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          data: {
+            chunks: [
+              {
+                id: "chunk-1",
+                document_id: "doc-1",
+                document_keyword: "Product Whitepaper",
+                content: "IP-guard content",
+                similarity: 0.2
+              }
+            ]
+          }
+        })
+      });
+    const client = new RagflowClient(baseConfig, fetcher);
+
+    await expect(client.retrieveKnowledgeChunks({ datasetId: "pas-v0", query: "risk boundary" })).resolves.toEqual([
+      expect.objectContaining({
+        chunkId: "chunk-1"
+      })
+    ]);
+    expect(fetcher).toHaveBeenCalledTimes(2);
   });
 
   it("returns no retrieval chunks without network calls when client mode is disabled", async () => {
