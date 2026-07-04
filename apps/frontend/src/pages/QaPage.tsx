@@ -47,8 +47,8 @@ export function QaPage() {
   };
 
   return (
-    <Space direction="vertical" size="large" style={{ width: "100%" }}>
-      <Card title="知识库问答">
+    <Space className="pas-page-stack" direction="vertical" size="middle">
+      <Card className="pas-panel pas-input-panel" title="知识库问答">
         <Space.Compact style={{ width: "100%" }}>
           <Input.TextArea
             value={query}
@@ -72,6 +72,7 @@ export function QaPage() {
 
       {response && (
         <Card
+          className="pas-panel"
           title="回答"
           extra={
             <Space>
@@ -102,7 +103,7 @@ export function QaPage() {
               dataSource={response.citations}
               renderItem={(citation, index) => (
                 <List.Item>
-                  <Space>
+                  <Space className="citation-row">
                     <Tag>[{index + 1}]</Tag>
                     <Typography.Text strong>{citation.title}</Typography.Text>
                     <Typography.Text type="secondary">

@@ -138,12 +138,12 @@ export function WorkbenchPage() {
   const draft = proposalJob?.draft;
 
   return (
-    <Space direction="vertical" size="large" style={{ width: "100%" }}>
-      <Card title="选择客户">
-        <Space wrap>
+    <Space className="pas-page-stack" direction="vertical" size="middle">
+      <Card className="pas-panel pas-toolbar-panel" title="选择客户">
+        <Space className="workbench-toolbar" wrap>
           <Select
             showSearch
-            style={{ minWidth: 320 }}
+            className="customer-select"
             placeholder="搜索或选择 CRM 客户"
             value={customerId}
             onChange={setCustomerId}
@@ -165,7 +165,7 @@ export function WorkbenchPage() {
       {error && <Alert type="error" message={error} closable onClose={() => setError(null)} />}
 
       {analysis && (
-        <Card title={`客户情况分析：${analysis.customerName}`}>
+        <Card className="pas-panel" title={`客户情况分析：${analysis.customerName}`}>
           <Alert type="warning" message="AI 生成内容，需人工核实后使用" showIcon style={{ marginBottom: 12 }} />
           {analysis.narrativeSummary && (
             <Typography.Paragraph strong style={{ whiteSpace: "pre-wrap" }}>
@@ -175,7 +175,7 @@ export function WorkbenchPage() {
               </Tag>
             </Typography.Paragraph>
           )}
-          <Descriptions column={1} size="small">
+          <Descriptions className="analysis-descriptions" column={1} size="small">
             <Descriptions.Item label="痛点">
               {analysis.painPoints.map((item) => item.title).join("；")}
             </Descriptions.Item>
@@ -194,7 +194,7 @@ export function WorkbenchPage() {
       )}
 
       {proposalJob && (
-        <Card title="方案生成进度">
+        <Card className="pas-panel" title="方案生成进度">
           <Steps
             size="small"
             direction="vertical"
@@ -213,6 +213,7 @@ export function WorkbenchPage() {
 
       {draft && (
         <Card
+          className="pas-panel"
           title={draft.title}
           extra={
             <Space>
@@ -235,6 +236,7 @@ export function WorkbenchPage() {
           {exportJob && (
             <List
               header="导出结果（临时模板生成，正式模板到位后自动替换样式）"
+              className="export-list"
               style={{ marginTop: 16 }}
               size="small"
               dataSource={exportJob.formats}

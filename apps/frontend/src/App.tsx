@@ -13,7 +13,7 @@ type View = "qa" | "workbench";
 export function App() {
   const [user, setUser] = useState<PublicUser | null>(null);
   const [booting, setBooting] = useState(true);
-  const [view, setView] = useState<View>("qa");
+  const [view, setView] = useState<View>("workbench");
 
   useEffect(() => {
     if (!getToken()) {
@@ -35,55 +35,59 @@ export function App() {
     <ConfigProvider
       theme={{
         token: {
-          borderRadius: 6,
-          colorPrimary: "#1677ff",
+          borderRadius: 10,
+          colorBgBase: "#ffffff",
+          colorBgContainer: "#ffffff",
+          colorBgLayout: "#f5f5f7",
+          colorBorder: "#e5e5ea",
+          colorPrimary: "#007aff",
+          colorText: "#1d1d1f",
+          colorTextSecondary: "#6e6e73",
+          controlHeight: 36,
           fontFamily:
-            "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif"
+            "-apple-system, BlinkMacSystemFont, \"SF Pro Text\", \"PingFang SC\", \"Segoe UI\", sans-serif"
         }
       }}
     >
       {booting ? (
-        <div style={{ display: "flex", justifyContent: "center", marginTop: 160 }}>
+        <div className="pas-boot">
           <Spin size="large" />
         </div>
       ) : !user ? (
         <LoginPage onLogin={setUser} />
       ) : (
-        <Layout style={{ minHeight: "100vh" }}>
-          <Layout.Sider theme="light" width={200}>
-            <Typography.Title level={4} style={{ padding: "16px 16px 0" }}>
+        <Layout className="pas-shell">
+          <Layout.Sider className="pas-sidebar" theme="light" width={188}>
+            <Typography.Title className="pas-brand" level={4}>
               PAS
             </Typography.Title>
             <Menu
+              className="pas-menu"
               mode="inline"
               selectedKeys={[view]}
               onClick={({ key }) => setView(key as View)}
               items={[
-                { key: "qa", icon: <MessageOutlined />, label: "知识库问答" },
-                { key: "workbench", icon: <FileDoneOutlined />, label: "客户与方案" }
+                { key: "workbench", icon: <FileDoneOutlined />, label: "客户与方案" },
+                { key: "qa", icon: <MessageOutlined />, label: "知识库问答" }
               ]}
             />
+            <div className="pas-sidebar-user">
+              <Typography.Text type="secondary">{user.displayName}</Typography.Text>
+              <Typography.Text type="secondary">（{user.role}）</Typography.Text>
+            </div>
           </Layout.Sider>
-          <Layout>
-            <Layout.Header
-              style={{
-                background: "#fff",
-                display: "flex",
-                justifyContent: "flex-end",
-                alignItems: "center",
-                paddingInline: 24
-              }}
-            >
+          <Layout className="pas-main">
+            <Layout.Header className="pas-topbar">
+              <Typography.Title className="pas-view-title" level={3}>
+                {view === "qa" ? "知识库问答" : "客户与方案"}
+              </Typography.Title>
               <Space>
-                <Typography.Text>
-                  {user.displayName}（{user.role}）
-                </Typography.Text>
                 <Button size="small" onClick={logout}>
                   退出登录
                 </Button>
               </Space>
             </Layout.Header>
-            <Layout.Content style={{ padding: 24, maxWidth: 1080, width: "100%", margin: "0 auto" }}>
+            <Layout.Content className="pas-content">
               {view === "qa" ? <QaPage /> : <WorkbenchPage />}
             </Layout.Content>
           </Layout>

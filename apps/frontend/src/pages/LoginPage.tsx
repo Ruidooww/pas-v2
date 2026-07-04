@@ -29,12 +29,12 @@ export function LoginPage({ onLogin }: LoginPageProps) {
   };
 
   return (
-    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh" }}>
-      <Card style={{ width: 380 }}>
-        <Typography.Title level={3} style={{ textAlign: "center" }}>
+    <div className="login-screen">
+      <Card className="login-card">
+        <Typography.Title className="login-title" level={3}>
           PAS 售前辅助系统
         </Typography.Title>
-        <Typography.Paragraph type="secondary" style={{ textAlign: "center" }}>
+        <Typography.Paragraph className="login-subtitle" type="secondary">
           账号由管理员分配，如无账号请联系管理员
         </Typography.Paragraph>
         {error && <Alert type="error" message={error} style={{ marginBottom: 16 }} />}

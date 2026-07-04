@@ -2,55 +2,271 @@
   box-sizing: border-box;
 }
 
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
 body {
   margin: 0;
-  background: #f4f7fb;
-  color: #101828;
+  color: #1d1d1f;
+  background: #eef0f5;
 }
 
-.app-shell {
-  min-height: 100vh;
-  background: #f4f7fb;
-}
-
-.app-header {
+.pas-boot,
+.login-screen {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: auto;
-  min-height: 88px;
-  padding: 20px 32px;
-  background: #ffffff;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.app-header h1.ant-typography {
-  margin: 0;
-  line-height: 1;
-}
-
-.app-content {
-  padding: 32px;
-}
-
-.status-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
-}
-
-.status-card {
-  min-height: 96px;
-  border-color: #e5e7eb;
-}
-
-.status-icon {
-  display: inline-flex;
+  min-height: 100vh;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  color: #1677ff;
-  background: #e6f4ff;
-  border-radius: 6px;
+  padding: 24px;
+  background: #eef0f5;
+}
+
+.login-card.ant-card {
+  width: min(420px, 100%);
+  border: 1px solid #e5e5ea;
+  border-radius: 18px;
+  box-shadow: 0 18px 50px rgba(29, 29, 31, 0.08);
+}
+
+.login-card .ant-card-body {
+  padding: 34px;
+}
+
+.login-title.ant-typography,
+.login-subtitle.ant-typography {
+  text-align: center;
+}
+
+.login-title.ant-typography {
+  margin-bottom: 10px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.login-subtitle.ant-typography {
+  margin-bottom: 28px;
+}
+
+.pas-shell.ant-layout {
+  min-height: 100vh;
+  padding: 24px 28px;
+  background: #eef0f5;
+}
+
+.pas-sidebar.ant-layout-sider {
+  position: sticky;
+  top: 24px;
+  height: calc(100vh - 48px);
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.74) !important;
+  border: 1px solid #e5e5ea;
+  border-right: 0;
+  border-radius: 18px 0 0 18px;
+}
+
+.pas-sidebar .ant-layout-sider-children {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  padding: 18px 10px;
+}
+
+.pas-brand.ant-typography {
+  margin: 0 8px 12px;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.pas-menu.ant-menu {
+  flex: 1;
+  background: transparent;
+  border-inline-end: 0 !important;
+}
+
+.pas-menu .ant-menu-item {
+  width: auto;
+  height: 36px;
+  margin: 4px 0;
+  border-radius: 9px;
+  color: #424245;
+}
+
+.pas-menu .ant-menu-item-selected {
+  color: #ffffff;
+  background: #007aff;
+}
+
+.pas-menu .ant-menu-item-selected .anticon {
+  color: #ffffff;
+}
+
+.pas-sidebar-user {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 12px 8px 0;
+  font-size: 12px;
+}
+
+.pas-main.ant-layout {
+  min-width: 0;
+  overflow: hidden;
+  background: #f5f5f7;
+  border: 1px solid #e5e5ea;
+  border-radius: 0 18px 18px 0;
+}
+
+.pas-topbar.ant-layout-header {
+  display: flex;
+  height: auto;
+  min-height: 76px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px;
+  background: transparent;
+}
+
+.pas-view-title.ant-typography {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.pas-content.ant-layout-content {
+  width: 100%;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 0 24px 28px;
+}
+
+.pas-page-stack {
+  width: 100%;
+}
+
+.pas-panel.ant-card {
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid #e5e5ea;
+  border-radius: 16px;
+  box-shadow: none;
+}
+
+.pas-panel .ant-card-head {
+  min-height: 54px;
+  padding: 0 18px;
+  border-bottom: 1px solid #ededf1;
+}
+
+.pas-panel .ant-card-head-title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.pas-panel .ant-card-body {
+  padding: 18px;
+}
+
+.pas-toolbar-panel .ant-card-body {
+  padding-top: 16px;
+}
+
+.workbench-toolbar {
+  width: 100%;
+}
+
+.customer-select.ant-select {
+  min-width: min(420px, 100%);
+  flex: 1 1 360px;
+}
+
+.pas-input-panel .ant-input,
+.pas-input-panel .ant-input-affix-wrapper,
+.pas-input-panel textarea.ant-input,
+.pas-toolbar-panel .ant-select-selector {
+  background: #f5f5f7 !important;
+  border-color: transparent !important;
+}
+
+.pas-input-panel textarea.ant-input {
+  border-radius: 12px;
+}
+
+.analysis-descriptions .ant-descriptions-item {
+  padding-bottom: 10px;
+}
+
+.analysis-descriptions .ant-descriptions-item-label {
+  width: 112px;
+  color: #86868b;
+}
+
+.citation-row {
+  width: 100%;
+  align-items: flex-start;
+}
+
+.export-list .ant-list-header {
+  color: #6e6e73;
+}
+
+@media (max-width: 760px) {
+  .pas-shell.ant-layout {
+    display: block;
+    padding: 12px;
+  }
+
+  .pas-sidebar.ant-layout-sider {
+    position: static;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    height: auto;
+    border-right: 1px solid #e5e5ea;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .pas-sidebar .ant-layout-sider-children {
+    min-height: 0;
+  }
+
+  .pas-sidebar-user {
+    display: none;
+  }
+
+  .pas-main.ant-layout {
+    display: block;
+    width: 100%;
+    min-width: 100%;
+    overflow: visible;
+    border-top: 0;
+    border-radius: 0 0 16px 16px;
+  }
+
+  .pas-topbar.ant-layout-header {
+    gap: 12px;
+    align-items: flex-start;
+    padding: 16px;
+  }
+
+  .pas-content.ant-layout-content {
+    padding: 0 14px 18px;
+  }
+
+  .workbench-toolbar {
+    display: grid;
+  }
+
+  .customer-select.ant-select {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .pas-panel .ant-card-body {
+    padding: 14px;
+  }
 }
