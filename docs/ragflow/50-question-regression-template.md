@@ -2,6 +2,26 @@
 
 Use this template after the PAS V0 dataset has been created and the curated materials are imported.
 
+## Candidate Bootstrap
+
+When the business-approved 50 questions are not ready yet, use
+`docs/ragflow/v0-candidate-regression-questions.json` as a draft review pool.
+Those records are deliberately marked with `review_status: "candidate"` and are not an approval artifact.
+
+Candidate questions may be used for smoke and retrieval tuning only:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\smoke-v0.ps1 `
+  -BaseUrl "http://127.0.0.1:18000" `
+  -Username "<initial admin username>" `
+  -Password "<initial admin password>" `
+  -CandidateQuestionFile ".\docs\ragflow\v0-candidate-regression-questions.json" `
+  -CandidateQuestionLimit 5
+```
+
+Before a V0 launch gate, a product or presales reviewer must convert exactly 50 approved questions into reviewed
+regression cases with pass/fail evidence. Do not submit the candidate file itself as the go-live evidence.
+
 ## Report Columns
 
 | Column | Required | Description |

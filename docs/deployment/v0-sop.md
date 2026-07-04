@@ -120,6 +120,19 @@ The smoke covers:
 - `POST /api/internal/exports`
 - `POST /api/internal/feedback`
 
+When the real 50-question set is not ready, use the candidate pool only for QA smoke and retrieval tuning:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\smoke-v0.ps1 `
+  -BaseUrl "http://127.0.0.1:18000" `
+  -Username "<initial admin username>" `
+  -Password "<initial admin password>" `
+  -CandidateQuestionFile ".\docs\ragflow\v0-candidate-regression-questions.json" `
+  -CandidateQuestionLimit 5
+```
+
+This does not satisfy the 50-question go-live gate.
+
 Full V0 trial cannot be marked ready when:
 
 - login or `/api/me` fails;
