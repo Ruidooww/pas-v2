@@ -75,7 +75,7 @@ $login = Invoke-Json -Method "Post" -Path "/api/auth/login" -Body @{
   username = $Username
   password = $Password
 }
-Assert-Condition ($login.accessToken) "Login did not return accessToken"
+Assert-Condition ([bool]$login.accessToken) "Login did not return accessToken"
 $headers = @{ Authorization = "Bearer $($login.accessToken)" }
 
 Write-Host "PAS V0 smoke: /api/me"
@@ -111,7 +111,7 @@ $proposalJob = Invoke-Json -Method "Post" -Path "/api/internal/proposals/generat
   userId = $me.userId
 }
 Assert-Condition ($proposalJob.status -eq "completed") "Proposal generation failed"
-Assert-Condition ($proposalJob.exportPackage) "Proposal did not return exportPackage"
+Assert-Condition ([bool]$proposalJob.exportPackage) "Proposal did not return exportPackage"
 
 Write-Host "PAS V0 smoke: export"
 $exportJob = Invoke-Json -Method "Post" -Path "/api/internal/exports" -Headers $headers -Body @{
@@ -144,6 +144,11 @@ Assert-Condition ($feedback.status -eq "open") "Feedback submit failed"
 if ($CandidateQuestionFile) {
   Write-Host "PAS V0 smoke: candidate QA questions"
   $candidateQuestions = Read-CandidateQuestions -Path $CandidateQuestionFile | Select-Object -First $CandidateQuestionLimit
+  $candidateQaSummary = @{
+    answered = 0
+    no_hit = 0
+    error = 0
+  }
   foreach ($candidate in $candidateQuestions) {
     Assert-Condition ([bool]$candidate.question_id) "Candidate question is missing question_id"
     Assert-Condition ([bool]$candidate.question) "Candidate question $($candidate.question_id) is missing question"
@@ -152,8 +157,10 @@ if ($CandidateQuestionFile) {
       userId = $me.userId
     }
     Assert-Condition ($candidateQa.status -in @("answered", "no_hit")) "Candidate QA failed: $($candidate.question_id) status=$($candidateQa.status)"
+    $candidateQaSummary[$candidateQa.status] += 1
     Write-Host "  $($candidate.question_id): $($candidateQa.status)"
   }
+  Write-Host "PAS V0 smoke: candidate QA summary answered=$($candidateQaSummary.answered) no_hit=$($candidateQaSummary.no_hit) error=$($candidateQaSummary.error)"
 }
 
 Write-Host "PAS V0 smoke passed"
