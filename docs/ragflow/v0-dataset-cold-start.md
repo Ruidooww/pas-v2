@@ -20,6 +20,11 @@ The cold start remains blocked until these inputs are supplied:
 | New PAS V0 dataset ID | User side / RAGFlow operator | Blocked | Store as `PAS_KB_ID` in local `.env`. |
 | 50 real regression questions | User side | Blocked | Use customer-facing and presales-facing questions. |
 
+When the real 50-question list is not ready, use
+`docs/ragflow/v0-candidate-regression-questions.json` as a candidate review pool. Candidate questions are for QA smoke
+and retrieval tuning only; they do not satisfy the V0 go-live regression gate until a product or presales reviewer
+approves exactly 50 reviewed cases with evidence.
+
 ## Import Rules
 
 - Import only the curated 30-50 materials into the V0 dataset.
@@ -44,6 +49,10 @@ For backend running directly on Windows, use:
 ```text
 RAGFLOW_BASE_URL=http://localhost:19380
 ```
+
+The RAGFlow UI may be checked at `http://localhost:80` on the preserved local stack. The API endpoint
+`/api/v1/datasets` should return `401` when `RAGFLOW_API_KEY` is missing; that confirms the API route is reachable but
+does not prove PAS can retrieve knowledge chunks.
 
 ## Adapter Contract
 

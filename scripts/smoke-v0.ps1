@@ -8,7 +8,12 @@ param(
   [Parameter(Mandatory = $true)]
   [string]$Password,
 
-  [switch]$AllowMissingExportTemplates
+  [switch]$AllowMissingExportTemplates,
+
+  [string]$CandidateQuestionFile,
+
+  [ValidateRange(1, 50)]
+  [int]$CandidateQuestionLimit = 5
 )
 
 $ErrorActionPreference = "Stop"
@@ -43,6 +48,24 @@ function Assert-Condition {
   if (-not $Condition) {
     throw $Message
   }
+}
+
+function Read-CandidateQuestions {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$Path
+  )
+
+  if (-not (Test-Path -LiteralPath $Path)) {
+    throw "Candidate question file not found: $Path"
+  }
+
+  $questions = Get-Content -Raw -Encoding UTF8 -LiteralPath $Path | ConvertFrom-Json
+  if ($null -eq $questions -or $questions.Count -eq 0) {
+    throw "Candidate question file is empty: $Path"
+  }
+
+  return @($questions)
 }
 
 $BaseUrl = $BaseUrl.TrimEnd("/")
@@ -117,5 +140,20 @@ $feedback = Invoke-Json -Method "Post" -Path "/api/internal/feedback" -Headers $
   comment = "Smoke feedback"
 }
 Assert-Condition ($feedback.status -eq "open") "Feedback submit failed"
+
+if ($CandidateQuestionFile) {
+  Write-Host "PAS V0 smoke: candidate QA questions"
+  $candidateQuestions = Read-CandidateQuestions -Path $CandidateQuestionFile | Select-Object -First $CandidateQuestionLimit
+  foreach ($candidate in $candidateQuestions) {
+    Assert-Condition ([bool]$candidate.question_id) "Candidate question is missing question_id"
+    Assert-Condition ([bool]$candidate.question) "Candidate question $($candidate.question_id) is missing question"
+    $candidateQa = Invoke-Json -Method "Post" -Path "/api/internal/qa/ask" -Headers $headers -Body @{
+      query = $candidate.question
+      userId = $me.userId
+    }
+    Assert-Condition ($candidateQa.status -in @("answered", "no_hit")) "Candidate QA failed: $($candidate.question_id) status=$($candidateQa.status)"
+    Write-Host "  $($candidate.question_id): $($candidateQa.status)"
+  }
+}
 
 Write-Host "PAS V0 smoke passed"
