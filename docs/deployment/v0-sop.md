@@ -66,6 +66,8 @@ EXPORT_TEMPLATE_VERSION=<template version>
 FEISHU_BOT_ENABLED=false
 ```
 
+Approved export templates must follow `docs/deployment/v0-export-template-contract.md`.
+
 Do not paste real secrets into issue comments, PR descriptions, or chat. Keep them in local `.env` or secret managers.
 
 ## Start PAS
