@@ -78,7 +78,10 @@ Before V1 release approval:
 - Browser smoke confirms login and the V1 operations pages load.
 - RAGFlow health is reachable when `RAGFLOW_CLIENT_MODE=real`.
 - Real company templates are uploaded or the release notes explicitly mark templates as temporary.
-- The final approved 50/100-question regression gate passes. This item is intentionally deferred until the approved set is ready.
+- The final approved regression gate passes:
+  - V0 compatibility runs use the default `requiredCaseCount=50`.
+  - V1 launch runs must submit `requiredCaseCount=100`.
+  This item is intentionally deferred until the approved set is ready.
 
 ## Rollback
 

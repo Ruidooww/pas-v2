@@ -46,6 +46,7 @@ export type CreateRegressionRunRequest = {
   name: string;
   owner: string;
   approver: string;
+  requiredCaseCount?: 50 | 100;
   cases: RegressionCaseInput[];
 };
 
@@ -58,6 +59,7 @@ export type RegressionFailureReason =
 
 export type RegressionRun = CreateRegressionRunRequest & {
   runId: string;
+  requiredCaseCount: 50 | 100;
   totalCases: number;
   passedCases: number;
   failedCases: number;
