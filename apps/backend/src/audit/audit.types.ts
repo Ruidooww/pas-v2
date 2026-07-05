@@ -4,6 +4,7 @@ export type AuditAction =
   | "user_imported"
   | "qa"
   | "retrieval"
+  | "knowledge"
   | "proposal_generation"
   | "export"
   | "download"

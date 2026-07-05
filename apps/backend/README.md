@@ -65,6 +65,30 @@ Audit endpoint:
 
 Internal APIs require `Authorization: Bearer <token>`. Bootstrap admin creation only runs when `AUTH_BOOTSTRAP_ADMIN_USERNAME` and `AUTH_BOOTSTRAP_ADMIN_PASSWORD` are provided by the local environment.
 
+Knowledge block endpoints:
+
+- `POST /api/internal/knowledge-blocks`
+- `GET /api/internal/knowledge-blocks`
+- `GET /api/internal/knowledge-blocks/published`
+- `GET /api/internal/knowledge-blocks/:blockId`
+- `POST /api/internal/knowledge-blocks/:blockId/submit-review`
+- `POST /api/internal/knowledge-blocks/:blockId/review`
+- `POST /api/internal/knowledge-blocks/:blockId/disable`
+
+Knowledge blocks use the V1 lifecycle `draft -> pending_review -> published`, with `rejected`, `disabled`, and `expired` terminal or operator-controlled states. Only published blocks are returned by the published-only endpoint, which is reserved for later deterministic ProposalModule and ExportModule fill.
+
+Knowledge document operations endpoints:
+
+- `POST /api/internal/knowledge-documents`
+- `GET /api/internal/knowledge-documents`
+- `GET /api/internal/knowledge-documents/:documentId`
+- `POST /api/internal/knowledge-documents/:documentId/tags`
+- `POST /api/internal/knowledge-documents/:documentId/enabled`
+- `POST /api/internal/knowledge-documents/:documentId/reparse`
+
+Document operations store PAS-side metadata for documents already managed in RAGFlow: parse status, chunk count, hit count, bad feedback count, tags, and enabled state. Reparse requests are tracked as PAS operations metadata; they do not mutate RAGFlow volumes or datasets.
+Document visibility supports public, role-scoped, and user-scoped access. When document metadata exists, QA retrieval passes the current user's accessible document ids to the RAGFlow adapter and chunks outside that allow-list are filtered before answer drafting.
+
 Feedback endpoints:
 
 - `POST /api/internal/feedback`

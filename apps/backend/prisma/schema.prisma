@@ -64,6 +64,21 @@ model ExportJobSnapshot {
   @@map("export_job_snapshots")
 }
 
+model ExportTemplateSnapshot {
+  templateId  String   @id @map("template_id")
+  ownerUserId String   @map("owner_user_id")
+  format      String
+  status      String
+  data        Json
+  createdAt   DateTime @map("created_at")
+  updatedAt   DateTime @map("updated_at")
+
+  @@index([ownerUserId])
+  @@index([format])
+  @@index([status])
+  @@map("export_template_snapshots")
+}
+
 model FeedbackSnapshot {
   feedbackId String   @id @map("feedback_id")
   userId     String   @map("user_id")
@@ -74,4 +89,32 @@ model FeedbackSnapshot {
 
   @@index([userId])
   @@map("feedback_snapshots")
+}
+
+model KnowledgeBlockSnapshot {
+  blockId     String   @id @map("block_id")
+  ownerUserId String   @map("owner_user_id")
+  status      String
+  data        Json
+  createdAt   DateTime @map("created_at")
+  updatedAt   DateTime @map("updated_at")
+
+  @@index([ownerUserId])
+  @@index([status])
+  @@map("knowledge_block_snapshots")
+}
+
+model KnowledgeDocumentSnapshot {
+  documentId  String   @id @map("document_id")
+  ownerUserId String   @map("owner_user_id")
+  parseStatus String   @map("parse_status")
+  enabled     Boolean
+  data        Json
+  createdAt   DateTime @map("created_at")
+  updatedAt   DateTime @map("updated_at")
+
+  @@index([ownerUserId])
+  @@index([parseStatus])
+  @@index([enabled])
+  @@map("knowledge_document_snapshots")
 }

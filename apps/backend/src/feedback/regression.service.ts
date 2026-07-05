@@ -17,12 +17,14 @@ export class RegressionService {
 
   createRun(user: AuthenticatedUser, request: CreateRegressionRunRequest): RegressionRun {
     assertRegressionManager(user);
+    const requiredCaseCount = request.requiredCaseCount ?? 50;
     const totalCases = request.cases.length;
     const passedCases = request.cases.filter((item) => item.passed).length;
     const failedCases = totalCases - passedCases;
-    const gate = calculateGate(request.cases, failedCases);
+    const gate = calculateGate(request.cases, failedCases, requiredCaseCount);
     const run: RegressionRun = {
       ...request,
+      requiredCaseCount,
       runId: createRunId(),
       totalCases,
       passedCases,
@@ -63,18 +65,18 @@ export class RegressionService {
   }
 }
 
-function calculateGate(cases: RegressionCaseInput[], failedCases: number): {
+function calculateGate(cases: RegressionCaseInput[], failedCases: number, requiredCaseCount: 50 | 100): {
   gateStatus: RegressionGateStatus;
   failureReason?: RegressionFailureReason;
 } {
-  if (cases.length < 50) {
+  if (cases.length < requiredCaseCount) {
     return {
       gateStatus: "blocked",
       failureReason: "REGRESSION_QUESTION_SET_INCOMPLETE"
     };
   }
 
-  if (cases.length !== 50 || hasInvalidCaseIdentity(cases)) {
+  if (cases.length !== requiredCaseCount || hasInvalidCaseIdentity(cases)) {
     return {
       gateStatus: "blocked",
       failureReason: "REGRESSION_QUESTION_SET_INVALID"

@@ -95,6 +95,28 @@ describe("TemplateExportRenderer", () => {
     await fs.rm(corruptRoot, { recursive: true, force: true });
   });
 
+  it("uses an explicitly selected template file and version", async () => {
+    const selectedRoot = await fs.mkdtemp(path.join(os.tmpdir(), "pas-export-selected-"));
+    await fs.copyFile(path.join(realTemplateRoot, "proposal.docx"), path.join(selectedRoot, "customer-template.docx"));
+    const selectedRenderer = new TemplateExportRenderer({
+      templateRoot: selectedRoot,
+      templateVersion: "fallback-version"
+    });
+
+    const rendered = await selectedRenderer.render("docx", exportPackage, {
+      templateId: "customer-docx-template",
+      name: "Customer DOCX Template",
+      category: "proposal",
+      format: "docx",
+      fileName: "customer-template.docx",
+      version: "customer-v1"
+    });
+
+    expect(rendered.templateId).toBe("customer-docx-template");
+    expect(rendered.templateVersion).toBe("customer-v1");
+    await fs.rm(selectedRoot, { recursive: true, force: true });
+  });
+
   it("renders docx with sections filled and no leftover template tags", async () => {
     const rendered = await renderer.render("docx", exportPackage);
     expect(rendered.contentType).toContain("wordprocessingml");

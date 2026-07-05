@@ -109,6 +109,97 @@ describe("RagflowClient", () => {
     });
   });
 
+  it("preserves optional V1 citation metadata from RAGFlow chunks", async () => {
+    const fetcher = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        data: {
+          chunks: [
+            {
+              id: "chunk-1",
+              document_id: "doc-1",
+              document_name: "Product Manual",
+              content: "IP-guard content",
+              similarity: 0.82,
+              source: "manual.pdf",
+              page: 7,
+              section: "Outbound control",
+              position: "p7:s2",
+              location: "page 7 paragraph 2",
+              snippet: "Outbound file control evidence"
+            }
+          ]
+        }
+      })
+    });
+    const client = new RagflowClient(baseConfig, fetcher);
+
+    await expect(client.retrieveKnowledgeChunks({ datasetId: "pas-v0", query: "IP-guard" })).resolves.toEqual([
+      {
+        chunkId: "chunk-1",
+        documentId: "doc-1",
+        title: "Product Manual",
+        content: "IP-guard content",
+        score: 0.82,
+        source: "manual.pdf",
+        page: 7,
+        section: "Outbound control",
+        position: "p7:s2",
+        location: "page 7 paragraph 2",
+        snippet: "Outbound file control evidence"
+      }
+    ]);
+  });
+
+  it("filters retrieval chunks by explicit allowed document ids", async () => {
+    const fetcher = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        data: {
+          chunks: [
+            {
+              id: "chunk-1",
+              document_id: "doc-allowed",
+              document_name: "Allowed Manual",
+              content: "allowed content",
+              similarity: 0.82
+            },
+            {
+              id: "chunk-2",
+              document_id: "doc-denied",
+              document_name: "Denied Manual",
+              content: "denied content",
+              similarity: 0.8
+            }
+          ]
+        }
+      })
+    });
+    const client = new RagflowClient(baseConfig, fetcher);
+
+    await expect(
+      client.retrieveKnowledgeChunks({
+        datasetId: "pas-v0",
+        query: "IP-guard",
+        allowedDocumentIds: ["doc-allowed"]
+      })
+    ).resolves.toEqual([
+      expect.objectContaining({
+        chunkId: "chunk-1",
+        documentId: "doc-allowed"
+      })
+    ]);
+    await expect(
+      client.retrieveKnowledgeChunks({
+        datasetId: "pas-v0",
+        query: "IP-guard",
+        allowedDocumentIds: []
+      })
+    ).resolves.toEqual([]);
+  });
+
   it("drops retrieval chunks without auditable citation fields", async () => {
     const fetcher = vi.fn().mockResolvedValue({
       ok: true,

@@ -20,6 +20,17 @@ export class ExportTemplateFieldMissingError extends Error {
   }
 }
 
+export class ExportDeliverableCheckFailedError extends Error {
+  constructor(
+    readonly format: ExportFormat,
+    readonly checkCode: string,
+    message: string
+  ) {
+    super(`Export deliverable check failed for ${format}: ${checkCode}: ${message}`);
+    this.name = "ExportDeliverableCheckFailedError";
+  }
+}
+
 export class ExportJobNotFoundError extends Error {
   constructor(jobId: string) {
     super(`Export job not found: ${jobId}`);

@@ -30,6 +30,7 @@ export type RetrieveKnowledgeChunksRequest = {
   datasetId: string;
   query: string;
   topK?: number;
+  allowedDocumentIds?: string[];
 };
 
 export class RagflowClient {
@@ -81,14 +82,24 @@ export class RagflowClient {
 
     const query = params.query.trim();
     const topK = params.topK ?? 5;
-    const chunks = await this.retrieveWithQuery(params.datasetId, query, topK);
+    if (params.allowedDocumentIds && params.allowedDocumentIds.length === 0) {
+      return [];
+    }
+
+    const chunks = filterAllowedDocuments(
+      await this.retrieveWithQuery(params.datasetId, query, topK),
+      params.allowedDocumentIds
+    );
     if (chunks.length > 0 || !this.shouldRetryWithFallback(query)) {
       return chunks;
     }
 
-    return this.retrieveWithQuery(params.datasetId, `${this.config.fallbackQueryPrefix} ${query}`, topK, {
-      fallbackTuning: true
-    });
+    return filterAllowedDocuments(
+      await this.retrieveWithQuery(params.datasetId, `${this.config.fallbackQueryPrefix} ${query}`, topK, {
+        fallbackTuning: true
+      }),
+      params.allowedDocumentIds
+    );
   }
 
   private async retrieveWithQuery(
@@ -159,6 +170,14 @@ function extractChunks(payload: unknown): Record<string, unknown>[] {
   return chunks.filter(isRecord);
 }
 
+function filterAllowedDocuments(chunks: KnowledgeChunk[], allowedDocumentIds: string[] | undefined): KnowledgeChunk[] {
+  if (!allowedDocumentIds) {
+    return chunks;
+  }
+  const allowed = new Set(allowedDocumentIds);
+  return chunks.filter((chunk) => allowed.has(chunk.documentId));
+}
+
 function mapKnowledgeChunk(chunk: Record<string, unknown>): KnowledgeChunk | undefined {
   const chunkId = stringValue(chunk.id) || stringValue(chunk.chunk_id) || stringValue(chunk.chunkId);
   const documentId = stringValue(chunk.document_id) || stringValue(chunk.documentId);
@@ -168,7 +187,7 @@ function mapKnowledgeChunk(chunk: Record<string, unknown>): KnowledgeChunk | und
     stringValue(chunk.title) ||
     documentId;
 
-  const knowledgeChunk = {
+  const knowledgeChunk: KnowledgeChunk = {
     chunkId,
     documentId,
     title,
@@ -176,6 +195,32 @@ function mapKnowledgeChunk(chunk: Record<string, unknown>): KnowledgeChunk | und
     score: numberValue(chunk.similarity) ?? numberValue(chunk.score) ?? Number.NaN,
     source: stringValue(chunk.source) || title
   };
+
+  const page = numberValue(chunk.page) ?? numberValue(chunk.page_number) ?? numberValue(chunk.pageNumber);
+  if (page !== undefined) {
+    knowledgeChunk.page = page;
+  }
+
+  const section = stringValue(chunk.section) || stringValue(chunk.section_title) || stringValue(chunk.sectionTitle);
+  if (section) {
+    knowledgeChunk.section = section;
+  }
+
+  const position = stringValue(chunk.position) || stringValue(chunk.positions);
+  if (position) {
+    knowledgeChunk.position = position;
+  }
+
+  const location = stringValue(chunk.location) || stringValue(chunk.loc);
+  if (location) {
+    knowledgeChunk.location = location;
+  }
+
+  const snippet = stringValue(chunk.snippet) || stringValue(chunk.highlight) || stringValue(chunk.summary);
+  if (snippet) {
+    knowledgeChunk.snippet = snippet;
+  }
+
   return isKnowledgeChunk(knowledgeChunk) ? knowledgeChunk : undefined;
 }
 

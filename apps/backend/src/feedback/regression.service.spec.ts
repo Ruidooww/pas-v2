@@ -118,6 +118,41 @@ describe("RegressionService", () => {
       })
     );
   });
+
+  it("blocks V1 go-live when the declared 100-question gate receives only 50 cases", () => {
+    const service = new RegressionService(new AuditLogService());
+    const run = service.createRun(createUser("admin"), {
+      name: "V1 100-question regression",
+      owner: "QA owner",
+      approver: "Business approver",
+      requiredCaseCount: 100,
+      cases: createPassingCases(50)
+    });
+
+    expect(run.requiredCaseCount).toBe(100);
+    expect(run.totalCases).toBe(50);
+    expect(run.canGoLive).toBe(false);
+    expect(run.gateStatus).toBe("blocked");
+    expect(run.failureReason).toBe("REGRESSION_QUESTION_SET_INCOMPLETE");
+  });
+
+  it("passes V1 go-live when all declared 100 regression cases pass", () => {
+    const service = new RegressionService(new AuditLogService());
+    const run = service.createRun(createUser("admin"), {
+      name: "V1 100-question regression",
+      owner: "QA owner",
+      approver: "Business approver",
+      requiredCaseCount: 100,
+      cases: createPassingCases(100)
+    });
+
+    expect(run.requiredCaseCount).toBe(100);
+    expect(run.totalCases).toBe(100);
+    expect(run.passedCases).toBe(100);
+    expect(run.canGoLive).toBe(true);
+    expect(run.gateStatus).toBe("passed");
+    expect(run.failureReason).toBeUndefined();
+  });
 });
 
 function createPassingCases(count: number) {

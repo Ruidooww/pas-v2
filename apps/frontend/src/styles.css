@@ -214,6 +214,52 @@ body {
   color: #6e6e73;
 }
 
+.knowledge-toolbar {
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.knowledge-draft-body.ant-input {
+  margin-bottom: 12px;
+  background: #f5f5f7;
+  border-color: transparent;
+  border-radius: 12px;
+}
+
+.knowledge-list {
+  display: grid;
+  gap: 12px;
+}
+
+.knowledge-list-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 14px 0;
+  border-bottom: 1px solid #ededf1;
+}
+
+.knowledge-list-item:last-child {
+  border-bottom: 0;
+}
+
+.knowledge-list-content {
+  min-width: 0;
+}
+
+.knowledge-list-actions {
+  justify-content: flex-end;
+}
+
+.knowledge-block-body {
+  width: 100%;
+}
+
+.knowledge-block-body .ant-typography {
+  margin-bottom: 0;
+}
+
 @media (max-width: 760px) {
   .pas-shell.ant-layout {
     display: block;
@@ -268,5 +314,13 @@ body {
 
   .pas-panel .ant-card-body {
     padding: 14px;
+  }
+
+  .knowledge-list-item {
+    grid-template-columns: 1fr;
+  }
+
+  .knowledge-list-actions {
+    justify-content: flex-start;
   }
 }

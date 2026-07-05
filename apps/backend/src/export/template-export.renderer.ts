@@ -6,7 +6,7 @@ import { buildExportViewModel } from "./export-view-model";
 import { fillDocxTemplate } from "./fillers/docx-template.filler";
 import { fillPptxTemplate } from "./fillers/pptx-template.filler";
 import { fillXlsxTemplate } from "./fillers/xlsx-template.filler";
-import type { ExportFormat, ExportRenderer, RenderedExportFile } from "./export.types";
+import type { ExportFormat, ExportRenderer, ExportTemplateSelection, RenderedExportFile } from "./export.types";
 
 export type TemplateExportRendererConfig = {
   templateRoot: string;
@@ -22,9 +22,13 @@ const CONTENT_TYPES: Record<ExportFormat, string> = {
 export class TemplateExportRenderer implements ExportRenderer {
   constructor(private readonly config: TemplateExportRendererConfig) {}
 
-  async render(format: ExportFormat, exportPackage: ExportPackage): Promise<RenderedExportFile> {
+  async render(
+    format: ExportFormat,
+    exportPackage: ExportPackage,
+    template?: ExportTemplateSelection
+  ): Promise<RenderedExportFile> {
     validateRequiredFields(format, exportPackage);
-    const templateName = `proposal.${format}`;
+    const templateName = template?.fileName ?? `proposal.${format}`;
     const templatePath = path.join(this.config.templateRoot, templateName);
 
     let templateContent: Buffer;
@@ -42,7 +46,8 @@ export class TemplateExportRenderer implements ExportRenderer {
       format,
       fileName: buildFileName(draft.customerName, format),
       contentType: CONTENT_TYPES[format],
-      templateVersion: this.config.templateVersion,
+      templateId: template?.templateId,
+      templateVersion: template?.version ?? this.config.templateVersion,
       content
     };
   }

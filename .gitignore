@@ -23,6 +23,7 @@ coverage/
 .vite/
 .next/
 out/
+.codegraph/
 
 # Package manager caches
 .pnpm-store/

@@ -3,7 +3,9 @@ import type { PrismaClient } from "@prisma/client";
 import type { AuditEvent } from "../audit/audit.types";
 import type { UserRecord } from "../auth/auth.types";
 import type { ExportJob } from "../export/export.types";
+import type { ExportTemplate } from "../export/export-template.types";
 import type { FeedbackRecord } from "../feedback/feedback.types";
+import type { KnowledgeBlock, KnowledgeDocument } from "../knowledge/knowledge.types";
 import type { ProposalJob } from "../proposal/proposal.types";
 
 // V0 persistence strategy: the synchronous in-memory stores stay the hot
@@ -126,6 +128,31 @@ export class PersistenceSink {
     return rows.map((row) => row.data as unknown as ExportJob);
   }
 
+  mirrorExportTemplate(template: ExportTemplate): void {
+    if (!this.client) return;
+    const data = {
+      ownerUserId: template.ownerUserId,
+      format: template.format,
+      status: template.status,
+      data: template as unknown as object,
+      createdAt: new Date(template.createdAt),
+      updatedAt: new Date(template.updatedAt)
+    };
+    this.client.exportTemplateSnapshot
+      .upsert({
+        where: { templateId: template.templateId },
+        create: { templateId: template.templateId, ...data },
+        update: data
+      })
+      .catch((error) => this.logMirrorFailure("export_template", template.templateId, error));
+  }
+
+  async loadExportTemplates(): Promise<ExportTemplate[]> {
+    if (!this.client) return [];
+    const rows = await this.client.exportTemplateSnapshot.findMany({ orderBy: { createdAt: "asc" } });
+    return rows.map((row) => row.data as unknown as ExportTemplate);
+  }
+
   mirrorFeedback(record: FeedbackRecord): void {
     if (!this.client) return;
     const data = {
@@ -148,6 +175,55 @@ export class PersistenceSink {
     if (!this.client) return [];
     const rows = await this.client.feedbackSnapshot.findMany({ orderBy: { createdAt: "asc" } });
     return rows.map((row) => row.data as unknown as FeedbackRecord);
+  }
+
+  mirrorKnowledgeBlock(block: KnowledgeBlock): void {
+    if (!this.client) return;
+    const data = {
+      ownerUserId: block.ownerUserId,
+      status: block.status,
+      data: block as unknown as object,
+      createdAt: new Date(block.createdAt),
+      updatedAt: new Date(block.updatedAt)
+    };
+    this.client.knowledgeBlockSnapshot
+      .upsert({
+        where: { blockId: block.blockId },
+        create: { blockId: block.blockId, ...data },
+        update: data
+      })
+      .catch((error) => this.logMirrorFailure("knowledge_block", block.blockId, error));
+  }
+
+  async loadKnowledgeBlocks(): Promise<KnowledgeBlock[]> {
+    if (!this.client) return [];
+    const rows = await this.client.knowledgeBlockSnapshot.findMany({ orderBy: { createdAt: "asc" } });
+    return rows.map((row) => row.data as unknown as KnowledgeBlock);
+  }
+
+  mirrorKnowledgeDocument(document: KnowledgeDocument): void {
+    if (!this.client) return;
+    const data = {
+      ownerUserId: document.ownerUserId,
+      parseStatus: document.parseStatus,
+      enabled: document.enabled,
+      data: document as unknown as object,
+      createdAt: new Date(document.createdAt),
+      updatedAt: new Date(document.updatedAt)
+    };
+    this.client.knowledgeDocumentSnapshot
+      .upsert({
+        where: { documentId: document.documentId },
+        create: { documentId: document.documentId, ...data },
+        update: data
+      })
+      .catch((error) => this.logMirrorFailure("knowledge_document", document.documentId, error));
+  }
+
+  async loadKnowledgeDocuments(): Promise<KnowledgeDocument[]> {
+    if (!this.client) return [];
+    const rows = await this.client.knowledgeDocumentSnapshot.findMany({ orderBy: { createdAt: "asc" } });
+    return rows.map((row) => row.data as unknown as KnowledgeDocument);
   }
 
   async onModuleDestroy(): Promise<void> {

@@ -5,4 +5,9 @@ export type KnowledgeChunk = {
   content: string;
   score: number;
   source: string;
+  page?: number;
+  section?: string;
+  position?: string;
+  location?: string;
+  snippet?: string;
 };

@@ -2,6 +2,7 @@ import type { FilesService } from "../files/files.service";
 import type { ExportPackage } from "../proposal/proposal.types";
 import { ExportAuditLogService } from "./export-audit-log.service";
 import {
+  ExportDeliverableCheckFailedError,
   ExportFileNotReadyError,
   ExportJobNotFoundError,
   ExportTemplateFieldMissingError,
@@ -10,15 +11,19 @@ import {
 import { ExportJobStoreService } from "./export-job-store.service";
 import type {
   ExportCreateRequest,
+  ExportDeliverableCheck,
   ExportDownloadResponse,
   ExportFormat,
   ExportFormatFailureReason,
   ExportFormatRecord,
   ExportJob,
-  ExportRenderer
+  ExportRenderer,
+  ExportTemplateCatalog,
+  ExportTemplateSelection
 } from "./export.types";
 
 export {
+  ExportDeliverableCheckFailedError,
   ExportFileNotReadyError,
   ExportJobNotFoundError,
   ExportTemplateFieldMissingError,
@@ -30,7 +35,8 @@ export class ExportService {
     private readonly renderer: ExportRenderer,
     private readonly filesService: FilesService,
     private readonly jobStore: ExportJobStoreService,
-    private readonly auditLog: ExportAuditLogService
+    private readonly auditLog: ExportAuditLogService,
+    private readonly templateCatalog?: ExportTemplateCatalog
   ) {}
 
   async createExport(request: ExportCreateRequest): Promise<ExportJob> {
@@ -89,8 +95,11 @@ export class ExportService {
   }
 
   private async renderFormat(format: ExportFormat, exportPackage: ExportPackage): Promise<ExportFormatRecord> {
+    const checks: ExportDeliverableCheck[] = [];
     try {
-      const rendered = await this.renderer.render(format, exportPackage);
+      const template = await this.resolveTemplate(format, checks);
+      const rendered = await this.renderer.render(format, exportPackage, template);
+      assertNonEmptyFile(format, rendered.content, checks);
       const stored = await this.filesService.saveFile({
         format,
         fileName: rendered.fileName,
@@ -108,16 +117,52 @@ export class ExportService {
         fileKey: stored.key,
         fileName: stored.fileName,
         contentType: stored.contentType,
+        templateId: rendered.templateId ?? template?.templateId,
         templateVersion: rendered.templateVersion,
-        size: stored.size
+        size: stored.size,
+        checks
       };
     } catch (error) {
+      if (checks.length === 0) {
+        checks.push({
+          code: "template_available",
+          status: "failed",
+          message: error instanceof Error ? error.message : "Export rendering failed"
+        });
+      }
       return {
         format,
         status: "failed",
         failureReason: classifyExportError(error),
-        errorMessage: error instanceof Error ? error.message : "Export rendering failed"
+        errorMessage: error instanceof Error ? error.message : "Export rendering failed",
+        checks
       };
+    }
+  }
+
+  private async resolveTemplate(
+    format: ExportFormat,
+    checks: ExportDeliverableCheck[]
+  ): Promise<ExportTemplateSelection | undefined> {
+    if (!this.templateCatalog) {
+      return undefined;
+    }
+
+    try {
+      const template = await this.templateCatalog.getAvailableTemplate(format);
+      checks.push({
+        code: "template_available",
+        status: "passed",
+        message: `${template.templateId} (${template.fileName})`
+      });
+      return template;
+    } catch (error) {
+      checks.push({
+        code: "template_available",
+        status: "failed",
+        message: error instanceof Error ? error.message : "Template is not available"
+      });
+      throw error;
     }
   }
 }
@@ -135,5 +180,27 @@ function classifyExportError(error: unknown): ExportFormatFailureReason {
     return "TEMPLATE_FIELD_MISSING";
   }
 
+  if (error instanceof ExportDeliverableCheckFailedError) {
+    return "DELIVERABLE_CHECK_FAILED";
+  }
+
   return "RENDER_FAILED";
+}
+
+function assertNonEmptyFile(format: ExportFormat, content: Buffer, checks: ExportDeliverableCheck[]): void {
+  if (content.length === 0) {
+    const message = "rendered file is empty";
+    checks.push({
+      code: "file_not_empty",
+      status: "failed",
+      message
+    });
+    throw new ExportDeliverableCheckFailedError(format, "file_not_empty", message);
+  }
+
+  checks.push({
+    code: "file_not_empty",
+    status: "passed",
+    message: `${content.length} bytes`
+  });
 }

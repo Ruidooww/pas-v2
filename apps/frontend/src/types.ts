@@ -19,7 +19,10 @@ export type QaCitation = {
   source: string;
   score: number;
   page?: number;
+  section?: string;
   position?: string;
+  location?: string;
+  snippet?: string;
 };
 
 export type QaAskResponse = {
@@ -113,4 +116,84 @@ export type ExportDownloadResponse = {
   contentType: string;
   contentBase64: string;
   size: number;
+};
+
+export type ExportTemplateStatus = "draft" | "active" | "disabled";
+
+export type ExportTemplate = {
+  templateId: string;
+  name: string;
+  category: "proposal";
+  format: ExportFormat;
+  version: string;
+  fileName: string;
+  status: ExportTemplateStatus;
+  products: string[];
+  scenarios: string[];
+  industries: string[];
+  tags: string[];
+  ownerUserId: string;
+  createdAt: string;
+  updatedAt: string;
+  disabledReason?: string;
+};
+
+export type KnowledgeBlockStatus =
+  | "draft"
+  | "pending_review"
+  | "published"
+  | "rejected"
+  | "disabled"
+  | "expired";
+
+export type KnowledgeBlock = {
+  blockId: string;
+  title: string;
+  product: string;
+  scenario: string;
+  body: string;
+  citations: QaCitation[];
+  tags: string[];
+  source?: {
+    type: "ragflow_chunk" | "manual" | "feedback" | "historical_proposal";
+    referenceId?: string;
+  };
+  status: KnowledgeBlockStatus;
+  version: number;
+  ownerUserId: string;
+  reviewerUserId?: string;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt?: string;
+  reviewNote?: string;
+};
+
+export type KnowledgeDocumentParseStatus = "pending" | "parsing" | "done" | "failed";
+
+export type KnowledgeDocumentMaterialType = "pdf" | "pptx" | "docx" | "xlsx" | "image" | "scan" | "other";
+
+export type KnowledgeDocument = {
+  documentId: string;
+  title: string;
+  product: string;
+  materialType: KnowledgeDocumentMaterialType;
+  sourceName: string;
+  parseStatus: KnowledgeDocumentParseStatus;
+  enabled: boolean;
+  chunkCount: number;
+  hitCount: number;
+  badFeedbackCount: number;
+  tags: string[];
+  visibility:
+    | { scope: "public" }
+    | { scope: "roles"; roles: PublicUser["role"][] }
+    | { scope: "users"; userIds: string[] };
+  ownerUserId: string;
+  createdAt: string;
+  updatedAt: string;
+  disabledReason?: string;
+  failureReason?: string;
+  reparseRequestedAt?: string;
+  reparseRequestedBy?: string;
+  reparseReason?: string;
 };
