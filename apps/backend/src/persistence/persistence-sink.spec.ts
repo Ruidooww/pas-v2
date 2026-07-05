@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import type { BusinessFlowRecord } from "../business-flow/business-flow.types";
 import type { KnowledgeBlock, KnowledgeDocument } from "../knowledge/knowledge.types";
 import { PersistenceSink } from "./persistence-sink";
 
@@ -80,6 +81,48 @@ describe("PersistenceSink", () => {
     await expect(sink.loadKnowledgeDocuments()).resolves.toEqual([document]);
     expect(findMany).toHaveBeenCalledWith({ orderBy: { createdAt: "asc" } });
   });
+
+  it("mirrors and loads V2 business flow record snapshots", async () => {
+    const record = createBusinessFlowRecord();
+    const upsert = vi.fn().mockResolvedValue(undefined);
+    const findMany = vi.fn().mockResolvedValue([{ data: record }]);
+    const sink = new PersistenceSink("");
+    Object.defineProperty(sink, "client", {
+      value: {
+        businessFlowRecordSnapshot: {
+          upsert,
+          findMany
+        }
+      }
+    });
+
+    sink.mirrorBusinessFlowRecord(record);
+
+    expect(upsert).toHaveBeenCalledWith({
+      where: { recordId: "bf-1" },
+      create: {
+        recordId: "bf-1",
+        ownerUserId: "sales-1",
+        kind: "opportunity",
+        status: "pending_confirmation",
+        sourceSystem: "manual_text",
+        data: record,
+        createdAt: expect.any(Date),
+        updatedAt: expect.any(Date)
+      },
+      update: {
+        ownerUserId: "sales-1",
+        kind: "opportunity",
+        status: "pending_confirmation",
+        sourceSystem: "manual_text",
+        data: record,
+        createdAt: expect.any(Date),
+        updatedAt: expect.any(Date)
+      }
+    });
+    await expect(sink.loadBusinessFlowRecords()).resolves.toEqual([record]);
+    expect(findMany).toHaveBeenCalledWith({ orderBy: { createdAt: "asc" } });
+  });
 });
 
 function createBlock(): KnowledgeBlock {
@@ -125,6 +168,43 @@ function createDocument(): KnowledgeDocument {
     tags: ["IP-Guard"],
     visibility: { scope: "public" },
     ownerUserId: "admin-1",
+    createdAt: "2026-07-05T00:00:00.000Z",
+    updatedAt: "2026-07-05T00:00:00.000Z"
+  };
+}
+
+function createBusinessFlowRecord(): BusinessFlowRecord {
+  return {
+    recordId: "bf-1",
+    kind: "opportunity",
+    status: "pending_confirmation",
+    ownerUserId: "sales-1",
+    ownerRole: "sales",
+    source: {
+      system: "manual_text",
+      reference: "note-1",
+      capturedAt: "2026-07-05T00:00:00.000Z"
+    },
+    payload: {
+      title: "华信精工"
+    },
+    outputs: {
+      opportunity: {
+        customerName: "华信精工",
+        demand: "终端数据防泄漏",
+        stage: "proposal",
+        sourceSummary: "manual text"
+      }
+    },
+    pendingInputs: ["crm_writeback_adapter"],
+    events: [
+      {
+        eventId: "event-1",
+        type: "record_created",
+        actorUserId: "sales-1",
+        occurredAt: "2026-07-05T00:00:00.000Z"
+      }
+    ],
     createdAt: "2026-07-05T00:00:00.000Z",
     updatedAt: "2026-07-05T00:00:00.000Z"
   };

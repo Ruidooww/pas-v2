@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button, ConfigProvider, Layout, Menu, Space, Spin, Typography } from "antd";
 import {
+  ApartmentOutlined,
   DatabaseOutlined,
   FileDoneOutlined,
   FileSearchOutlined,
@@ -8,6 +9,7 @@ import {
   MessageOutlined
 } from "@ant-design/icons";
 import { api, clearToken, getToken } from "./api";
+import { BusinessFlowsPage } from "./pages/BusinessFlowsPage";
 import { ExportTemplatesPage } from "./pages/ExportTemplatesPage";
 import { LoginPage } from "./pages/LoginPage";
 import { KnowledgeBlocksPage } from "./pages/KnowledgeBlocksPage";
@@ -17,7 +19,7 @@ import { WorkbenchPage } from "./pages/WorkbenchPage";
 import type { PublicUser } from "./types";
 import "./styles.css";
 
-type View = "qa" | "workbench" | "knowledge" | "documents" | "templates";
+type View = "qa" | "workbench" | "business" | "knowledge" | "documents" | "templates";
 
 export function App() {
   const [user, setUser] = useState<PublicUser | null>(null);
@@ -77,6 +79,7 @@ export function App() {
               onClick={({ key }) => setView(key as View)}
               items={[
                 { key: "workbench", icon: <FileDoneOutlined />, label: "客户与方案" },
+                { key: "business", icon: <ApartmentOutlined />, label: "V2 业务闭环" },
                 { key: "qa", icon: <MessageOutlined />, label: "知识库问答" },
                 { key: "documents", icon: <FileSearchOutlined />, label: "文档运营" },
                 { key: "knowledge", icon: <DatabaseOutlined />, label: "知识块运营" },
@@ -93,6 +96,8 @@ export function App() {
               <Typography.Title className="pas-view-title" level={3}>
                 {view === "qa"
                   ? "知识库问答"
+                  : view === "business"
+                    ? "V2 业务闭环"
                   : view === "knowledge"
                     ? "知识块运营"
                     : view === "documents"
@@ -110,6 +115,8 @@ export function App() {
             <Layout.Content className="pas-content">
               {view === "qa" ? (
                 <QaPage />
+              ) : view === "business" ? (
+                <BusinessFlowsPage />
               ) : view === "knowledge" ? (
                 <KnowledgeBlocksPage />
               ) : view === "documents" ? (

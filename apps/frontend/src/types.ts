@@ -197,3 +197,107 @@ export type KnowledgeDocument = {
   reparseRequestedBy?: string;
   reparseReason?: string;
 };
+
+export type BusinessFlowKind =
+  | "opportunity"
+  | "meeting"
+  | "contract_review"
+  | "after_sales"
+  | "channel"
+  | "customer_signal";
+
+export type BusinessFlowStatus = "pending_confirmation" | "confirmed" | "sync_pending" | "completed";
+
+export type BusinessFlowRecord = {
+  recordId: string;
+  kind: BusinessFlowKind;
+  status: BusinessFlowStatus;
+  ownerUserId: string;
+  source: {
+    system: string;
+    reference: string;
+    capturedAt: string;
+  };
+  payload: Record<string, unknown>;
+  outputs: {
+    opportunity?: {
+      customerName: string;
+      demand: string;
+      budgetAmount?: number;
+      expectedCloseDate?: string;
+      contactName?: string;
+      stage: "discovery" | "proposal" | "negotiation" | "won";
+      sourceSummary: string;
+    };
+    syncRequest?: {
+      targetSystem: "external_crm";
+      status: "pending_external_adapter";
+      humanConfirmed: true;
+      requestedAt: string;
+    };
+    meetingMinutes?: {
+      customerId: string;
+      summary: string;
+      requirements: string[];
+      painPoints: string[];
+      decisionMakers: string[];
+      actionItems: string[];
+    };
+    proposalJobId?: string;
+    contractReview?: {
+      contractTitle: string;
+      reportSummary: string;
+      risks: Array<{
+        code: string;
+        severity: "medium" | "high";
+        clause: string;
+        suggestion: string;
+      }>;
+    };
+    afterSalesAnswer?: {
+      answer: string;
+      escalationRequired: boolean;
+      escalationReason?: string;
+    };
+    maintenanceReminders?: Array<{
+      productName: string;
+      daysBeforeExpiry: 90 | 60 | 30;
+      remindAt: string;
+      contractEndDate: string;
+    }>;
+    channelContext?: {
+      partnerName: string;
+      customerName: string;
+      duplicateRisk: boolean;
+      proposalVariables: Record<string, string>;
+    };
+    customerSignal?: {
+      customerName: string;
+      purchaseWindow: "near_term" | "unknown";
+      competitorInvolved: boolean;
+      actionSuggestions: string[];
+      talkTracks: string[];
+      evidenceSources: string[];
+    };
+  };
+  pendingInputs: string[];
+  events: Array<{
+    type: string;
+    actorUserId: string;
+    occurredAt: string;
+  }>;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type BusinessMetrics = {
+  definitions: Array<{
+    module: BusinessFlowKind;
+    name: string;
+    description: string;
+  }>;
+  counters: Array<{
+    name: string;
+    value: number;
+  }>;
+};
