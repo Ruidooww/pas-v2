@@ -260,6 +260,54 @@ body {
   margin-bottom: 0;
 }
 
+.business-flow-metrics {
+  width: 100%;
+}
+
+.business-flow-tab {
+  display: grid;
+  gap: 12px;
+}
+
+.business-flow-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.business-flow-list {
+  display: grid;
+  gap: 8px;
+}
+
+.business-flow-list-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.business-flow-list-item:last-child {
+  border-bottom: 0;
+}
+
+.business-flow-json {
+  margin: 12px 0 0;
+  max-height: 360px;
+  overflow: auto;
+  padding: 12px;
+  border: 1px solid #e5e5ea;
+  border-radius: 8px;
+  background: #f7f8fa;
+  color: #1d1d1f;
+  font-size: 12px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 @media (max-width: 760px) {
   .pas-shell.ant-layout {
     display: block;

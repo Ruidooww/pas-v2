@@ -2,6 +2,7 @@ import { Logger } from "@nestjs/common";
 import type { PrismaClient } from "@prisma/client";
 import type { AuditEvent } from "../audit/audit.types";
 import type { UserRecord } from "../auth/auth.types";
+import type { BusinessFlowRecord } from "../business-flow/business-flow.types";
 import type { ExportJob } from "../export/export.types";
 import type { ExportTemplate } from "../export/export-template.types";
 import type { FeedbackRecord } from "../feedback/feedback.types";
@@ -224,6 +225,32 @@ export class PersistenceSink {
     if (!this.client) return [];
     const rows = await this.client.knowledgeDocumentSnapshot.findMany({ orderBy: { createdAt: "asc" } });
     return rows.map((row) => row.data as unknown as KnowledgeDocument);
+  }
+
+  mirrorBusinessFlowRecord(record: BusinessFlowRecord): void {
+    if (!this.client) return;
+    const data = {
+      ownerUserId: record.ownerUserId,
+      kind: record.kind,
+      status: record.status,
+      sourceSystem: record.source.system,
+      data: record as unknown as object,
+      createdAt: new Date(record.createdAt),
+      updatedAt: new Date(record.updatedAt)
+    };
+    this.client.businessFlowRecordSnapshot
+      .upsert({
+        where: { recordId: record.recordId },
+        create: { recordId: record.recordId, ...data },
+        update: data
+      })
+      .catch((error) => this.logMirrorFailure("business_flow_record", record.recordId, error));
+  }
+
+  async loadBusinessFlowRecords(): Promise<BusinessFlowRecord[]> {
+    if (!this.client) return [];
+    const rows = await this.client.businessFlowRecordSnapshot.findMany({ orderBy: { createdAt: "asc" } });
+    return rows.map((row) => row.data as unknown as BusinessFlowRecord);
   }
 
   async onModuleDestroy(): Promise<void> {

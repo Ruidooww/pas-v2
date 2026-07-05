@@ -118,3 +118,20 @@ model KnowledgeDocumentSnapshot {
   @@index([enabled])
   @@map("knowledge_document_snapshots")
 }
+
+model BusinessFlowRecordSnapshot {
+  recordId     String   @id @map("record_id")
+  ownerUserId  String   @map("owner_user_id")
+  kind         String
+  status       String
+  sourceSystem String   @map("source_system")
+  data         Json
+  createdAt    DateTime @map("created_at")
+  updatedAt    DateTime @map("updated_at")
+
+  @@index([ownerUserId])
+  @@index([kind])
+  @@index([status])
+  @@index([sourceSystem])
+  @@map("business_flow_record_snapshots")
+}
