@@ -1,7 +1,14 @@
 import { useEffect, useState } from "react";
 import { Button, ConfigProvider, Layout, Menu, Space, Spin, Typography } from "antd";
-import { DatabaseOutlined, FileDoneOutlined, FileSearchOutlined, MessageOutlined } from "@ant-design/icons";
+import {
+  DatabaseOutlined,
+  FileDoneOutlined,
+  FileSearchOutlined,
+  FileTextOutlined,
+  MessageOutlined
+} from "@ant-design/icons";
 import { api, clearToken, getToken } from "./api";
+import { ExportTemplatesPage } from "./pages/ExportTemplatesPage";
 import { LoginPage } from "./pages/LoginPage";
 import { KnowledgeBlocksPage } from "./pages/KnowledgeBlocksPage";
 import { KnowledgeDocumentsPage } from "./pages/KnowledgeDocumentsPage";
@@ -10,7 +17,7 @@ import { WorkbenchPage } from "./pages/WorkbenchPage";
 import type { PublicUser } from "./types";
 import "./styles.css";
 
-type View = "qa" | "workbench" | "knowledge" | "documents";
+type View = "qa" | "workbench" | "knowledge" | "documents" | "templates";
 
 export function App() {
   const [user, setUser] = useState<PublicUser | null>(null);
@@ -72,7 +79,8 @@ export function App() {
                 { key: "workbench", icon: <FileDoneOutlined />, label: "客户与方案" },
                 { key: "qa", icon: <MessageOutlined />, label: "知识库问答" },
                 { key: "documents", icon: <FileSearchOutlined />, label: "文档运营" },
-                { key: "knowledge", icon: <DatabaseOutlined />, label: "知识块运营" }
+                { key: "knowledge", icon: <DatabaseOutlined />, label: "知识块运营" },
+                { key: "templates", icon: <FileTextOutlined />, label: "模板运营" }
               ]}
             />
             <div className="pas-sidebar-user">
@@ -89,7 +97,9 @@ export function App() {
                     ? "知识块运营"
                     : view === "documents"
                       ? "文档运营"
-                      : "客户与方案"}
+                      : view === "templates"
+                        ? "模板运营"
+                        : "客户与方案"}
               </Typography.Title>
               <Space>
                 <Button size="small" onClick={logout}>
@@ -104,6 +114,8 @@ export function App() {
                 <KnowledgeBlocksPage />
               ) : view === "documents" ? (
                 <KnowledgeDocumentsPage />
+              ) : view === "templates" ? (
+                <ExportTemplatesPage />
               ) : (
                 <WorkbenchPage />
               )}

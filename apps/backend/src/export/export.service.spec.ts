@@ -8,7 +8,7 @@ import {
 } from "./export.service";
 import { ExportAuditLogService } from "./export-audit-log.service";
 import { ExportJobStoreService } from "./export-job-store.service";
-import type { ExportFormat, ExportRenderer } from "./export.types";
+import type { ExportFormat, ExportRenderer, ExportTemplateCatalog } from "./export.types";
 
 const exportPackage: ExportPackage = {
   packageId: "export-package-1",
@@ -139,6 +139,94 @@ describe("ExportService", () => {
     ]);
   });
 
+  it("uses an available active template when rendering a format", async () => {
+    const renderer = createRenderer();
+    const filesService = createFilesService();
+    const templateCatalog = createTemplateCatalog();
+    const service = createService(renderer, filesService, new ExportAuditLogService(), templateCatalog);
+
+    const job = await service.createExport({
+      exportPackage,
+      formats: ["docx"],
+      userId: "user-1"
+    });
+
+    expect(templateCatalog.getAvailableTemplate).toHaveBeenCalledWith("docx");
+    expect(renderer.render).toHaveBeenCalledWith(
+      "docx",
+      exportPackage,
+      expect.objectContaining({
+        templateId: "template-docx",
+        fileName: "proposal-v1.docx",
+        version: "v1-docx"
+      })
+    );
+    expect(job.formats).toEqual([
+      expect.objectContaining({
+        format: "docx",
+        status: "completed",
+        templateId: "template-docx",
+        templateVersion: "v1-docx",
+        checks: expect.arrayContaining([
+          expect.objectContaining({ code: "template_available", status: "passed" }),
+          expect.objectContaining({ code: "file_not_empty", status: "passed" })
+        ])
+      })
+    ]);
+  });
+
+  it("fails a format before rendering when no active real template is available", async () => {
+    const renderer = createRenderer();
+    const filesService = createFilesService();
+    const templateCatalog = {
+      getAvailableTemplate: vi.fn(async () => {
+        throw new ExportTemplateMissingError("pptx", "proposal-v1.pptx");
+      })
+    };
+    const service = createService(renderer, filesService, new ExportAuditLogService(), templateCatalog);
+
+    const job = await service.createExport({
+      exportPackage,
+      formats: ["pptx"],
+      userId: "user-1"
+    });
+
+    expect(renderer.render).not.toHaveBeenCalled();
+    expect(filesService.saveFile).not.toHaveBeenCalled();
+    expect(job.status).toBe("failed");
+    expect(job.formats).toEqual([
+      expect.objectContaining({
+        format: "pptx",
+        status: "failed",
+        failureReason: "TEMPLATE_MISSING",
+        checks: [expect.objectContaining({ code: "template_available", status: "failed" })]
+      })
+    ]);
+  });
+
+  it("fails zero-byte rendered files before saving them", async () => {
+    const renderer = createRenderer({}, { docx: Buffer.alloc(0) });
+    const filesService = createFilesService();
+    const service = createService(renderer, filesService, new ExportAuditLogService(), createTemplateCatalog());
+
+    const job = await service.createExport({
+      exportPackage,
+      formats: ["docx"],
+      userId: "user-1"
+    });
+
+    expect(filesService.saveFile).not.toHaveBeenCalled();
+    expect(job.status).toBe("failed");
+    expect(job.formats).toEqual([
+      expect.objectContaining({
+        format: "docx",
+        status: "failed",
+        failureReason: "DELIVERABLE_CHECK_FAILED",
+        checks: expect.arrayContaining([expect.objectContaining({ code: "file_not_empty", status: "failed" })])
+      })
+    ]);
+  });
+
   it("downloads completed files through FilesService and records the download", async () => {
     const filesService = createFilesService();
     const auditLog = new ExportAuditLogService();
@@ -171,14 +259,18 @@ describe("ExportService", () => {
 function createService(
   renderer: ExportRenderer,
   filesService: FilesService,
-  auditLog: ExportAuditLogService
+  auditLog: ExportAuditLogService,
+  templateCatalog?: ExportTemplateCatalog
 ): ExportService {
-  return new ExportService(renderer, filesService, new ExportJobStoreService(), auditLog);
+  return new ExportService(renderer, filesService, new ExportJobStoreService(), auditLog, templateCatalog);
 }
 
-function createRenderer(failures: Partial<Record<"docx" | "pptx" | "xlsx", Error>> = {}): ExportRenderer {
+function createRenderer(
+  failures: Partial<Record<"docx" | "pptx" | "xlsx", Error>> = {},
+  contents: Partial<Record<"docx" | "pptx" | "xlsx", Buffer>> = {}
+): ExportRenderer {
   return {
-    render: vi.fn(async (format: ExportFormat) => {
+    render: vi.fn(async (format: ExportFormat, _exportPackage, template) => {
       const failure = failures[format];
       if (failure) {
         throw failure;
@@ -188,10 +280,24 @@ function createRenderer(failures: Partial<Record<"docx" | "pptx" | "xlsx", Error
         format,
         fileName: `proposal.${format}`,
         contentType: contentTypeFor(format),
-        templateVersion: `v0-${format}`,
-        content: Buffer.from(`rendered:${format}`)
+        templateId: template?.templateId,
+        templateVersion: template?.version ?? `v0-${format}`,
+        content: contents[format] ?? Buffer.from(`rendered:${format}`)
       };
     })
+  };
+}
+
+function createTemplateCatalog(): ExportTemplateCatalog {
+  return {
+    getAvailableTemplate: vi.fn(async (format: ExportFormat) => ({
+      templateId: `template-${format}`,
+      name: `Template ${format}`,
+      category: "proposal" as const,
+      format,
+      version: `v1-${format}`,
+      fileName: `proposal-v1.${format}`
+    }))
   };
 }
 

@@ -3,6 +3,7 @@ import type { PrismaClient } from "@prisma/client";
 import type { AuditEvent } from "../audit/audit.types";
 import type { UserRecord } from "../auth/auth.types";
 import type { ExportJob } from "../export/export.types";
+import type { ExportTemplate } from "../export/export-template.types";
 import type { FeedbackRecord } from "../feedback/feedback.types";
 import type { KnowledgeBlock, KnowledgeDocument } from "../knowledge/knowledge.types";
 import type { ProposalJob } from "../proposal/proposal.types";
@@ -125,6 +126,31 @@ export class PersistenceSink {
     if (!this.client) return [];
     const rows = await this.client.exportJobSnapshot.findMany({ orderBy: { createdAt: "asc" } });
     return rows.map((row) => row.data as unknown as ExportJob);
+  }
+
+  mirrorExportTemplate(template: ExportTemplate): void {
+    if (!this.client) return;
+    const data = {
+      ownerUserId: template.ownerUserId,
+      format: template.format,
+      status: template.status,
+      data: template as unknown as object,
+      createdAt: new Date(template.createdAt),
+      updatedAt: new Date(template.updatedAt)
+    };
+    this.client.exportTemplateSnapshot
+      .upsert({
+        where: { templateId: template.templateId },
+        create: { templateId: template.templateId, ...data },
+        update: data
+      })
+      .catch((error) => this.logMirrorFailure("export_template", template.templateId, error));
+  }
+
+  async loadExportTemplates(): Promise<ExportTemplate[]> {
+    if (!this.client) return [];
+    const rows = await this.client.exportTemplateSnapshot.findMany({ orderBy: { createdAt: "asc" } });
+    return rows.map((row) => row.data as unknown as ExportTemplate);
   }
 
   mirrorFeedback(record: FeedbackRecord): void {

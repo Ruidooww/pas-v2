@@ -118,6 +118,26 @@ export type ExportDownloadResponse = {
   size: number;
 };
 
+export type ExportTemplateStatus = "draft" | "active" | "disabled";
+
+export type ExportTemplate = {
+  templateId: string;
+  name: string;
+  category: "proposal";
+  format: ExportFormat;
+  version: string;
+  fileName: string;
+  status: ExportTemplateStatus;
+  products: string[];
+  scenarios: string[];
+  industries: string[];
+  tags: string[];
+  ownerUserId: string;
+  createdAt: string;
+  updatedAt: string;
+  disabledReason?: string;
+};
+
 export type KnowledgeBlockStatus =
   | "draft"
   | "pending_review"
