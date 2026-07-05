@@ -19,7 +19,10 @@ export type QaCitation = {
   source: string;
   score: number;
   page?: number;
+  section?: string;
   position?: string;
+  location?: string;
+  snippet?: string;
 };
 
 export type QaAskResponse = {
@@ -113,4 +116,34 @@ export type ExportDownloadResponse = {
   contentType: string;
   contentBase64: string;
   size: number;
+};
+
+export type KnowledgeBlockStatus =
+  | "draft"
+  | "pending_review"
+  | "published"
+  | "rejected"
+  | "disabled"
+  | "expired";
+
+export type KnowledgeBlock = {
+  blockId: string;
+  title: string;
+  product: string;
+  scenario: string;
+  body: string;
+  citations: QaCitation[];
+  tags: string[];
+  source?: {
+    type: "ragflow_chunk" | "manual" | "feedback" | "historical_proposal";
+    referenceId?: string;
+  };
+  status: KnowledgeBlockStatus;
+  version: number;
+  ownerUserId: string;
+  reviewerUserId?: string;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt?: string;
+  reviewNote?: string;
 };

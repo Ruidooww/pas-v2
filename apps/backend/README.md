@@ -65,6 +65,18 @@ Audit endpoint:
 
 Internal APIs require `Authorization: Bearer <token>`. Bootstrap admin creation only runs when `AUTH_BOOTSTRAP_ADMIN_USERNAME` and `AUTH_BOOTSTRAP_ADMIN_PASSWORD` are provided by the local environment.
 
+Knowledge block endpoints:
+
+- `POST /api/internal/knowledge-blocks`
+- `GET /api/internal/knowledge-blocks`
+- `GET /api/internal/knowledge-blocks/published`
+- `GET /api/internal/knowledge-blocks/:blockId`
+- `POST /api/internal/knowledge-blocks/:blockId/submit-review`
+- `POST /api/internal/knowledge-blocks/:blockId/review`
+- `POST /api/internal/knowledge-blocks/:blockId/disable`
+
+Knowledge blocks use the V1 lifecycle `draft -> pending_review -> published`, with `rejected`, `disabled`, and `expired` terminal or operator-controlled states. Only published blocks are returned by the published-only endpoint, which is reserved for later deterministic ProposalModule and ExportModule fill.
+
 Feedback endpoints:
 
 - `POST /api/internal/feedback`

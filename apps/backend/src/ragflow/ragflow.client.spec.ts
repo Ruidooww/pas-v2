@@ -109,6 +109,49 @@ describe("RagflowClient", () => {
     });
   });
 
+  it("preserves optional V1 citation metadata from RAGFlow chunks", async () => {
+    const fetcher = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        data: {
+          chunks: [
+            {
+              id: "chunk-1",
+              document_id: "doc-1",
+              document_name: "Product Manual",
+              content: "IP-guard content",
+              similarity: 0.82,
+              source: "manual.pdf",
+              page: 7,
+              section: "Outbound control",
+              position: "p7:s2",
+              location: "page 7 paragraph 2",
+              snippet: "Outbound file control evidence"
+            }
+          ]
+        }
+      })
+    });
+    const client = new RagflowClient(baseConfig, fetcher);
+
+    await expect(client.retrieveKnowledgeChunks({ datasetId: "pas-v0", query: "IP-guard" })).resolves.toEqual([
+      {
+        chunkId: "chunk-1",
+        documentId: "doc-1",
+        title: "Product Manual",
+        content: "IP-guard content",
+        score: 0.82,
+        source: "manual.pdf",
+        page: 7,
+        section: "Outbound control",
+        position: "p7:s2",
+        location: "page 7 paragraph 2",
+        snippet: "Outbound file control evidence"
+      }
+    ]);
+  });
+
   it("drops retrieval chunks without auditable citation fields", async () => {
     const fetcher = vi.fn().mockResolvedValue({
       ok: true,

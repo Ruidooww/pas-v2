@@ -55,6 +55,50 @@ describe("QaService", () => {
     );
   });
 
+  it("exposes optional V1 citation metadata when retrieved chunks include it", async () => {
+    const ragflowClient = {
+      retrieveKnowledgeChunks: vi.fn().mockResolvedValue([
+        {
+          chunkId: "chunk-1",
+          documentId: "doc-1",
+          title: "IP-Guard 管理手册",
+          content: "透明加密可对研发图纸进行自动加密保护。",
+          score: 0.91,
+          source: "manual.pdf",
+          page: 7,
+          section: "透明加密",
+          position: "p7:s2",
+          location: "page 7 paragraph 2",
+          snippet: "研发图纸透明加密保护"
+        }
+      ])
+    } as unknown as RagflowClient;
+    const service = new QaService(ragflowClient, new LocalQaDraftProvider(), new QaAuditLogService(), {
+      datasetId: "qa-v0",
+      topK: 3
+    });
+
+    await expect(service.ask({ query: "如何保护研发图纸？", userId: "user-1" })).resolves.toEqual({
+      questionId: expect.stringMatching(/^qa-/),
+      status: "answered",
+      answer: expect.stringContaining("需人工审核"),
+      citations: [
+        {
+          chunkId: "chunk-1",
+          documentId: "doc-1",
+          title: "IP-Guard 管理手册",
+          source: "manual.pdf",
+          score: 0.91,
+          page: 7,
+          section: "透明加密",
+          position: "p7:s2",
+          location: "page 7 paragraph 2",
+          snippet: "研发图纸透明加密保护"
+        }
+      ]
+    });
+  });
+
   it("returns a no-hit response without fabricated citations", async () => {
     const ragflowClient = {
       retrieveKnowledgeChunks: vi.fn().mockResolvedValue([])

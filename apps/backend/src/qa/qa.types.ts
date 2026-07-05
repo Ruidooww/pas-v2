@@ -13,7 +13,10 @@ export type QaCitation = {
   source: string;
   score: number;
   page?: number;
+  section?: string;
   position?: string;
+  location?: string;
+  snippet?: string;
 };
 
 export type QaAnswerStatus = "answered" | "no_hit" | "error";

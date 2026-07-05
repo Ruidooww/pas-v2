@@ -168,7 +168,7 @@ function mapKnowledgeChunk(chunk: Record<string, unknown>): KnowledgeChunk | und
     stringValue(chunk.title) ||
     documentId;
 
-  const knowledgeChunk = {
+  const knowledgeChunk: KnowledgeChunk = {
     chunkId,
     documentId,
     title,
@@ -176,6 +176,32 @@ function mapKnowledgeChunk(chunk: Record<string, unknown>): KnowledgeChunk | und
     score: numberValue(chunk.similarity) ?? numberValue(chunk.score) ?? Number.NaN,
     source: stringValue(chunk.source) || title
   };
+
+  const page = numberValue(chunk.page) ?? numberValue(chunk.page_number) ?? numberValue(chunk.pageNumber);
+  if (page !== undefined) {
+    knowledgeChunk.page = page;
+  }
+
+  const section = stringValue(chunk.section) || stringValue(chunk.section_title) || stringValue(chunk.sectionTitle);
+  if (section) {
+    knowledgeChunk.section = section;
+  }
+
+  const position = stringValue(chunk.position) || stringValue(chunk.positions);
+  if (position) {
+    knowledgeChunk.position = position;
+  }
+
+  const location = stringValue(chunk.location) || stringValue(chunk.loc);
+  if (location) {
+    knowledgeChunk.location = location;
+  }
+
+  const snippet = stringValue(chunk.snippet) || stringValue(chunk.highlight) || stringValue(chunk.summary);
+  if (snippet) {
+    knowledgeChunk.snippet = snippet;
+  }
+
   return isKnowledgeChunk(knowledgeChunk) ? knowledgeChunk : undefined;
 }
 

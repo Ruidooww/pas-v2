@@ -96,13 +96,31 @@ export class QaService {
 }
 
 function toCitation(chunk: KnowledgeChunk): QaCitation {
-  return {
+  const citation: QaCitation = {
     chunkId: chunk.chunkId,
     documentId: chunk.documentId,
     title: chunk.title,
     source: chunk.source,
     score: chunk.score
   };
+
+  if (chunk.page !== undefined) {
+    citation.page = chunk.page;
+  }
+  if (chunk.section) {
+    citation.section = chunk.section;
+  }
+  if (chunk.position) {
+    citation.position = chunk.position;
+  }
+  if (chunk.location) {
+    citation.location = chunk.location;
+  }
+  if (chunk.snippet) {
+    citation.snippet = chunk.snippet;
+  }
+
+  return citation;
 }
 
 function createQuestionId(): string {

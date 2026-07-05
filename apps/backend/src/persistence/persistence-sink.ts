@@ -4,6 +4,7 @@ import type { AuditEvent } from "../audit/audit.types";
 import type { UserRecord } from "../auth/auth.types";
 import type { ExportJob } from "../export/export.types";
 import type { FeedbackRecord } from "../feedback/feedback.types";
+import type { KnowledgeBlock } from "../knowledge/knowledge.types";
 import type { ProposalJob } from "../proposal/proposal.types";
 
 // V0 persistence strategy: the synchronous in-memory stores stay the hot
@@ -148,6 +149,30 @@ export class PersistenceSink {
     if (!this.client) return [];
     const rows = await this.client.feedbackSnapshot.findMany({ orderBy: { createdAt: "asc" } });
     return rows.map((row) => row.data as unknown as FeedbackRecord);
+  }
+
+  mirrorKnowledgeBlock(block: KnowledgeBlock): void {
+    if (!this.client) return;
+    const data = {
+      ownerUserId: block.ownerUserId,
+      status: block.status,
+      data: block as unknown as object,
+      createdAt: new Date(block.createdAt),
+      updatedAt: new Date(block.updatedAt)
+    };
+    this.client.knowledgeBlockSnapshot
+      .upsert({
+        where: { blockId: block.blockId },
+        create: { blockId: block.blockId, ...data },
+        update: data
+      })
+      .catch((error) => this.logMirrorFailure("knowledge_block", block.blockId, error));
+  }
+
+  async loadKnowledgeBlocks(): Promise<KnowledgeBlock[]> {
+    if (!this.client) return [];
+    const rows = await this.client.knowledgeBlockSnapshot.findMany({ orderBy: { createdAt: "asc" } });
+    return rows.map((row) => row.data as unknown as KnowledgeBlock);
   }
 
   async onModuleDestroy(): Promise<void> {

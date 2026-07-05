@@ -13,3 +13,19 @@ if (typeof window !== "undefined" && !window.matchMedia) {
       dispatchEvent: () => false
     }) as unknown as MediaQueryList;
 }
+
+if (typeof window !== "undefined" && !window.ResizeObserver) {
+  window.ResizeObserver = class ResizeObserver {
+    observe() {
+      return undefined;
+    }
+
+    unobserve() {
+      return undefined;
+    }
+
+    disconnect() {
+      return undefined;
+    }
+  };
+}
