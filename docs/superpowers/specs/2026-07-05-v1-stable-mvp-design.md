@@ -4,7 +4,7 @@
 
 **Rollback rule:** V1 work stays on `codex/v1-stable-mvp` and is additive until merged. Existing V0 API contracts stay compatible; new V1 backend capabilities use new modules, fields, or endpoints.
 
-**Deferred by user instruction:** The 50/100-question quality gate is a V1 closeout task, not part of the first implementation batch.
+**Deferred by user instruction:** The 50/100-question quality gate is the final V1 closeout task. Do not change it until all non-gate V1 work is complete.
 
 ## V1 Delivery Train
 
@@ -22,9 +22,9 @@ Build the first durable operations layer:
 
 Add document/tag/status views after V1-A lands. This can reuse the same operations module and should not mutate RAGFlow volumes or compose configuration.
 
-### V1-C Permission Completion
+### V1-C Permission Foundation
 
-Add department/user/template/generation-record visibility rules. Retrieval pre-filtering must fail closed once the document visibility model exists.
+Add document-level visibility metadata first. Retrieval pre-filtering must fail closed once the document catalog exists. Broader department, template, and generation-record permissions stay compatible with this model and can be expanded after the stable MVP branch lands.
 
 ### V1-D Template And Deliverable Expansion
 
@@ -34,9 +34,17 @@ Expand proposal/export templates using current V0 templates as fallback until re
 
 Implement the final 50/100 regression gate, scoring reports, SOP docs, and V1 acceptance evidence.
 
-## Current Batch Scope
+## Current Branch Scope
 
-This branch implements V1-A only. It intentionally does not modify `RegressionService` gate thresholds.
+This branch implements V1-A through V1-D plus non-gate V1 SOP documentation:
+
+- V1-A: knowledge block lifecycle, review, publish, and published-only reads.
+- V1-B: document operations metadata, parse status, tags, counters, enablement, and reparse requests.
+- V1-C: document visibility and QA/RAGFlow fail-closed filtering when a document catalog exists.
+- V1-D: export template metadata operations, active template selection, and basic deliverable checks.
+- V1 SOP: administrator operating procedure for knowledge, template, feedback, and release handling.
+
+It intentionally does not modify `RegressionService` gate thresholds or execute the final 50/100-question launch gate.
 
 ## Data Model
 
