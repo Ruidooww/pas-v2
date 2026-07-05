@@ -308,6 +308,54 @@ body {
   word-break: break-word;
 }
 
+.platform-page {
+  display: grid;
+  gap: 12px;
+}
+
+.platform-methodology {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.platform-form-grid {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.platform-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.platform-list {
+  display: grid;
+  gap: 8px;
+}
+
+.platform-list-item {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.platform-list-item:last-child {
+  border-bottom: 0;
+}
+
+.platform-list-item .ant-typography {
+  min-width: 0;
+  word-break: break-word;
+}
+
 @media (max-width: 760px) {
   .pas-shell.ant-layout {
     display: block;

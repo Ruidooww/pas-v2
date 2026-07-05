@@ -4,6 +4,7 @@ import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
 import { AuditModule } from "./audit/audit.module";
 import { BusinessFlowModule } from "./business-flow/business-flow.module";
 import { PersistenceModule } from "./persistence/persistence.module";
+import { PlatformModule } from "./platform/platform.module";
 import { AuthModule } from "./auth/auth.module";
 import { CustomerAnalysisModule } from "./customer-analysis/customer-analysis.module";
 import { CrmModule } from "./crm/crm.module";
@@ -36,6 +37,7 @@ import { RagflowModule } from "./ragflow/ragflow.module";
     FeedbackModule,
     KnowledgeModule,
     BusinessFlowModule,
+    PlatformModule,
     IntegrationModule,
     RagflowModule
   ],

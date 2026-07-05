@@ -47,7 +47,7 @@ export function QaPage() {
   };
 
   return (
-    <Space className="pas-page-stack" direction="vertical" size="middle">
+    <Space className="pas-page-stack" orientation="vertical" size="middle">
       <Card className="pas-panel pas-input-panel" title="知识库问答">
         <Space.Compact style={{ width: "100%" }}>
           <Input.TextArea
