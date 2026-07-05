@@ -88,3 +88,18 @@ model KnowledgeBlockSnapshot {
   @@index([status])
   @@map("knowledge_block_snapshots")
 }
+
+model KnowledgeDocumentSnapshot {
+  documentId  String   @id @map("document_id")
+  ownerUserId String   @map("owner_user_id")
+  parseStatus String   @map("parse_status")
+  enabled     Boolean
+  data        Json
+  createdAt   DateTime @map("created_at")
+  updatedAt   DateTime @map("updated_at")
+
+  @@index([ownerUserId])
+  @@index([parseStatus])
+  @@index([enabled])
+  @@map("knowledge_document_snapshots")
+}

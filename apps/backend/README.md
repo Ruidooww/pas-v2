@@ -77,6 +77,17 @@ Knowledge block endpoints:
 
 Knowledge blocks use the V1 lifecycle `draft -> pending_review -> published`, with `rejected`, `disabled`, and `expired` terminal or operator-controlled states. Only published blocks are returned by the published-only endpoint, which is reserved for later deterministic ProposalModule and ExportModule fill.
 
+Knowledge document operations endpoints:
+
+- `POST /api/internal/knowledge-documents`
+- `GET /api/internal/knowledge-documents`
+- `GET /api/internal/knowledge-documents/:documentId`
+- `POST /api/internal/knowledge-documents/:documentId/tags`
+- `POST /api/internal/knowledge-documents/:documentId/enabled`
+- `POST /api/internal/knowledge-documents/:documentId/reparse`
+
+Document operations store PAS-side metadata for documents already managed in RAGFlow: parse status, chunk count, hit count, bad feedback count, tags, and enabled state. Reparse requests are tracked as PAS operations metadata; they do not mutate RAGFlow volumes or datasets.
+
 Feedback endpoints:
 
 - `POST /api/internal/feedback`

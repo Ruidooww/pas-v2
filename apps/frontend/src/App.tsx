@@ -1,15 +1,16 @@
 import { useEffect, useState } from "react";
 import { Button, ConfigProvider, Layout, Menu, Space, Spin, Typography } from "antd";
-import { DatabaseOutlined, FileDoneOutlined, MessageOutlined } from "@ant-design/icons";
+import { DatabaseOutlined, FileDoneOutlined, FileSearchOutlined, MessageOutlined } from "@ant-design/icons";
 import { api, clearToken, getToken } from "./api";
 import { LoginPage } from "./pages/LoginPage";
 import { KnowledgeBlocksPage } from "./pages/KnowledgeBlocksPage";
+import { KnowledgeDocumentsPage } from "./pages/KnowledgeDocumentsPage";
 import { QaPage } from "./pages/QaPage";
 import { WorkbenchPage } from "./pages/WorkbenchPage";
 import type { PublicUser } from "./types";
 import "./styles.css";
 
-type View = "qa" | "workbench" | "knowledge";
+type View = "qa" | "workbench" | "knowledge" | "documents";
 
 export function App() {
   const [user, setUser] = useState<PublicUser | null>(null);
@@ -70,6 +71,7 @@ export function App() {
               items={[
                 { key: "workbench", icon: <FileDoneOutlined />, label: "客户与方案" },
                 { key: "qa", icon: <MessageOutlined />, label: "知识库问答" },
+                { key: "documents", icon: <FileSearchOutlined />, label: "文档运营" },
                 { key: "knowledge", icon: <DatabaseOutlined />, label: "知识块运营" }
               ]}
             />
@@ -81,7 +83,13 @@ export function App() {
           <Layout className="pas-main">
             <Layout.Header className="pas-topbar">
               <Typography.Title className="pas-view-title" level={3}>
-                {view === "qa" ? "知识库问答" : view === "knowledge" ? "知识块运营" : "客户与方案"}
+                {view === "qa"
+                  ? "知识库问答"
+                  : view === "knowledge"
+                    ? "知识块运营"
+                    : view === "documents"
+                      ? "文档运营"
+                      : "客户与方案"}
               </Typography.Title>
               <Space>
                 <Button size="small" onClick={logout}>
@@ -90,7 +98,15 @@ export function App() {
               </Space>
             </Layout.Header>
             <Layout.Content className="pas-content">
-              {view === "qa" ? <QaPage /> : view === "knowledge" ? <KnowledgeBlocksPage /> : <WorkbenchPage />}
+              {view === "qa" ? (
+                <QaPage />
+              ) : view === "knowledge" ? (
+                <KnowledgeBlocksPage />
+              ) : view === "documents" ? (
+                <KnowledgeDocumentsPage />
+              ) : (
+                <WorkbenchPage />
+              )}
             </Layout.Content>
           </Layout>
         </Layout>

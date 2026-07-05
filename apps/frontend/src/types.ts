@@ -147,3 +147,29 @@ export type KnowledgeBlock = {
   publishedAt?: string;
   reviewNote?: string;
 };
+
+export type KnowledgeDocumentParseStatus = "pending" | "parsing" | "done" | "failed";
+
+export type KnowledgeDocumentMaterialType = "pdf" | "pptx" | "docx" | "xlsx" | "image" | "scan" | "other";
+
+export type KnowledgeDocument = {
+  documentId: string;
+  title: string;
+  product: string;
+  materialType: KnowledgeDocumentMaterialType;
+  sourceName: string;
+  parseStatus: KnowledgeDocumentParseStatus;
+  enabled: boolean;
+  chunkCount: number;
+  hitCount: number;
+  badFeedbackCount: number;
+  tags: string[];
+  ownerUserId: string;
+  createdAt: string;
+  updatedAt: string;
+  disabledReason?: string;
+  failureReason?: string;
+  reparseRequestedAt?: string;
+  reparseRequestedBy?: string;
+  reparseReason?: string;
+};

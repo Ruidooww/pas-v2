@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import type { KnowledgeBlock } from "../knowledge/knowledge.types";
+import type { KnowledgeBlock, KnowledgeDocument } from "../knowledge/knowledge.types";
 import { PersistenceSink } from "./persistence-sink";
 
 describe("PersistenceSink", () => {
@@ -40,6 +40,46 @@ describe("PersistenceSink", () => {
     await expect(sink.loadKnowledgeBlocks()).resolves.toEqual([block]);
     expect(findMany).toHaveBeenCalledWith({ orderBy: { createdAt: "asc" } });
   });
+
+  it("mirrors and loads knowledge document snapshots", async () => {
+    const document = createDocument();
+    const upsert = vi.fn().mockResolvedValue(undefined);
+    const findMany = vi.fn().mockResolvedValue([{ data: document }]);
+    const sink = new PersistenceSink("");
+    Object.defineProperty(sink, "client", {
+      value: {
+        knowledgeDocumentSnapshot: {
+          upsert,
+          findMany
+        }
+      }
+    });
+
+    sink.mirrorKnowledgeDocument(document);
+
+    expect(upsert).toHaveBeenCalledWith({
+      where: { documentId: "doc-1" },
+      create: {
+        documentId: "doc-1",
+        ownerUserId: "admin-1",
+        parseStatus: "done",
+        enabled: true,
+        data: document,
+        createdAt: expect.any(Date),
+        updatedAt: expect.any(Date)
+      },
+      update: {
+        ownerUserId: "admin-1",
+        parseStatus: "done",
+        enabled: true,
+        data: document,
+        createdAt: expect.any(Date),
+        updatedAt: expect.any(Date)
+      }
+    });
+    await expect(sink.loadKnowledgeDocuments()).resolves.toEqual([document]);
+    expect(findMany).toHaveBeenCalledWith({ orderBy: { createdAt: "asc" } });
+  });
 });
 
 function createBlock(): KnowledgeBlock {
@@ -67,5 +107,24 @@ function createBlock(): KnowledgeBlock {
     createdAt: "2026-07-05T00:00:00.000Z",
     updatedAt: "2026-07-05T00:00:00.000Z",
     publishedAt: "2026-07-05T00:00:00.000Z"
+  };
+}
+
+function createDocument(): KnowledgeDocument {
+  return {
+    documentId: "doc-1",
+    title: "IP-Guard Manual",
+    product: "IP-Guard",
+    materialType: "pdf",
+    sourceName: "manual.pdf",
+    parseStatus: "done",
+    enabled: true,
+    chunkCount: 42,
+    hitCount: 0,
+    badFeedbackCount: 0,
+    tags: ["IP-Guard"],
+    ownerUserId: "admin-1",
+    createdAt: "2026-07-05T00:00:00.000Z",
+    updatedAt: "2026-07-05T00:00:00.000Z"
   };
 }

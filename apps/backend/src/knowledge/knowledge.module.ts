@@ -4,12 +4,14 @@ import { AuditModule } from "../audit/audit.module";
 import { AUDIT_LOG } from "../audit/audit.tokens";
 import type { PersistenceSink } from "../persistence/persistence-sink";
 import { PERSISTENCE_SINK } from "../persistence/persistence.tokens";
+import { KnowledgeDocumentController } from "./knowledge-document.controller";
+import { KnowledgeDocumentService } from "./knowledge-document.service";
 import { KnowledgeBlockController } from "./knowledge.controller";
 import { KnowledgeBlockService } from "./knowledge.service";
-import { KNOWLEDGE_BLOCK_SERVICE } from "./knowledge.tokens";
+import { KNOWLEDGE_BLOCK_SERVICE, KNOWLEDGE_DOCUMENT_SERVICE } from "./knowledge.tokens";
 
 @Module({
-  controllers: [KnowledgeBlockController],
+  controllers: [KnowledgeBlockController, KnowledgeDocumentController],
   imports: [AuditModule],
   providers: [
     {
@@ -20,8 +22,17 @@ import { KNOWLEDGE_BLOCK_SERVICE } from "./knowledge.tokens";
         return service;
       },
       inject: [AUDIT_LOG, PERSISTENCE_SINK]
+    },
+    {
+      provide: KNOWLEDGE_DOCUMENT_SERVICE,
+      useFactory: async (auditLog: AuditLogService, sink: PersistenceSink): Promise<KnowledgeDocumentService> => {
+        const service = new KnowledgeDocumentService(auditLog, sink);
+        service.seed(await sink.loadKnowledgeDocuments());
+        return service;
+      },
+      inject: [AUDIT_LOG, PERSISTENCE_SINK]
     }
   ],
-  exports: [KNOWLEDGE_BLOCK_SERVICE]
+  exports: [KNOWLEDGE_BLOCK_SERVICE, KNOWLEDGE_DOCUMENT_SERVICE]
 })
 export class KnowledgeModule {}

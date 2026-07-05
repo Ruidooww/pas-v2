@@ -41,3 +41,43 @@ export type ReviewKnowledgeBlockRequest = {
   decision: "approve" | "reject";
   reviewNote?: string;
 };
+
+export type KnowledgeDocumentParseStatus = "pending" | "parsing" | "done" | "failed";
+
+export type KnowledgeDocumentMaterialType = "pdf" | "pptx" | "docx" | "xlsx" | "image" | "scan" | "other";
+
+export type UpsertKnowledgeDocumentRequest = {
+  documentId: string;
+  title: string;
+  product: string;
+  materialType: KnowledgeDocumentMaterialType;
+  sourceName: string;
+  parseStatus: KnowledgeDocumentParseStatus;
+  chunkCount?: number;
+  hitCount?: number;
+  badFeedbackCount?: number;
+  tags?: string[];
+  failureReason?: string;
+};
+
+export type KnowledgeDocument = UpsertKnowledgeDocumentRequest & {
+  enabled: boolean;
+  chunkCount: number;
+  hitCount: number;
+  badFeedbackCount: number;
+  tags: string[];
+  ownerUserId: string;
+  createdAt: string;
+  updatedAt: string;
+  disabledReason?: string;
+  reparseRequestedAt?: string;
+  reparseRequestedBy?: string;
+  reparseReason?: string;
+};
+
+export type KnowledgeDocumentListFilter = {
+  parseStatus?: KnowledgeDocumentParseStatus;
+  enabled?: boolean;
+  product?: string;
+  tag?: string;
+};
