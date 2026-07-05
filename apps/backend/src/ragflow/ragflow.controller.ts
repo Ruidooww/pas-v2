@@ -1,4 +1,7 @@
-import { BadRequestException, Body, Controller, Get, Inject, Post } from "@nestjs/common";
+import { BadRequestException, Body, Controller, Get, Inject, Post, Req } from "@nestjs/common";
+import type { AuthenticatedUser } from "../auth/auth.types";
+import type { KnowledgeDocumentService } from "../knowledge/knowledge-document.service";
+import { KNOWLEDGE_DOCUMENT_SERVICE } from "../knowledge/knowledge.tokens";
 import type { KnowledgeChunk } from "./knowledge-chunk";
 import { RagflowClient, type RagflowHealth } from "./ragflow.client";
 import type { RagflowConfig } from "./ragflow.config";
@@ -15,11 +18,17 @@ type SearchResponse = {
   chunks: KnowledgeChunk[];
 };
 
+type RequestWithUser = {
+  user: AuthenticatedUser;
+};
+
 @Controller("api/ragflow")
 export class RagflowController {
   constructor(
     @Inject(RAGFLOW_CLIENT) private readonly ragflowClient: RagflowClient,
-    @Inject(RAGFLOW_CONFIG) private readonly config: RagflowControllerConfig
+    @Inject(RAGFLOW_CONFIG) private readonly config: RagflowControllerConfig,
+    @Inject(KNOWLEDGE_DOCUMENT_SERVICE)
+    private readonly documentService?: KnowledgeDocumentService
   ) {}
 
   @Get("health")
@@ -28,7 +37,7 @@ export class RagflowController {
   }
 
   @Post("search")
-  async search(@Body() body: SearchRequest): Promise<SearchResponse> {
+  async search(@Req() request: RequestWithUser, @Body() body: SearchRequest): Promise<SearchResponse> {
     const query = body.query?.trim();
     if (!query) {
       throw new BadRequestException("query is required");
@@ -41,7 +50,8 @@ export class RagflowController {
     const chunks = await this.ragflowClient.retrieveKnowledgeChunks({
       datasetId: this.config.pasKbId,
       query,
-      topK: body.topK
+      topK: body.topK,
+      ...(this.documentService ? { allowedDocumentIds: this.documentService.getAccessibleDocumentIds(request.user) } : {})
     });
 
     return { chunks };

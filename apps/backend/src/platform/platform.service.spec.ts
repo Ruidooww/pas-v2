@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { ForbiddenException } from "@nestjs/common";
 import type { AuthenticatedUser } from "../auth/auth.types";
 import type { BusinessFlowService } from "../business-flow/business-flow.service";
 import { PlatformService } from "./platform.service";
@@ -22,13 +23,24 @@ describe("PlatformService", () => {
   it("builds an executive dashboard from V2 records and V3 platform state", () => {
     const service = createService();
 
-    const dashboard = service.getDashboard({ department: "sales", product: "IP-Guard" }, adminActor);
+    const dashboard = service.getDashboard({}, adminActor);
 
-    expect(dashboard.filters).toMatchObject({ department: "sales", product: "IP-Guard" });
+    expect(dashboard.filters).toEqual({});
     expect(dashboard.cards.find((card) => card.key === "sales_funnel")?.value).toBe(2);
     expect(dashboard.cards.find((card) => card.key === "pending_inputs")?.value).toBe(1);
     expect(dashboard.methodology).toContainEqual(expect.objectContaining({ key: "sales_funnel" }));
     expect(dashboard.drilldowns.salesFunnel[0]).toMatchObject({ stage: "proposal", count: 1 });
+  });
+
+  it("applies dashboard filters to the records and platform state being counted", () => {
+    const service = createService();
+
+    const dashboard = service.getDashboard({ product: "IP-Guard", channel: "华东金牌渠道" }, adminActor);
+
+    expect(dashboard.filters).toMatchObject({ product: "IP-Guard", channel: "华东金牌渠道" });
+    expect(dashboard.cards.find((card) => card.key === "sales_funnel")?.value).toBe(1);
+    expect(dashboard.cards.find((card) => card.key === "pending_inputs")?.value).toBe(0);
+    expect(dashboard.cards.find((card) => card.key === "channel_contribution")?.value).toBe(1);
   });
 
   it("routes multi-channel messages and records task notifications", () => {
@@ -81,12 +93,59 @@ describe("PlatformService", () => {
           trigger: "purchase-window"
         }
       },
-      salesActor
+      adminActor
     );
 
     expect(execution.status).toBe("completed");
     expect(execution.steps.map((step) => step.status)).toEqual(["completed", "completed"]);
     expect(service.getSecurityReport(adminActor).eventsByType.agent_execution).toBeGreaterThan(0);
+  });
+
+  it("rejects non-admin platform registry and sales workflow mutations", () => {
+    const service = createService();
+
+    expect(() =>
+      service.importSkill(
+        {
+          name: "Proposal Brief Builder",
+          description: "整理客户需求并生成方案提纲",
+          requestedScopes: ["proposal:write"],
+          packageManifest: "name: proposal-brief-builder"
+        },
+        salesActor
+      )
+    ).toThrow(ForbiddenException);
+    expect(() =>
+      service.registerProduct(
+        {
+          name: "Partner DLP Suite",
+          version: "1.0",
+          ownerTeam: "渠道事业部"
+        },
+        salesActor
+      )
+    ).toThrow(ForbiddenException);
+    expect(() =>
+      service.runWorkflow(
+        {
+          workflowId: "customer_followup_workflow",
+          input: {
+            customerId: "demo-huaxin-manufacturing"
+          }
+        },
+        salesActor
+      )
+    ).toThrow(ForbiddenException);
+    expect(() =>
+      service.detectCipSignals(
+        {
+          customerId: "demo-huaxin-manufacturing",
+          customerName: "华信精工",
+          evidenceText: "90天未拜访"
+        },
+        salesActor
+      )
+    ).toThrow(ForbiddenException);
   });
 
   it("registers partner products with template, API, webhook, and plugin declarations", () => {
@@ -121,7 +180,7 @@ describe("PlatformService", () => {
         customerName: "华信精工",
         evidenceText: "90天未拜访，竞品进入测试，信息化负责人离职，9月采购窗口，发生终端泄密事件，维保即将到期"
       },
-      salesActor
+      adminActor
     );
 
     expect(signals.map((signal) => signal.type)).toEqual(
@@ -156,7 +215,7 @@ function createService(): PlatformService {
         outputs: {
           opportunity: {
             customerName: "华信精工",
-            demand: "防泄漏",
+            demand: "IP-Guard 防泄漏",
             stage: "proposal",
             sourceSummary: "manual"
           }

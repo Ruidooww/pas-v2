@@ -1,3 +1,4 @@
+import type { KnowledgeDocumentService } from "../knowledge/knowledge-document.service";
 import type { CrmClient, CrmCustomerContext } from "../crm/crm.types";
 import type { LlmClientPort } from "../llm/llm.types";
 import type { QaCitation } from "../qa/qa.types";
@@ -17,7 +18,8 @@ export class CustomerAnalysisService {
     private readonly ragflowClient: RagflowClient,
     private readonly auditLog: CustomerAnalysisAuditLogService,
     private readonly config: CustomerAnalysisConfig,
-    private readonly llmClient?: LlmClientPort
+    private readonly llmClient?: LlmClientPort,
+    private readonly documentService?: KnowledgeDocumentService
   ) {}
 
   async analyze(request: CustomerAnalysisRequest): Promise<CustomerAnalysisResult> {
@@ -39,7 +41,10 @@ export class CustomerAnalysisService {
     const chunks = await this.ragflowClient.retrieveKnowledgeChunks({
       datasetId: this.config.datasetId,
       query: buildRetrievalQuery(customer),
-      topK: this.config.topK
+      topK: this.config.topK,
+      ...(request.user && this.documentService
+        ? { allowedDocumentIds: this.documentService.getAccessibleDocumentIds(request.user) }
+        : {})
     });
     const evidence = chunks.map(toCitation);
     const basis = evidence.length > 0 ? "evidence" : "inferred";

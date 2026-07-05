@@ -1,7 +1,7 @@
-import { BadRequestException } from "@nestjs/common";
+import { BadRequestException, ForbiddenException } from "@nestjs/common";
 import { describe, expect, it, vi } from "vitest";
 import { ProposalController } from "./proposal.controller";
-import type { ProposalService } from "./proposal.service";
+import { ProposalJobAccessDeniedError, type ProposalService } from "./proposal.service";
 
 describe("ProposalController", () => {
   const request = {
@@ -49,11 +49,12 @@ describe("ProposalController", () => {
     expect(service.generate).toHaveBeenCalledWith({
       customerId: "demo-huaxin-manufacturing",
       userId: "authenticated-user",
+      user: request.user,
       humanInputs: undefined
     });
   });
 
-  it("delegates status lookup and retry", async () => {
+  it("delegates status lookup and retry using the authenticated user", async () => {
     const response = {
       jobId: "proposal-job-1",
       status: "failed",
@@ -65,7 +66,7 @@ describe("ProposalController", () => {
       updatedAt: "2026-07-02T00:00:00.000Z"
     };
     const service = {
-      getJobOrThrow: vi.fn().mockReturnValue(response),
+      getJobForUser: vi.fn().mockReturnValue(response),
       retry: vi.fn().mockResolvedValue({
         ...response,
         status: "completed"
@@ -73,12 +74,23 @@ describe("ProposalController", () => {
     } as unknown as ProposalService;
     const controller = new ProposalController(service);
 
-    expect(controller.getJob("proposal-job-1")).toEqual(response);
-    await expect(controller.retry("proposal-job-1")).resolves.toEqual({
+    expect(controller.getJob(request, "proposal-job-1")).toEqual(response);
+    await expect(controller.retry(request, "proposal-job-1")).resolves.toEqual({
       ...response,
       status: "completed"
     });
-    expect(service.getJobOrThrow).toHaveBeenCalledWith("proposal-job-1");
-    expect(service.retry).toHaveBeenCalledWith("proposal-job-1");
+    expect(service.getJobForUser).toHaveBeenCalledWith("proposal-job-1", request.user);
+    expect(service.retry).toHaveBeenCalledWith("proposal-job-1", request.user);
+  });
+
+  it("maps proposal access denial to ForbiddenException", () => {
+    const service = {
+      getJobForUser: vi.fn(() => {
+        throw new ProposalJobAccessDeniedError("proposal-job-1");
+      })
+    } as unknown as ProposalService;
+    const controller = new ProposalController(service);
+
+    expect(() => controller.getJob(request, "proposal-job-1")).toThrow(ForbiddenException);
   });
 });

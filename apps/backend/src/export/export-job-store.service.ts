@@ -12,19 +12,20 @@ export class ExportJobStoreService {
     }
   }
 
-  create(sourcePackageId: string, customerId: string): ExportJob {
+  create(sourcePackageId: string, customerId: string, userId: string): ExportJob {
     const now = new Date().toISOString();
     const job: ExportJob = {
       jobId: createJobId(),
       sourcePackageId,
       customerId,
+      userId,
       status: "failed",
       formats: [],
       createdAt: now,
       updatedAt: now
     };
     this.jobs.set(job.jobId, job);
-    this.sink?.mirrorExportJob(job);
+    this.sink?.mirrorExportJob(job, userId);
     return cloneJob(job);
   }
 
@@ -45,7 +46,7 @@ export class ExportJobStoreService {
       updatedAt: new Date().toISOString()
     };
     this.jobs.set(jobId, updated);
-    this.sink?.mirrorExportJob(updated);
+    this.sink?.mirrorExportJob(updated, updated.userId);
     return cloneJob(updated);
   }
 
@@ -62,7 +63,7 @@ export class ExportJobStoreService {
       updatedAt: new Date().toISOString()
     };
     this.jobs.set(jobId, updated);
-    this.sink?.mirrorExportJob(updated);
+    this.sink?.mirrorExportJob(updated, updated.userId);
     return cloneJob(updated);
   }
 }

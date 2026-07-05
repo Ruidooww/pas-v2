@@ -1,8 +1,9 @@
-import { BadRequestException, Body, Controller, Get, Inject, NotFoundException, Param, Post, Req } from "@nestjs/common";
+import { BadRequestException, Body, Controller, ForbiddenException, Get, Inject, NotFoundException, Param, Post, Req } from "@nestjs/common";
 import type { AuthenticatedUser } from "../auth/auth.types";
 import { EXPORT_SERVICE } from "./export.tokens";
 import {
   ExportFileNotReadyError,
+  ExportJobAccessDeniedError,
   ExportJobNotFoundError,
   ExportService
 } from "./export.service";
@@ -30,9 +31,9 @@ export class ExportController {
   }
 
   @Get(":jobId")
-  getJob(@Param("jobId") jobId: string): ExportJob {
+  getJob(@Req() request: RequestWithUser, @Param("jobId") jobId: string): ExportJob {
     try {
-      return this.exportService.getJobOrThrow(jobId);
+      return this.exportService.getJobForUser(jobId, request.user);
     } catch (error) {
       throw mapExportError(error);
     }
@@ -46,7 +47,7 @@ export class ExportController {
   ): Promise<ExportDownloadResponse> {
     const parsedFormat = parseFormat(format);
     try {
-      return await this.exportService.download(jobId, parsedFormat, request.user.userId);
+      return await this.exportService.download(jobId, parsedFormat, request.user);
     } catch (error) {
       throw mapExportError(error);
     }
@@ -72,6 +73,10 @@ function mapExportError(error: unknown): Error {
 
   if (error instanceof ExportFileNotReadyError) {
     return new BadRequestException(error.message);
+  }
+
+  if (error instanceof ExportJobAccessDeniedError) {
+    return new ForbiddenException(error.message);
   }
 
   return error instanceof Error ? error : new Error("Export request failed");

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Button, ConfigProvider, Layout, Menu, Space, Spin, Typography } from "antd";
 import {
   ApartmentOutlined,
@@ -43,6 +43,8 @@ export function App() {
     clearToken();
     setUser(null);
   };
+  const menuItems = user ? menuItemsFor(user) : [];
+  const activeView = menuItems.some((item) => item.key === view) ? view : "workbench";
 
   return (
     <ConfigProvider
@@ -77,17 +79,9 @@ export function App() {
             <Menu
               className="pas-menu"
               mode="inline"
-              selectedKeys={[view]}
+              selectedKeys={[activeView]}
               onClick={({ key }) => setView(key as View)}
-              items={[
-                { key: "workbench", icon: <FileDoneOutlined />, label: "客户与方案" },
-                { key: "business", icon: <ApartmentOutlined />, label: "V2 业务闭环" },
-                { key: "platform", icon: <ClusterOutlined />, label: "V3 平台化" },
-                { key: "qa", icon: <MessageOutlined />, label: "知识库问答" },
-                { key: "documents", icon: <FileSearchOutlined />, label: "文档运营" },
-                { key: "knowledge", icon: <DatabaseOutlined />, label: "知识块运营" },
-                { key: "templates", icon: <FileTextOutlined />, label: "模板运营" }
-              ]}
+              items={menuItems}
             />
             <div className="pas-sidebar-user">
               <Typography.Text type="secondary">{user.displayName}</Typography.Text>
@@ -97,17 +91,17 @@ export function App() {
           <Layout className="pas-main">
             <Layout.Header className="pas-topbar">
               <Typography.Title className="pas-view-title" level={3}>
-                {view === "qa"
+                {activeView === "qa"
                   ? "知识库问答"
-                  : view === "business"
+                  : activeView === "business"
                     ? "V2 业务闭环"
-                    : view === "platform"
+                    : activeView === "platform"
                       ? "V3 平台化"
-                  : view === "knowledge"
+                  : activeView === "knowledge"
                     ? "知识块运营"
-                    : view === "documents"
+                    : activeView === "documents"
                       ? "文档运营"
-                      : view === "templates"
+                      : activeView === "templates"
                         ? "模板运营"
                         : "客户与方案"}
               </Typography.Title>
@@ -118,17 +112,17 @@ export function App() {
               </Space>
             </Layout.Header>
             <Layout.Content className="pas-content">
-              {view === "qa" ? (
+              {activeView === "qa" ? (
                 <QaPage />
-              ) : view === "business" ? (
+              ) : activeView === "business" ? (
                 <BusinessFlowsPage />
-              ) : view === "platform" ? (
-                <PlatformPage />
-              ) : view === "knowledge" ? (
+              ) : activeView === "platform" ? (
+                <PlatformPage user={user} />
+              ) : activeView === "knowledge" ? (
                 <KnowledgeBlocksPage />
-              ) : view === "documents" ? (
+              ) : activeView === "documents" ? (
                 <KnowledgeDocumentsPage />
-              ) : view === "templates" ? (
+              ) : activeView === "templates" ? (
                 <ExportTemplatesPage />
               ) : (
                 <WorkbenchPage />
@@ -139,4 +133,21 @@ export function App() {
       )}
     </ConfigProvider>
   );
+}
+
+function menuItemsFor(user: PublicUser): Array<{ key: View; icon: ReactNode; label: string }> {
+  const items: Array<{ key: View; icon: ReactNode; label: string }> = [
+    { key: "workbench", icon: <FileDoneOutlined />, label: "客户与方案" },
+    { key: "business", icon: <ApartmentOutlined />, label: "V2 业务闭环" },
+    { key: "qa", icon: <MessageOutlined />, label: "知识库问答" }
+  ];
+  if (user.role === "admin" || user.role === "presales") {
+    items.splice(2, 0, { key: "platform", icon: <ClusterOutlined />, label: "V3 平台化" });
+    items.push(
+      { key: "documents", icon: <FileSearchOutlined />, label: "文档运营" },
+      { key: "knowledge", icon: <DatabaseOutlined />, label: "知识块运营" },
+      { key: "templates", icon: <FileTextOutlined />, label: "模板运营" }
+    );
+  }
+  return items;
 }

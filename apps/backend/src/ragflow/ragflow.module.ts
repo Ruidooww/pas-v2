@@ -1,4 +1,5 @@
 import { Module } from "@nestjs/common";
+import { KnowledgeModule } from "../knowledge/knowledge.module";
 import { createRagflowConfig, type RagflowConfig } from "./ragflow.config";
 import { RagflowClient } from "./ragflow.client";
 import { RagflowController } from "./ragflow.controller";
@@ -6,6 +7,7 @@ import { RAGFLOW_CLIENT, RAGFLOW_CONFIG } from "./ragflow.tokens";
 
 @Module({
   controllers: [RagflowController],
+  imports: [KnowledgeModule],
   providers: [
     {
       provide: RAGFLOW_CONFIG,

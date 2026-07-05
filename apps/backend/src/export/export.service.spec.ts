@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { ExportPackage } from "../proposal/proposal.types";
 import type { FilesService } from "../files/files.service";
 import {
+  ExportJobAccessDeniedError,
   ExportService,
   ExportTemplateFieldMissingError,
   ExportTemplateMissingError
@@ -71,6 +72,7 @@ describe("ExportService", () => {
         jobId: expect.stringMatching(/^export-job-/),
         sourcePackageId: "export-package-1",
         customerId: "demo-huaxin-manufacturing",
+        userId: "user-1",
         status: "completed"
       })
     );
@@ -233,7 +235,7 @@ describe("ExportService", () => {
     const service = createService(createRenderer(), filesService, auditLog);
     const job = await service.createExport({ exportPackage, formats: ["docx"], userId: "user-1" });
 
-    const download = await service.download(job.jobId, "docx", "downloader-1");
+    const download = await service.download(job.jobId, "docx", "user-1");
 
     expect(filesService.readFile).toHaveBeenCalledWith("files/docx-1");
     expect(download).toEqual(
@@ -249,10 +251,29 @@ describe("ExportService", () => {
           event: "export_downloaded",
           jobId: job.jobId,
           format: "docx",
-          userId: "downloader-1"
+          userId: "user-1"
         })
       ])
     );
+  });
+
+  it("allows only the owner or admin to read and download export jobs", async () => {
+    const filesService = createFilesService();
+    const service = createService(createRenderer(), filesService, new ExportAuditLogService());
+    const job = await service.createExport({ exportPackage, formats: ["docx"], userId: "owner-1" });
+
+    expect(service.getJobForUser(job.jobId, createUser("owner-1", "presales"))).toEqual(job);
+    expect(service.getJobForUser(job.jobId, createUser("admin-1", "admin"))).toEqual(job);
+    expect(() => service.getJobForUser(job.jobId, createUser("other-1", "presales"))).toThrow(
+      ExportJobAccessDeniedError
+    );
+    await expect(service.download(job.jobId, "docx", createUser("admin-1", "admin"))).resolves.toEqual(
+      expect.objectContaining({ fileName: "proposal.docx" })
+    );
+    await expect(service.download(job.jobId, "docx", "other-1")).rejects.toBeInstanceOf(
+      ExportJobAccessDeniedError
+    );
+    expect(filesService.readFile).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -263,6 +284,15 @@ function createService(
   templateCatalog?: ExportTemplateCatalog
 ): ExportService {
   return new ExportService(renderer, filesService, new ExportJobStoreService(), auditLog, templateCatalog);
+}
+
+function createUser(userId: string, role: "sales" | "presales" | "admin") {
+  return {
+    userId,
+    username: `${userId}@example.com`,
+    displayName: userId,
+    role
+  };
 }
 
 function createRenderer(

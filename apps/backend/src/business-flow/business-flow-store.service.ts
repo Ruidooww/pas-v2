@@ -1,10 +1,7 @@
 import type { PersistenceSink } from "../persistence/persistence-sink";
-import type { BusinessFlowActor, BusinessFlowKind, BusinessFlowRecord } from "./business-flow.types";
+import type { BusinessFlowActor, BusinessFlowRecord } from "./business-flow.types";
 
 type BusinessFlowPersistenceSink = Pick<PersistenceSink, "mirrorBusinessFlowRecord">;
-
-const salesVisibleKinds: BusinessFlowKind[] = ["opportunity", "channel", "customer_signal"];
-const presalesVisibleKinds: BusinessFlowKind[] = ["meeting", "contract_review", "after_sales", "customer_signal"];
 
 export class BusinessFlowStoreService {
   private readonly records = new Map<string, BusinessFlowRecord>();
@@ -48,13 +45,7 @@ export function canReadRecord(record: BusinessFlowRecord, actor: BusinessFlowAct
   if (actor.role === "admin") {
     return true;
   }
-  if (record.ownerUserId === actor.userId) {
-    return true;
-  }
-  if (actor.role === "sales") {
-    return salesVisibleKinds.includes(record.kind);
-  }
-  return presalesVisibleKinds.includes(record.kind);
+  return record.ownerUserId === actor.userId;
 }
 
 function cloneRecord(record: BusinessFlowRecord): BusinessFlowRecord {

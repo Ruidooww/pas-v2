@@ -38,6 +38,13 @@ export class ExportJobNotFoundError extends Error {
   }
 }
 
+export class ExportJobAccessDeniedError extends Error {
+  constructor(jobId: string) {
+    super(`Export job is not accessible: ${jobId}`);
+    this.name = "ExportJobAccessDeniedError";
+  }
+}
+
 export class ExportFileNotReadyError extends Error {
   constructor(jobId: string, format: ExportFormat) {
     super(`Export file is not ready: ${jobId}/${format}`);

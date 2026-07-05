@@ -4,7 +4,7 @@ import type { CustomerAnalysisService } from "../customer-analysis/customer-anal
 import { ProposalAuditLogService } from "./proposal-audit-log.service";
 import { LocalProposalDraftProvider } from "./proposal-draft.provider";
 import { ProposalJobStoreService } from "./proposal-job-store.service";
-import { ProposalJobRetryRejectedError, ProposalService } from "./proposal.service";
+import { ProposalJobAccessDeniedError, ProposalJobRetryRejectedError, ProposalService } from "./proposal.service";
 import type { ProposalDraftProvider } from "./proposal.types";
 
 const completedAnalysis: CustomerAnalysisResult = {
@@ -65,6 +65,7 @@ describe("ProposalService", () => {
     const job = await service.generate({
       customerId: "demo-huaxin-manufacturing",
       userId: "user-1",
+      user: createUser("user-1", "presales"),
       humanInputs: [
         {
           inputId: "input-1",
@@ -76,7 +77,8 @@ describe("ProposalService", () => {
 
     expect(customerAnalysisService.analyze).toHaveBeenCalledWith({
       customerId: "demo-huaxin-manufacturing",
-      userId: "user-1"
+      userId: "user-1",
+      user: createUser("user-1", "presales")
     });
     expect(job).toEqual(
       expect.objectContaining({
@@ -85,6 +87,7 @@ describe("ProposalService", () => {
         failureReason: undefined
       })
     );
+    expect(job.request).not.toHaveProperty("user");
     expect(job.draft).toEqual(
       expect.objectContaining({
         draftId: expect.stringMatching(/^proposal-draft-/),
@@ -166,9 +169,11 @@ describe("ProposalService", () => {
 
     const failedJob = await service.generate({
       customerId: "demo-huaxin-manufacturing",
-      userId: "user-1"
+      userId: "user-1",
+      user: createUser("user-1", "presales")
     });
-    const retriedJob = await service.retry(failedJob.jobId);
+    const retryActor = createUser("user-1", "sales");
+    const retriedJob = await service.retry(failedJob.jobId, retryActor);
 
     expect(retriedJob.jobId).toBe(failedJob.jobId);
     expect(retriedJob.status).toBe("completed");
@@ -176,7 +181,8 @@ describe("ProposalService", () => {
     expect(customerAnalysisService.analyze).toHaveBeenCalledTimes(2);
     expect(customerAnalysisService.analyze).toHaveBeenNthCalledWith(2, {
       customerId: "demo-huaxin-manufacturing",
-      userId: "user-1"
+      userId: "user-1",
+      user: retryActor
     });
   });
 
@@ -187,10 +193,35 @@ describe("ProposalService", () => {
     const { service } = createService(customerAnalysisService);
 
     const job = await service.generate({
-      customerId: "demo-huaxin-manufacturing"
+      customerId: "demo-huaxin-manufacturing",
+      userId: "user-1",
+      user: createUser("user-1", "presales")
     });
 
-    await expect(service.retry(job.jobId)).rejects.toBeInstanceOf(ProposalJobRetryRejectedError);
+    await expect(service.retry(job.jobId, createUser("user-1", "presales"))).rejects.toBeInstanceOf(
+      ProposalJobRetryRejectedError
+    );
+  });
+
+  it("allows only the owner or admin to read and retry proposal jobs", async () => {
+    const customerAnalysisService = {
+      analyze: vi.fn().mockRejectedValue(new Error("RAGFlow timeout"))
+    } as unknown as CustomerAnalysisService;
+    const { service } = createService(customerAnalysisService);
+
+    const failedJob = await service.generate({
+      customerId: "demo-huaxin-manufacturing",
+      userId: "owner-1"
+    });
+
+    expect(service.getJobForUser(failedJob.jobId, createUser("owner-1", "presales"))).toEqual(failedJob);
+    expect(service.getJobForUser(failedJob.jobId, createUser("admin-1", "admin"))).toEqual(failedJob);
+    expect(() => service.getJobForUser(failedJob.jobId, createUser("other-1", "presales"))).toThrow(
+      ProposalJobAccessDeniedError
+    );
+    await expect(service.retry(failedJob.jobId, createUser("other-1", "presales"))).rejects.toBeInstanceOf(
+      ProposalJobAccessDeniedError
+    );
   });
 
   it("stores failed jobs without an export package when draft provider fails", async () => {
@@ -204,7 +235,8 @@ describe("ProposalService", () => {
 
     const job = await service.generate({
       customerId: "demo-huaxin-manufacturing",
-      userId: "user-1"
+      userId: "user-1",
+      user: createUser("user-1", "presales")
     });
 
     expect(job.status).toBe("failed");
@@ -226,4 +258,13 @@ function createService(
     draftProvider
   );
   return { service, auditLog };
+}
+
+function createUser(userId: string, role: "sales" | "presales" | "admin") {
+  return {
+    userId,
+    username: `${userId}@example.com`,
+    displayName: userId,
+    role
+  };
 }

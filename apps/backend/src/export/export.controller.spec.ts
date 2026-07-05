@@ -46,6 +46,7 @@ describe("ExportController", () => {
       jobId: "export-job-1",
       sourcePackageId: "export-package-1",
       customerId: "demo-huaxin-manufacturing",
+      userId: "authenticated-user",
       status: "completed",
       formats: [],
       createdAt: "2026-07-02T00:00:00.000Z",
@@ -59,7 +60,7 @@ describe("ExportController", () => {
     };
     const service = {
       createExport: vi.fn().mockResolvedValue(job),
-      getJobOrThrow: vi.fn().mockReturnValue(job),
+      getJobForUser: vi.fn().mockReturnValue(job),
       download: vi.fn().mockResolvedValue(download)
     } as unknown as ExportService;
     const controller = new ExportController(service);
@@ -73,13 +74,13 @@ describe("ExportController", () => {
     } as unknown as ExportCreateRequest;
 
     await expect(controller.create(request, body)).resolves.toEqual(job);
-    expect(controller.getJob("export-job-1")).toEqual(job);
+    expect(controller.getJob(request, "export-job-1")).toEqual(job);
     await expect(controller.download(request, "export-job-1", "docx")).resolves.toEqual(download);
     expect(service.createExport).toHaveBeenCalledWith({
       ...body,
       userId: "authenticated-user"
     });
-    expect(service.getJobOrThrow).toHaveBeenCalledWith("export-job-1");
-    expect(service.download).toHaveBeenCalledWith("export-job-1", "docx", "authenticated-user");
+    expect(service.getJobForUser).toHaveBeenCalledWith("export-job-1", request.user);
+    expect(service.download).toHaveBeenCalledWith("export-job-1", "docx", request.user);
   });
 });

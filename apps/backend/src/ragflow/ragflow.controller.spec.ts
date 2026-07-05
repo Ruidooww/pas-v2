@@ -1,9 +1,19 @@
 import { BadRequestException } from "@nestjs/common";
 import { describe, expect, it, vi } from "vitest";
+import type { KnowledgeDocumentService } from "../knowledge/knowledge-document.service";
 import { RagflowController } from "./ragflow.controller";
 import type { RagflowClient } from "./ragflow.client";
 
 describe("RagflowController", () => {
+  const request = {
+    user: {
+      userId: "user-1",
+      username: "user-1@example.com",
+      displayName: "User 1",
+      role: "sales" as const
+    }
+  };
+
   it("delegates health checks to RagflowClient", async () => {
     const client = {
       checkHealth: vi.fn().mockResolvedValue({
@@ -26,11 +36,9 @@ describe("RagflowController", () => {
     const client = {
       retrieveKnowledgeChunks: vi.fn()
     } as unknown as RagflowClient;
-    const controller = new RagflowController(client, {
-      pasKbId: "pas-v0"
-    });
+    const controller = new RagflowController(client, { pasKbId: "pas-v0" }, createDocumentService());
 
-    await expect(controller.search({ query: "  " })).rejects.toBeInstanceOf(BadRequestException);
+    await expect(controller.search(request, { query: "  " })).rejects.toBeInstanceOf(BadRequestException);
     expect(client.retrieveKnowledgeChunks).not.toHaveBeenCalled();
   });
 
@@ -38,11 +46,9 @@ describe("RagflowController", () => {
     const client = {
       retrieveKnowledgeChunks: vi.fn()
     } as unknown as RagflowClient;
-    const controller = new RagflowController(client, {
-      pasKbId: ""
-    });
+    const controller = new RagflowController(client, { pasKbId: "" }, createDocumentService());
 
-    await expect(controller.search({ query: "IP-guard" })).rejects.toBeInstanceOf(BadRequestException);
+    await expect(controller.search(request, { query: "IP-guard" })).rejects.toBeInstanceOf(BadRequestException);
     expect(client.retrieveKnowledgeChunks).not.toHaveBeenCalled();
   });
 
@@ -60,17 +66,39 @@ describe("RagflowController", () => {
     const client = {
       retrieveKnowledgeChunks: vi.fn().mockResolvedValue(chunks)
     } as unknown as RagflowClient;
-    const controller = new RagflowController(client, {
-      pasKbId: "pas-v0"
-    });
+    const documents = createDocumentService(["doc-1"]);
+    const controller = new RagflowController(client, { pasKbId: "pas-v0" }, documents);
 
-    await expect(controller.search({ query: "IP-guard" })).resolves.toEqual({
+    await expect(controller.search(request, { query: "IP-guard" })).resolves.toEqual({
       chunks
     });
+    expect(documents.getAccessibleDocumentIds).toHaveBeenCalledWith(request.user);
     expect(client.retrieveKnowledgeChunks).toHaveBeenCalledWith({
       datasetId: "pas-v0",
       query: "IP-guard",
-      topK: undefined
+      topK: undefined,
+      allowedDocumentIds: ["doc-1"]
+    });
+  });
+
+  it("sends an empty allow-list to RAGFlow when the current user has no accessible documents", async () => {
+    const client = {
+      retrieveKnowledgeChunks: vi.fn().mockResolvedValue([])
+    } as unknown as RagflowClient;
+    const controller = new RagflowController(client, { pasKbId: "pas-v0" }, createDocumentService([]));
+
+    await expect(controller.search(request, { query: "IP-guard" })).resolves.toEqual({ chunks: [] });
+    expect(client.retrieveKnowledgeChunks).toHaveBeenCalledWith({
+      datasetId: "pas-v0",
+      query: "IP-guard",
+      topK: undefined,
+      allowedDocumentIds: []
     });
   });
 });
+
+function createDocumentService(ids: string[] = ["doc-1"]) {
+  return {
+    getAccessibleDocumentIds: vi.fn().mockReturnValue(ids)
+  } as unknown as KnowledgeDocumentService;
+}

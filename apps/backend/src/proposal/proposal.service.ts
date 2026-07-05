@@ -1,3 +1,4 @@
+import type { AuthenticatedUser } from "../auth/auth.types";
 import type { CustomerAnalysisResult } from "../customer-analysis/customer-analysis.types";
 import type { CustomerAnalysisService } from "../customer-analysis/customer-analysis.service";
 import { ProposalAuditLogService } from "./proposal-audit-log.service";
@@ -26,6 +27,13 @@ export class ProposalJobRetryRejectedError extends Error {
   }
 }
 
+export class ProposalJobAccessDeniedError extends Error {
+  constructor(jobId: string) {
+    super(`Proposal job is not accessible: ${jobId}`);
+    this.name = "ProposalJobAccessDeniedError";
+  }
+}
+
 export class ProposalService {
   constructor(
     private readonly customerAnalysisService: CustomerAnalysisService,
@@ -36,7 +44,7 @@ export class ProposalService {
 
   async generate(request: ProposalGenerationRequest): Promise<ProposalJob> {
     const job = this.jobStore.create(normalizeRequest(request));
-    return this.runJob(job.jobId);
+    return this.runJob(job.jobId, request.user);
   }
 
   getJob(jobId: string): ProposalJob | undefined {
@@ -52,17 +60,23 @@ export class ProposalService {
     return job;
   }
 
-  async retry(jobId: string): Promise<ProposalJob> {
+  getJobForUser(jobId: string, actor: AuthenticatedUser): ProposalJob {
     const job = this.getJobOrThrow(jobId);
+    assertCanAccessJob(job, actor);
+    return job;
+  }
+
+  async retry(jobId: string, actor: AuthenticatedUser): Promise<ProposalJob> {
+    const job = this.getJobForUser(jobId, actor);
     if (job.status !== "failed") {
       throw new ProposalJobRetryRejectedError(jobId);
     }
 
     this.jobStore.resetForRetry(jobId);
-    return this.runJob(jobId);
+    return this.runJob(jobId, actor);
   }
 
-  private async runJob(jobId: string): Promise<ProposalJob> {
+  private async runJob(jobId: string, actor?: AuthenticatedUser): Promise<ProposalJob> {
     const job = this.getJobOrThrow(jobId);
     const userId = job.request.userId?.trim() || "anonymous-v0";
     this.auditLog.record({
@@ -78,7 +92,8 @@ export class ProposalService {
       this.appendProgress(jobId, "customer_analysis", "running", "Customer analysis started");
       analysis = await this.customerAnalysisService.analyze({
         customerId: job.request.customerId,
-        userId: job.request.userId
+        userId: job.request.userId,
+        user: actor
       });
       this.appendProgress(jobId, "customer_analysis", "completed", "Customer analysis completed");
     } catch {
@@ -138,6 +153,13 @@ export class ProposalService {
       at: new Date().toISOString()
     });
   }
+}
+
+function assertCanAccessJob(job: ProposalJob, actor: AuthenticatedUser): void {
+  if (actor.role === "admin" || job.request.userId === actor.userId) {
+    return;
+  }
+  throw new ProposalJobAccessDeniedError(job.jobId);
 }
 
 function normalizeRequest(request: ProposalGenerationRequest): ProposalGenerationRequest {

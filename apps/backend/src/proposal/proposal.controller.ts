@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  ForbiddenException,
   Get,
   Inject,
   NotFoundException,
@@ -13,6 +14,7 @@ import type { AuthenticatedUser } from "../auth/auth.types";
 import { PROPOSAL_SERVICE } from "./proposal.tokens";
 import {
   ProposalJobNotFoundError,
+  ProposalJobAccessDeniedError,
   ProposalJobRetryRejectedError,
   ProposalService
 } from "./proposal.service";
@@ -36,23 +38,24 @@ export class ProposalController {
     return this.proposalService.generate({
       customerId,
       userId: request.user.userId,
+      user: request.user,
       humanInputs: body.humanInputs
     });
   }
 
   @Get(":jobId")
-  getJob(@Param("jobId") jobId: string): ProposalJob {
+  getJob(@Req() request: RequestWithUser, @Param("jobId") jobId: string): ProposalJob {
     try {
-      return this.proposalService.getJobOrThrow(jobId);
+      return this.proposalService.getJobForUser(jobId, request.user);
     } catch (error) {
       throw mapProposalError(error);
     }
   }
 
   @Post(":jobId/retry")
-  async retry(@Param("jobId") jobId: string): Promise<ProposalJob> {
+  async retry(@Req() request: RequestWithUser, @Param("jobId") jobId: string): Promise<ProposalJob> {
     try {
-      return await this.proposalService.retry(jobId);
+      return await this.proposalService.retry(jobId, request.user);
     } catch (error) {
       throw mapProposalError(error);
     }
@@ -66,6 +69,10 @@ function mapProposalError(error: unknown): Error {
 
   if (error instanceof ProposalJobRetryRejectedError) {
     return new BadRequestException(error.message);
+  }
+
+  if (error instanceof ProposalJobAccessDeniedError) {
+    return new ForbiddenException(error.message);
   }
 
   return error instanceof Error ? error : new Error("Proposal request failed");

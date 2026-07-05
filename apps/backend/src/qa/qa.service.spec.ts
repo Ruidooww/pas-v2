@@ -101,7 +101,7 @@ describe("QaService", () => {
     });
   });
 
-  it("passes accessible document ids to RAGFlow when the document catalog is populated", async () => {
+  it("passes accessible document ids to RAGFlow for authenticated users", async () => {
     const ragflowClient = {
       retrieveKnowledgeChunks: vi.fn().mockResolvedValue([
         {
@@ -115,7 +115,6 @@ describe("QaService", () => {
       ])
     } as unknown as RagflowClient;
     const documentService = {
-      hasDocuments: vi.fn().mockReturnValue(true),
       getAccessibleDocumentIds: vi.fn().mockReturnValue(["doc-allowed"])
     } as unknown as KnowledgeDocumentService;
     const service = new QaService(ragflowClient, new LocalQaDraftProvider(), new QaAuditLogService(), {
@@ -131,6 +130,28 @@ describe("QaService", () => {
       query: "如何保护研发图纸？",
       topK: 3,
       allowedDocumentIds: ["doc-allowed"]
+    });
+  });
+
+  it("fails closed with an empty allow-list when the user has no accessible documents", async () => {
+    const ragflowClient = {
+      retrieveKnowledgeChunks: vi.fn().mockResolvedValue([])
+    } as unknown as RagflowClient;
+    const documentService = {
+      getAccessibleDocumentIds: vi.fn().mockReturnValue([])
+    } as unknown as KnowledgeDocumentService;
+    const service = new QaService(ragflowClient, new LocalQaDraftProvider(), new QaAuditLogService(), {
+      datasetId: "qa-v0",
+      topK: 3
+    }, documentService);
+
+    await service.ask({ query: "如何保护研发图纸？", userId: "user-1", user: createUser("sales") });
+
+    expect(ragflowClient.retrieveKnowledgeChunks).toHaveBeenCalledWith({
+      datasetId: "qa-v0",
+      query: "如何保护研发图纸？",
+      topK: 3,
+      allowedDocumentIds: []
     });
   });
 
