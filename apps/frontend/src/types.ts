@@ -301,3 +301,165 @@ export type BusinessMetrics = {
     value: number;
   }>;
 };
+
+export type PlatformChannelKind = "web" | "feishu" | "wecom" | "qq" | "wechat" | "mobile_h5";
+
+export type PlatformDashboard = {
+  filters: Record<string, string | undefined>;
+  cards: Array<{
+    key: string;
+    title: string;
+    value: number;
+    unit?: string;
+    trend?: "up" | "flat" | "down";
+  }>;
+  drilldowns: {
+    salesFunnel: Array<{ stage: string; count: number }>;
+    channelContribution: Array<{ channel: string; count: number }>;
+    productMix: Array<{ product: string; count: number }>;
+    knowledgeUsage: Array<{ metric: string; value: number }>;
+    proposalConversion: Array<{ metric: string; value: number }>;
+  };
+  methodology: Array<{
+    key: string;
+    description: string;
+  }>;
+};
+
+export type PlatformChannel = {
+  channelId: string;
+  kind: PlatformChannelKind;
+  name: string;
+  status: "active" | "adapter_pending" | "disabled";
+  identityMapping: "pas_user" | "external_mapping" | "pending";
+  pendingInputs: string[];
+};
+
+export type PlatformSession = {
+  sessionId: string;
+  channel: PlatformChannelKind;
+  sourceRef: string;
+  identity: {
+    userId: string;
+    role: PublicUser["role"];
+    externalUserId: string;
+    mappingStatus: "mapped" | "pending_external_mapping";
+  };
+  actions: Array<{
+    type: "answer_knowledge" | "create_deliverable_task" | "archive_session";
+    status: "completed" | "pending_external_adapter";
+    summary: string;
+    pendingInputs: string[];
+  }>;
+  notification?: {
+    targetChannel: PlatformChannelKind;
+    status: "queued" | "sent" | "pending_external_adapter";
+    summary: string;
+  };
+  createdAt: string;
+};
+
+export type PlatformAgent = {
+  agentId: string;
+  name: string;
+  purpose: string;
+  status: "active" | "disabled";
+  allowedScopes: string[];
+  ownerRole: PublicUser["role"];
+};
+
+export type PlatformSkill = {
+  skillId: string;
+  name: string;
+  description?: string;
+  status: "pending_approval" | "approved" | "rejected";
+  requestedScopes: string[];
+  scan: {
+    riskLevel: "low" | "medium" | "high";
+    findings: string[];
+  };
+};
+
+export type PlatformWorkflow = {
+  workflowId: string;
+  name: string;
+  trigger: string;
+  status: "active" | "disabled";
+  complexity: "simple" | "controlled";
+  agentIds: string[];
+  skillIds: string[];
+};
+
+export type PlatformProduct = {
+  productId: string;
+  name: string;
+  version: string;
+  ownerTeam: string;
+  status: "enabled" | "disabled";
+  knowledgePartitionIds?: string[];
+  proposalTemplateIds?: string[];
+  exportTemplateIds?: string[];
+  webhookEvents?: string[];
+  apiVersion?: string;
+  pluginDependencies?: string[];
+  pendingInputs: string[];
+};
+
+export type PlatformCipSignal = {
+  signalId: string;
+  customerId: string;
+  customerName: string;
+  type:
+    | "silent_customer"
+    | "competitor_involved"
+    | "personnel_change"
+    | "purchase_window"
+    | "security_incident"
+    | "renewal_expansion";
+  severity: "medium" | "high";
+  suggestion: string;
+};
+
+export type PlatformTenant = {
+  tenantId: string;
+  organizationId: string;
+  mode: "single_org" | "multi_org_reserved";
+  isolationFields: string[];
+  billingReserved: boolean;
+  singleOrgCompatible: boolean;
+};
+
+export type PlatformSecurityReport = {
+  totalEvents: number;
+  eventsByType: Record<string, number>;
+  sensitiveAlerts: Array<{
+    auditId: string;
+    type: string;
+    severity: "info" | "warning" | "critical";
+    summary: string;
+  }>;
+  permissionBoundaryChecks: Array<{
+    key: string;
+    status: "passed" | "pending_external_policy";
+    summary: string;
+  }>;
+};
+
+export type PlatformOverview = {
+  dashboard: PlatformDashboard;
+  channels: PlatformChannel[];
+  recentSessions: PlatformSession[];
+  agents: PlatformAgent[];
+  skills: PlatformSkill[];
+  workflows: PlatformWorkflow[];
+  products: PlatformProduct[];
+  cipSignals: PlatformCipSignal[];
+  tenant: PlatformTenant;
+  security: PlatformSecurityReport;
+  trialReadiness: Array<{
+    area: string;
+    status: "code_ready" | "business_input_required";
+    note: string;
+  }>;
+  updatedAt: string;
+};

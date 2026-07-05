@@ -7,6 +7,7 @@ import type { ExportJob } from "../export/export.types";
 import type { ExportTemplate } from "../export/export-template.types";
 import type { FeedbackRecord } from "../feedback/feedback.types";
 import type { KnowledgeBlock, KnowledgeDocument } from "../knowledge/knowledge.types";
+import type { PlatformState } from "../platform/platform.types";
 import type { ProposalJob } from "../proposal/proposal.types";
 
 // V0 persistence strategy: the synchronous in-memory stores stay the hot
@@ -251,6 +252,27 @@ export class PersistenceSink {
     if (!this.client) return [];
     const rows = await this.client.businessFlowRecordSnapshot.findMany({ orderBy: { createdAt: "asc" } });
     return rows.map((row) => row.data as unknown as BusinessFlowRecord);
+  }
+
+  mirrorPlatformState(state: PlatformState): void {
+    if (!this.client) return;
+    const data = {
+      data: state as unknown as object,
+      updatedAt: new Date(state.updatedAt)
+    };
+    this.client.platformStateSnapshot
+      .upsert({
+        where: { snapshotId: state.stateId },
+        create: { snapshotId: state.stateId, ...data },
+        update: data
+      })
+      .catch((error) => this.logMirrorFailure("platform_state", state.stateId, error));
+  }
+
+  async loadPlatformState(): Promise<PlatformState | undefined> {
+    if (!this.client) return undefined;
+    const row = await this.client.platformStateSnapshot.findFirst({ orderBy: { updatedAt: "desc" } });
+    return row ? (row.data as unknown as PlatformState) : undefined;
   }
 
   async onModuleDestroy(): Promise<void> {

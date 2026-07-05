@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Button, ConfigProvider, Layout, Menu, Space, Spin, Typography } from "antd";
 import {
   ApartmentOutlined,
+  ClusterOutlined,
   DatabaseOutlined,
   FileDoneOutlined,
   FileSearchOutlined,
@@ -14,12 +15,13 @@ import { ExportTemplatesPage } from "./pages/ExportTemplatesPage";
 import { LoginPage } from "./pages/LoginPage";
 import { KnowledgeBlocksPage } from "./pages/KnowledgeBlocksPage";
 import { KnowledgeDocumentsPage } from "./pages/KnowledgeDocumentsPage";
+import { PlatformPage } from "./pages/PlatformPage";
 import { QaPage } from "./pages/QaPage";
 import { WorkbenchPage } from "./pages/WorkbenchPage";
 import type { PublicUser } from "./types";
 import "./styles.css";
 
-type View = "qa" | "workbench" | "business" | "knowledge" | "documents" | "templates";
+type View = "qa" | "workbench" | "business" | "platform" | "knowledge" | "documents" | "templates";
 
 export function App() {
   const [user, setUser] = useState<PublicUser | null>(null);
@@ -80,6 +82,7 @@ export function App() {
               items={[
                 { key: "workbench", icon: <FileDoneOutlined />, label: "客户与方案" },
                 { key: "business", icon: <ApartmentOutlined />, label: "V2 业务闭环" },
+                { key: "platform", icon: <ClusterOutlined />, label: "V3 平台化" },
                 { key: "qa", icon: <MessageOutlined />, label: "知识库问答" },
                 { key: "documents", icon: <FileSearchOutlined />, label: "文档运营" },
                 { key: "knowledge", icon: <DatabaseOutlined />, label: "知识块运营" },
@@ -98,6 +101,8 @@ export function App() {
                   ? "知识库问答"
                   : view === "business"
                     ? "V2 业务闭环"
+                    : view === "platform"
+                      ? "V3 平台化"
                   : view === "knowledge"
                     ? "知识块运营"
                     : view === "documents"
@@ -117,6 +122,8 @@ export function App() {
                 <QaPage />
               ) : view === "business" ? (
                 <BusinessFlowsPage />
+              ) : view === "platform" ? (
+                <PlatformPage />
               ) : view === "knowledge" ? (
                 <KnowledgeBlocksPage />
               ) : view === "documents" ? (

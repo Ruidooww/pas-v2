@@ -135,3 +135,12 @@ model BusinessFlowRecordSnapshot {
   @@index([sourceSystem])
   @@map("business_flow_record_snapshots")
 }
+
+model PlatformStateSnapshot {
+  snapshotId String   @id @map("snapshot_id")
+  data       Json
+  updatedAt  DateTime @map("updated_at")
+
+  @@index([updatedAt])
+  @@map("platform_state_snapshots")
+}

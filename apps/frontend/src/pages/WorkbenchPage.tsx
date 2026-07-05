@@ -138,7 +138,7 @@ export function WorkbenchPage() {
   const draft = proposalJob?.draft;
 
   return (
-    <Space className="pas-page-stack" direction="vertical" size="middle">
+    <Space className="pas-page-stack" orientation="vertical" size="middle">
       <Card className="pas-panel pas-toolbar-panel" title="选择客户">
         <Space className="workbench-toolbar" wrap>
           <Select
@@ -197,7 +197,7 @@ export function WorkbenchPage() {
         <Card className="pas-panel" title="方案生成进度">
           <Steps
             size="small"
-            direction="vertical"
+            orientation="vertical"
             items={proposalJob.progress.map((record) => ({
               title: record.message,
               status:
