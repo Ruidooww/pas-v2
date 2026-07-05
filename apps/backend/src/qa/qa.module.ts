@@ -1,4 +1,7 @@
 import { Module } from "@nestjs/common";
+import { KnowledgeModule } from "../knowledge/knowledge.module";
+import { KNOWLEDGE_DOCUMENT_SERVICE } from "../knowledge/knowledge.tokens";
+import type { KnowledgeDocumentService } from "../knowledge/knowledge-document.service";
 import { RagflowModule } from "../ragflow/ragflow.module";
 import { RAGFLOW_CLIENT } from "../ragflow/ragflow.tokens";
 import type { RagflowClient } from "../ragflow/ragflow.client";
@@ -12,7 +15,7 @@ import type { QaConfig, QaDraftProvider } from "./qa.types";
 
 @Module({
   controllers: [QaController],
-  imports: [RagflowModule],
+  imports: [RagflowModule, KnowledgeModule],
   providers: [
     {
       provide: QA_CONFIG,
@@ -32,9 +35,10 @@ import type { QaConfig, QaDraftProvider } from "./qa.types";
         ragflowClient: RagflowClient,
         draftProvider: QaDraftProvider,
         auditLog: QaAuditLogService,
-        config: QaConfig
-      ): QaService => new QaService(ragflowClient, draftProvider, auditLog, config),
-      inject: [RAGFLOW_CLIENT, QA_DRAFT_PROVIDER, QA_AUDIT_LOG, QA_CONFIG]
+        config: QaConfig,
+        documents: KnowledgeDocumentService
+      ): QaService => new QaService(ragflowClient, draftProvider, auditLog, config, documents),
+      inject: [RAGFLOW_CLIENT, QA_DRAFT_PROVIDER, QA_AUDIT_LOG, QA_CONFIG, KNOWLEDGE_DOCUMENT_SERVICE]
     }
   ],
   exports: [QA_SERVICE]

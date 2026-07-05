@@ -87,6 +87,7 @@ Knowledge document operations endpoints:
 - `POST /api/internal/knowledge-documents/:documentId/reparse`
 
 Document operations store PAS-side metadata for documents already managed in RAGFlow: parse status, chunk count, hit count, bad feedback count, tags, and enabled state. Reparse requests are tracked as PAS operations metadata; they do not mutate RAGFlow volumes or datasets.
+Document visibility supports public, role-scoped, and user-scoped access. When document metadata exists, QA retrieval passes the current user's accessible document ids to the RAGFlow adapter and chunks outside that allow-list are filtered before answer drafting.
 
 Feedback endpoints:
 

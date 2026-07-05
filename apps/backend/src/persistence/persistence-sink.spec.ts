@@ -123,6 +123,7 @@ function createDocument(): KnowledgeDocument {
     hitCount: 0,
     badFeedbackCount: 0,
     tags: ["IP-Guard"],
+    visibility: { scope: "public" },
     ownerUserId: "admin-1",
     createdAt: "2026-07-05T00:00:00.000Z",
     updatedAt: "2026-07-05T00:00:00.000Z"

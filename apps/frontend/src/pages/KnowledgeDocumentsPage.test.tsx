@@ -23,6 +23,7 @@ describe("KnowledgeDocumentsPage", () => {
             hitCount: 7,
             badFeedbackCount: 1,
             tags: ["IP-Guard", "manual"],
+            visibility: { scope: "public" },
             ownerUserId: "admin-1",
             createdAt: "2026-07-05T00:00:00.000Z",
             updatedAt: "2026-07-05T00:00:00.000Z"
@@ -40,6 +41,7 @@ describe("KnowledgeDocumentsPage", () => {
     expect(screen.getByText("42 chunks")).toBeInTheDocument();
     expect(screen.getByText("7 hits")).toBeInTheDocument();
     expect(screen.getByText("1 bad feedback")).toBeInTheDocument();
+    expect(screen.getByText("public")).toBeInTheDocument();
     expect(fetch).toHaveBeenCalledWith(
       "/api/internal/knowledge-documents",
       expect.objectContaining({

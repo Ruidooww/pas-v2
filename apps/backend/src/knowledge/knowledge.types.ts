@@ -1,4 +1,5 @@
 import type { QaCitation } from "../qa/qa.types";
+import type { UserRole } from "../auth/auth.types";
 
 export type KnowledgeBlockStatus = "draft" | "pending_review" | "published" | "rejected" | "disabled" | "expired";
 
@@ -46,6 +47,19 @@ export type KnowledgeDocumentParseStatus = "pending" | "parsing" | "done" | "fai
 
 export type KnowledgeDocumentMaterialType = "pdf" | "pptx" | "docx" | "xlsx" | "image" | "scan" | "other";
 
+export type KnowledgeDocumentVisibility =
+  | {
+      scope: "public";
+    }
+  | {
+      scope: "roles";
+      roles: UserRole[];
+    }
+  | {
+      scope: "users";
+      userIds: string[];
+    };
+
 export type UpsertKnowledgeDocumentRequest = {
   documentId: string;
   title: string;
@@ -57,6 +71,7 @@ export type UpsertKnowledgeDocumentRequest = {
   hitCount?: number;
   badFeedbackCount?: number;
   tags?: string[];
+  visibility?: KnowledgeDocumentVisibility;
   failureReason?: string;
 };
 
@@ -66,6 +81,7 @@ export type KnowledgeDocument = UpsertKnowledgeDocumentRequest & {
   hitCount: number;
   badFeedbackCount: number;
   tags: string[];
+  visibility: KnowledgeDocumentVisibility;
   ownerUserId: string;
   createdAt: string;
   updatedAt: string;

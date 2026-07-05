@@ -77,6 +77,26 @@ describe("KnowledgeDocumentService", () => {
     expect(() => service.requestReparse(createUser("sales"), "doc-1")).toThrow(ForbiddenException);
     expect(() => service.getDocument(createUser("admin"), "missing-doc")).toThrow(NotFoundException);
   });
+
+  it("enforces document visibility and reports accessible document ids", () => {
+    const service = new KnowledgeDocumentService(new AuditLogService());
+    service.seed([
+      createDocument("doc-public", "done", true),
+      { ...createDocument("doc-admin", "done", true), visibility: { scope: "roles", roles: ["admin"] } },
+      { ...createDocument("doc-sales", "done", true), visibility: { scope: "roles", roles: ["sales"] } },
+      { ...createDocument("doc-user", "done", true), visibility: { scope: "users", userIds: ["presales-1"] } },
+      { ...createDocument("doc-disabled", "done", false), visibility: { scope: "public" } }
+    ]);
+
+    expect(service.hasDocuments()).toBe(true);
+    expect(service.getAccessibleDocumentIds(createUser("sales"))).toEqual(["doc-public", "doc-sales"]);
+    expect(service.getAccessibleDocumentIds(createUser("presales"))).toEqual(["doc-public", "doc-user"]);
+    expect(service.listDocuments(createUser("sales")).map((document) => document.documentId)).toEqual([
+      "doc-public",
+      "doc-sales"
+    ]);
+    expect(() => service.getDocument(createUser("sales"), "doc-admin")).toThrow(ForbiddenException);
+  });
 });
 
 function createRequest(): UpsertKnowledgeDocumentRequest {
@@ -109,6 +129,7 @@ function createDocument(
     hitCount: 0,
     badFeedbackCount: 0,
     tags: ["IP-Guard"],
+    visibility: { scope: "public" },
     ownerUserId: "admin-1",
     createdAt: "2026-07-05T00:00:00.000Z",
     updatedAt: "2026-07-05T00:00:00.000Z"

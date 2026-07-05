@@ -164,6 +164,10 @@ export type KnowledgeDocument = {
   hitCount: number;
   badFeedbackCount: number;
   tags: string[];
+  visibility:
+    | { scope: "public" }
+    | { scope: "roles"; roles: PublicUser["role"][] }
+    | { scope: "users"; userIds: string[] };
   ownerUserId: string;
   createdAt: string;
   updatedAt: string;

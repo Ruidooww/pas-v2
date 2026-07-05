@@ -10,12 +10,13 @@ import type {
 
 type NormalizedKnowledgeDocumentInput = Omit<
   UpsertKnowledgeDocumentRequest,
-  "badFeedbackCount" | "chunkCount" | "hitCount" | "tags"
+  "badFeedbackCount" | "chunkCount" | "hitCount" | "tags" | "visibility"
 > & {
   badFeedbackCount: number;
   chunkCount: number;
   hitCount: number;
   tags: string[];
+  visibility: KnowledgeDocument["visibility"];
 };
 
 export class KnowledgeDocumentService {
@@ -32,6 +33,17 @@ export class KnowledgeDocumentService {
         this.documents.set(document.documentId, cloneDocument(document));
       }
     }
+  }
+
+  hasDocuments(): boolean {
+    return this.documents.size > 0;
+  }
+
+  getAccessibleDocumentIds(user: AuthenticatedUser): string[] {
+    return [...this.documents.values()]
+      .filter((document) => document.enabled && document.parseStatus === "done")
+      .filter((document) => isVisibleToUser(user, document))
+      .map((document) => document.documentId);
   }
 
   upsertDocument(user: AuthenticatedUser, request: UpsertKnowledgeDocumentRequest): KnowledgeDocument {
@@ -54,6 +66,7 @@ export class KnowledgeDocumentService {
   listDocuments(user: AuthenticatedUser, filter: KnowledgeDocumentListFilter = {}): KnowledgeDocument[] {
     return [...this.documents.values()]
       .filter((document) => (user.role === "sales" ? document.enabled && document.parseStatus === "done" : true))
+      .filter((document) => isVisibleToUser(user, document))
       .filter((document) => (filter.parseStatus ? document.parseStatus === filter.parseStatus : true))
       .filter((document) => (filter.enabled === undefined ? true : document.enabled === filter.enabled))
       .filter((document) => (filter.product ? document.product === filter.product : true))
@@ -68,6 +81,9 @@ export class KnowledgeDocumentService {
     }
     if (user.role === "sales" && (!document.enabled || document.parseStatus !== "done")) {
       throw new ForbiddenException("enabled parsed document is required");
+    }
+    if (!isVisibleToUser(user, document)) {
+      throw new ForbiddenException("document is not visible to user");
     }
     return cloneDocument(document);
   }
@@ -147,6 +163,7 @@ function normalizeRequest(request: UpsertKnowledgeDocumentRequest): NormalizedKn
     hitCount: Math.max(0, request.hitCount ?? 0),
     badFeedbackCount: Math.max(0, request.badFeedbackCount ?? 0),
     tags: normalizeTags(request.tags ?? []),
+    visibility: request.visibility ?? { scope: "public" },
     failureReason: request.failureReason
   };
 }
@@ -164,10 +181,26 @@ function assertOperator(user: AuthenticatedUser): void {
 function cloneDocument(document: KnowledgeDocument): KnowledgeDocument {
   return {
     ...document,
-    tags: [...document.tags]
+    tags: [...document.tags],
+    visibility:
+      document.visibility.scope === "roles"
+        ? { scope: "roles", roles: [...document.visibility.roles] }
+        : document.visibility.scope === "users"
+          ? { scope: "users", userIds: [...document.visibility.userIds] }
+          : { scope: "public" }
   };
 }
 
 function nowIso(): string {
   return new Date().toISOString();
+}
+
+function isVisibleToUser(user: AuthenticatedUser, document: KnowledgeDocument): boolean {
+  if (document.visibility.scope === "public") {
+    return true;
+  }
+  if (document.visibility.scope === "roles") {
+    return document.visibility.roles.includes(user.role);
+  }
+  return document.visibility.userIds.includes(user.userId);
 }

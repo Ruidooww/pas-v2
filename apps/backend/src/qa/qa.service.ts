@@ -1,3 +1,4 @@
+import type { KnowledgeDocumentService } from "../knowledge/knowledge-document.service";
 import type { RagflowClient } from "../ragflow/ragflow.client";
 import type { KnowledgeChunk } from "../ragflow/knowledge-chunk";
 import { QaAuditLogService } from "./qa-audit-log.service";
@@ -8,7 +9,8 @@ export class QaService {
     private readonly ragflowClient: RagflowClient,
     private readonly draftProvider: QaDraftProvider,
     private readonly auditLog: QaAuditLogService,
-    private readonly config: QaConfig
+    private readonly config: QaConfig,
+    private readonly documentService?: KnowledgeDocumentService
   ) {}
 
   async ask(request: QaAskRequest): Promise<QaAskResponse> {
@@ -26,10 +28,15 @@ export class QaService {
 
     let chunks: KnowledgeChunk[];
     try {
+      const allowedDocumentIds =
+        request.user && this.documentService?.hasDocuments()
+          ? this.documentService.getAccessibleDocumentIds(request.user)
+          : undefined;
       chunks = await this.ragflowClient.retrieveKnowledgeChunks({
         datasetId: this.config.datasetId,
         query,
-        topK: request.topK ?? this.config.topK
+        topK: request.topK ?? this.config.topK,
+        ...(allowedDocumentIds ? { allowedDocumentIds } : {})
       });
     } catch {
       this.auditLog.record({

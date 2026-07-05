@@ -43,7 +43,8 @@ describe("QaController", () => {
     ).resolves.toEqual(response);
     expect(service.ask).toHaveBeenCalledWith({
       query: "How does IP-Guard protect drawings?",
-      userId: "authenticated-user"
+      userId: "authenticated-user",
+      user: request.user
     });
   });
 });

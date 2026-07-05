@@ -21,7 +21,8 @@ export class QaController {
 
     return this.qaService.ask({
       query,
-      userId: request.user.userId
+      userId: request.user.userId,
+      user: request.user
     });
   }
 }

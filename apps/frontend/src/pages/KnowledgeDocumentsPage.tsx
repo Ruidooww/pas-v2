@@ -72,6 +72,7 @@ export function KnowledgeDocumentsPage() {
           materialType: form.materialType,
           sourceName: form.sourceName.trim(),
           parseStatus: "pending",
+          visibility: { scope: "public" },
           tags: form.tags
             .split(/[,\s，]+/)
             .map((tag) => tag.trim())
@@ -167,6 +168,7 @@ export function KnowledgeDocumentsPage() {
                     <Tag color={document.enabled ? "green" : "red"}>
                       {document.enabled ? "enabled" : "disabled"}
                     </Tag>
+                    <Tag>{document.visibility.scope}</Tag>
                     <Typography.Text type="secondary">
                       {document.product} / {document.materialType} / {document.sourceName}
                     </Typography.Text>

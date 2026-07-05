@@ -30,6 +30,7 @@ export type RetrieveKnowledgeChunksRequest = {
   datasetId: string;
   query: string;
   topK?: number;
+  allowedDocumentIds?: string[];
 };
 
 export class RagflowClient {
@@ -81,14 +82,24 @@ export class RagflowClient {
 
     const query = params.query.trim();
     const topK = params.topK ?? 5;
-    const chunks = await this.retrieveWithQuery(params.datasetId, query, topK);
+    if (params.allowedDocumentIds && params.allowedDocumentIds.length === 0) {
+      return [];
+    }
+
+    const chunks = filterAllowedDocuments(
+      await this.retrieveWithQuery(params.datasetId, query, topK),
+      params.allowedDocumentIds
+    );
     if (chunks.length > 0 || !this.shouldRetryWithFallback(query)) {
       return chunks;
     }
 
-    return this.retrieveWithQuery(params.datasetId, `${this.config.fallbackQueryPrefix} ${query}`, topK, {
-      fallbackTuning: true
-    });
+    return filterAllowedDocuments(
+      await this.retrieveWithQuery(params.datasetId, `${this.config.fallbackQueryPrefix} ${query}`, topK, {
+        fallbackTuning: true
+      }),
+      params.allowedDocumentIds
+    );
   }
 
   private async retrieveWithQuery(
@@ -157,6 +168,14 @@ function extractChunks(payload: unknown): Record<string, unknown>[] {
   const chunks = Array.isArray(data.chunks) ? data.chunks : [];
 
   return chunks.filter(isRecord);
+}
+
+function filterAllowedDocuments(chunks: KnowledgeChunk[], allowedDocumentIds: string[] | undefined): KnowledgeChunk[] {
+  if (!allowedDocumentIds) {
+    return chunks;
+  }
+  const allowed = new Set(allowedDocumentIds);
+  return chunks.filter((chunk) => allowed.has(chunk.documentId));
 }
 
 function mapKnowledgeChunk(chunk: Record<string, unknown>): KnowledgeChunk | undefined {

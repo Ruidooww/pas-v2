@@ -1,8 +1,10 @@
 import type { KnowledgeChunk } from "../ragflow/knowledge-chunk";
+import type { AuthenticatedUser } from "../auth/auth.types";
 
 export type QaAskRequest = {
   query: string;
   userId?: string;
+  user?: AuthenticatedUser;
   topK?: number;
 };
 
