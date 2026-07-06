@@ -8,7 +8,8 @@ export type AuditAction =
   | "proposal_generation"
   | "export"
   | "download"
-  | "feedback";
+  | "feedback"
+  | "menu_configuration";
 
 export type AuditResult = "success" | "failure";
 

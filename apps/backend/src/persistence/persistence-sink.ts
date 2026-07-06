@@ -7,6 +7,7 @@ import type { ExportJob } from "../export/export.types";
 import type { ExportTemplate } from "../export/export-template.types";
 import type { FeedbackRecord } from "../feedback/feedback.types";
 import type { KnowledgeBlock, KnowledgeDocument } from "../knowledge/knowledge.types";
+import type { MenuState } from "../menu/menu.types";
 import type { PlatformState } from "../platform/platform.types";
 import type { ProposalJob } from "../proposal/proposal.types";
 
@@ -273,6 +274,27 @@ export class PersistenceSink {
     if (!this.client) return undefined;
     const row = await this.client.platformStateSnapshot.findFirst({ orderBy: { updatedAt: "desc" } });
     return row ? (row.data as unknown as PlatformState) : undefined;
+  }
+
+  mirrorMenuState(state: MenuState): void {
+    if (!this.client) return;
+    const data = {
+      data: state as unknown as object,
+      updatedAt: new Date(state.updatedAt)
+    };
+    this.client.menuStateSnapshot
+      .upsert({
+        where: { snapshotId: state.stateId },
+        create: { snapshotId: state.stateId, ...data },
+        update: data
+      })
+      .catch((error) => this.logMirrorFailure("menu_state", state.stateId, error));
+  }
+
+  async loadMenuState(): Promise<MenuState | undefined> {
+    if (!this.client) return undefined;
+    const row = await this.client.menuStateSnapshot.findFirst({ orderBy: { updatedAt: "desc" } });
+    return row ? (row.data as unknown as MenuState) : undefined;
   }
 
   async onModuleDestroy(): Promise<void> {
