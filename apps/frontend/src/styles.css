@@ -114,6 +114,11 @@ body {
   border-inline-end: 0 !important;
 }
 
+.pas-menu.ant-menu:focus,
+.pas-menu.ant-menu:focus-visible {
+  outline: none;
+}
+
 .pas-menu .ant-menu-item,
 .pas-menu .ant-menu-submenu-title {
   width: auto;
@@ -429,12 +434,47 @@ body {
   padding: 0;
 }
 
-.menu-config-table .ant-table {
-  background: transparent;
+.menu-config-secondary-list {
+  display: grid;
 }
 
-.menu-config-table .ant-table-cell {
-  vertical-align: middle;
+.menu-config-secondary-item {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border-bottom: 1px solid #ededf1;
+}
+
+.menu-config-secondary-item:last-child {
+  border-bottom: 0;
+}
+
+.menu-config-secondary-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.menu-config-secondary-controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  align-items: center;
+}
+
+.menu-config-secondary-controls .ant-input-number,
+.menu-config-secondary-controls .ant-btn {
+  width: 100%;
+}
+
+.menu-config-secondary-controls .ant-select {
+  min-width: 0;
+}
+
+.menu-config-secondary-controls .ant-tag {
+  justify-self: start;
+  margin-inline-end: 0;
 }
 
 .menu-config-rail .ant-typography {
@@ -502,6 +542,10 @@ body {
   }
 
   .menu-config-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .menu-config-secondary-controls {
     grid-template-columns: 1fr;
   }
 

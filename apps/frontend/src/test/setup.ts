@@ -29,3 +29,7 @@ if (typeof window !== "undefined" && !window.ResizeObserver) {
     }
   };
 }
+
+if (typeof window !== "undefined") {
+  window.scrollTo = () => undefined;
+}

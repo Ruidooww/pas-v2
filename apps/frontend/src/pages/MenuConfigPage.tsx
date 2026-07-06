@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Alert, Button, Card, Input, InputNumber, Select, Space, Spin, Switch, Table, Tag, Typography } from "antd";
-import type { ColumnsType } from "antd/es/table";
+import { Alert, Button, Card, Input, InputNumber, Select, Space, Spin, Switch, Tag, Typography } from "antd";
 import { api } from "../api";
 import type {
   MenuConfiguration,
@@ -50,90 +49,6 @@ export function MenuConfigPage() {
     return selectedPrimary.children.map((child) => toRow(child, findOverride(config.overrides, selectedPrimary.key, child.key), drafts));
   }, [config, drafts, selectedPrimary]);
 
-  const columns: ColumnsType<MenuConfigRow> = [
-    {
-      title: "二级菜单",
-      dataIndex: "label",
-      render: (_, row) => (
-        <Space orientation="vertical" size={2}>
-          <Typography.Text strong>{row.alias || row.label}</Typography.Text>
-          <Typography.Text type="secondary">{row.route}</Typography.Text>
-        </Space>
-      )
-    },
-    {
-      title: "显示",
-      width: 88,
-      render: (_, row) => (
-        <Switch
-          aria-label={row.label}
-          checked={row.visible}
-          loading={savingKey === row.key}
-          onChange={(visible) => void saveRow(row, { visible })}
-        />
-      )
-    },
-    {
-      title: "别名",
-      width: 170,
-      render: (_, row) => (
-        <Input
-          aria-label={`${row.label}别名`}
-          value={row.alias}
-          placeholder={row.label}
-          onChange={(event) => updateDraft(row.key, { alias: event.target.value })}
-        />
-      )
-    },
-    {
-      title: "角色",
-      width: 220,
-      render: (_, row) => (
-        <Select
-          aria-label={`${row.label}角色`}
-          mode="multiple"
-          options={ROLE_OPTIONS}
-          value={row.roles}
-          onChange={(roles) => updateDraft(row.key, { roles })}
-        />
-      )
-    },
-    {
-      title: "排序",
-      width: 96,
-      render: (_, row) => (
-        <InputNumber
-          aria-label={`${row.label}排序`}
-          min={1}
-          step={10}
-          value={row.order}
-          onChange={(order) => updateDraft(row.key, { order: Number(order || row.order) })}
-        />
-      )
-    },
-    {
-      title: "默认",
-      width: 110,
-      render: (_, row) =>
-        row.isDefault ? (
-          <Tag color="blue">默认入口</Tag>
-        ) : (
-          <Button size="small" onClick={() => void saveRow(row, { isDefault: true })}>
-            设为默认
-          </Button>
-        )
-    },
-    {
-      title: "操作",
-      width: 88,
-      render: (_, row) => (
-        <Button size="small" type="primary" loading={savingKey === row.key} onClick={() => void saveRow(row, {})}>
-          保存
-        </Button>
-      )
-    }
-  ];
-
   if (loading) {
     return (
       <div className="pas-boot">
@@ -170,13 +85,54 @@ export function MenuConfigPage() {
             </Button>
           }
         >
-          <Table<MenuConfigRow>
-            rowKey="key"
-            columns={columns}
-            dataSource={rows}
-            pagination={false}
-            scroll={{ x: 980 }}
-          />
+          <div className="menu-config-secondary-list">
+            {rows.map((row) => (
+              <div className="menu-config-secondary-item" key={row.key}>
+                <div className="menu-config-secondary-main">
+                  <Space orientation="vertical" size={2}>
+                    <Typography.Text strong>{row.alias || row.label}</Typography.Text>
+                    <Typography.Text type="secondary">{row.route}</Typography.Text>
+                  </Space>
+                  <Switch
+                    aria-label={row.label}
+                    checked={row.visible}
+                    loading={savingKey === row.key}
+                    onChange={(visible) => void saveRow(row, { visible })}
+                  />
+                </div>
+                <div className="menu-config-secondary-controls">
+                  <Input
+                    aria-label={`${row.label}别名`}
+                    value={row.alias}
+                    placeholder={row.label}
+                    onChange={(event) => updateDraft(row.key, { alias: event.target.value })}
+                  />
+                  <Select
+                    aria-label={`${row.label}角色`}
+                    mode="multiple"
+                    options={ROLE_OPTIONS}
+                    value={row.roles}
+                    onChange={(roles) => updateDraft(row.key, { roles })}
+                  />
+                  <InputNumber
+                    aria-label={`${row.label}排序`}
+                    min={1}
+                    step={10}
+                    value={row.order}
+                    onChange={(order) => updateDraft(row.key, { order: Number(order || row.order) })}
+                  />
+                  {row.isDefault ? (
+                    <Tag color="blue">默认入口</Tag>
+                  ) : (
+                    <Button onClick={() => void saveRow(row, { isDefault: true })}>设为默认</Button>
+                  )}
+                  <Button type="primary" loading={savingKey === row.key} onClick={() => void saveRow(row, {})}>
+                    保存
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
         </Card>
 
         <Card className="pas-panel menu-config-rail" title="配置边界">

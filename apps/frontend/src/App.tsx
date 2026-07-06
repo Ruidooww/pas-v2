@@ -53,6 +53,10 @@ export function App() {
       .finally(() => setBooting(false));
   }, []);
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0 });
+  }, [activeSecondaryKey]);
+
   const activeSecondary = findSecondary(menu, activeSecondaryKey);
   const activePrimary = findPrimaryBySecondary(menu, activeSecondaryKey);
   const activeView = routeToView(activeSecondary?.route ?? "");
