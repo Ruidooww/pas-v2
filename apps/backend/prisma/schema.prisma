@@ -144,3 +144,12 @@ model PlatformStateSnapshot {
   @@index([updatedAt])
   @@map("platform_state_snapshots")
 }
+
+model MenuStateSnapshot {
+  snapshotId String   @id @map("snapshot_id")
+  data       Json
+  updatedAt  DateTime @map("updated_at")
+
+  @@index([updatedAt])
+  @@map("menu_state_snapshots")
+}

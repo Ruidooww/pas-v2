@@ -1,6 +1,22 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { App } from "./App";
+import { fallbackMenuFor } from "./navigation";
+import type { MenuConfiguration, PlatformOverview, PublicUser } from "./types";
+
+const adminUser: PublicUser = {
+  userId: "admin-1",
+  username: "admin",
+  displayName: "Admin",
+  role: "admin"
+};
+
+const salesUser: PublicUser = {
+  userId: "sales-1",
+  username: "sales",
+  displayName: "Sales",
+  role: "sales"
+};
 
 describe("App", () => {
   afterEach(() => {
@@ -16,148 +32,130 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: /登\s*录/ })).toBeTruthy();
   });
 
-  it("shows the V2 business flow console for an authenticated user", async () => {
+  it("renders fixed first-level menus with second-level children", async () => {
     localStorage.setItem("pas.access-token", "token");
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async (input: RequestInfo | URL) => {
-        const path = String(input);
-        if (path === "/api/me") {
-          return jsonResponse({
-            userId: "admin-1",
-            username: "admin@example.com",
-            displayName: "Admin",
-            role: "admin",
-            active: true
-          });
-        }
-        if (path === "/api/crm/customers") {
-          return jsonResponse({ customers: [] });
-        }
-        if (path === "/api/internal/business-flows/records") {
-          return jsonResponse({ records: [] });
-        }
-        if (path === "/api/internal/business-flows/metrics") {
-          return jsonResponse({ definitions: [], counters: [] });
-        }
-        return jsonResponse({});
-      })
-    );
+    vi.stubGlobal("fetch", vi.fn(mockAdminFetch));
 
     render(<App />);
 
-    const menuItem = await screen.findByText("V2 业务闭环");
-    fireEvent.click(menuItem);
-
-    expect(await screen.findByRole("heading", { name: "V2 业务闭环" })).toBeTruthy();
-    expect(screen.getByRole("tab", { name: "商机" })).toBeTruthy();
+    expect((await screen.findAllByText("工作台")).length).toBeGreaterThan(0);
+    expect(screen.getByText("客户与方案")).toBeTruthy();
+    expect(screen.getByText("知识与交付")).toBeTruthy();
+    expect(screen.getByText("系统管理")).toBeTruthy();
+    fireEvent.click(screen.getByText("系统管理"));
+    expect(await screen.findByText("二级菜单配置")).toBeTruthy();
   });
 
-  it("shows the V3 platform console for an authenticated user", async () => {
+  it("shows the business flow console from the business first-level menu", async () => {
     localStorage.setItem("pas.access-token", "token");
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async (input: RequestInfo | URL) => {
-        const path = String(input);
-        if (path === "/api/me") {
-          return jsonResponse({
-            userId: "admin-1",
-            username: "admin@example.com",
-            displayName: "Admin",
-            role: "admin",
-            active: true
-          });
-        }
-        if (path === "/api/internal/platform/overview") {
-          return jsonResponse(createPlatformOverview());
-        }
-        if (path === "/api/crm/customers") {
-          return jsonResponse({ customers: [] });
-        }
-        return jsonResponse({});
-      })
-    );
+    vi.stubGlobal("fetch", vi.fn(mockAdminFetch));
 
     render(<App />);
 
-    const menuItem = await screen.findByText("V3 平台化");
-    fireEvent.click(menuItem);
+    fireEvent.click(await screen.findByText("业务闭环"));
 
-    expect(await screen.findByRole("heading", { name: "V3 平台化" })).toBeTruthy();
-    expect(screen.getByText("经营驾驶舱")).toBeTruthy();
-    expect(screen.getByText("多渠道入口")).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "商机管理" })).toBeTruthy();
+    expect(screen.getByText("V2 Records")).toBeTruthy();
+  });
+
+  it("shows the platform console from the platform first-level menu", async () => {
+    localStorage.setItem("pas.access-token", "token");
+    vi.stubGlobal("fetch", vi.fn(mockAdminFetch));
+
+    render(<App />);
+
+    fireEvent.click(await screen.findByText("平台运营"));
+
+    expect(await screen.findByRole("heading", { name: "平台治理" })).toBeTruthy();
     expect(screen.getByText("Agent / Skill 编排")).toBeTruthy();
   });
 
-  it("hides management consoles from sales users", async () => {
+  it("falls back to default menu when effective menu fetch fails", async () => {
     localStorage.setItem("pas.access-token", "token");
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async (input: RequestInfo | URL) => {
-        const path = String(input);
-        if (path === "/api/me") {
-          return jsonResponse({
-            userId: "sales-1",
-            username: "sales@example.com",
-            displayName: "Sales",
-            role: "sales",
-            active: true
-          });
-        }
-        if (path === "/api/crm/customers") {
-          return jsonResponse({ customers: [] });
-        }
-        return jsonResponse({});
-      })
-    );
+    vi.stubGlobal("fetch", vi.fn(mockAdminFetchWithMenuFailure));
 
     render(<App />);
 
-    expect(await screen.findByRole("heading", { name: "客户与方案" })).toBeTruthy();
-    expect(screen.queryByText("V3 平台化")).toBeNull();
-    expect(screen.queryByText("文档运营")).toBeNull();
-    expect(screen.queryByText("知识块运营")).toBeNull();
-    expect(screen.queryByText("模板运营")).toBeNull();
+    expect((await screen.findAllByText("工作台")).length).toBeGreaterThan(0);
+    expect(screen.getByText("客户与方案")).toBeTruthy();
   });
 
-  it("hides admin-only V3 actions from presales users", async () => {
+  it("routes secondary menu configuration to the admin page", async () => {
     localStorage.setItem("pas.access-token", "token");
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async (input: RequestInfo | URL) => {
-        const path = String(input);
-        if (path === "/api/me") {
-          return jsonResponse({
-            userId: "presales-1",
-            username: "presales@example.com",
-            displayName: "Presales",
-            role: "presales",
-            active: true
-          });
-        }
-        if (path === "/api/internal/platform/overview") {
-          return jsonResponse(createPlatformOverview());
-        }
-        if (path === "/api/crm/customers") {
-          return jsonResponse({ customers: [] });
-        }
-        return jsonResponse({});
-      })
-    );
+    vi.stubGlobal("fetch", vi.fn(mockAdminFetch));
 
     render(<App />);
 
-    const menuItem = await screen.findByText("V3 平台化");
-    fireEvent.click(menuItem);
+    fireEvent.click(await screen.findByText("系统管理"));
+    fireEvent.click(await screen.findByText("二级菜单配置"));
 
-    expect(await screen.findByRole("heading", { name: "V3 平台化" })).toBeTruthy();
-    expect(screen.queryByText("导入 Skill")).toBeNull();
-    expect(screen.queryByText("审批 Skill")).toBeNull();
-    expect(screen.queryByText("注册产品")).toBeNull();
-    expect(screen.getByText("运行工作流")).toBeTruthy();
-    expect(screen.getByText("识别信号")).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "二级菜单配置" })).toBeTruthy();
+  });
+
+  it("hides management menus from sales users", async () => {
+    localStorage.setItem("pas.access-token", "token");
+    vi.stubGlobal("fetch", vi.fn(mockSalesFetch));
+
+    render(<App />);
+
+    expect(await screen.findByRole("heading", { name: "总览看板" })).toBeTruthy();
+    expect(screen.queryByText("平台运营")).toBeNull();
+    expect(screen.queryByText("系统管理")).toBeNull();
+    expect(screen.queryByText("文档运营")).toBeNull();
   });
 });
+
+function mockAdminFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  return mockFetchForUser(adminUser, input, init);
+}
+
+function mockSalesFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  return mockFetchForUser(salesUser, input, init);
+}
+
+function mockAdminFetchWithMenuFailure(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  const path = String(input);
+  if (path === "/api/internal/menu/effective") {
+    return Promise.resolve({
+      ok: false,
+      status: 500,
+      json: async () => ({ message: "menu unavailable" })
+    } as Response);
+  }
+  return mockAdminFetch(input, init);
+}
+
+function mockFetchForUser(user: PublicUser, input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  const path = String(input);
+  if (path === "/api/me") {
+    return Promise.resolve(jsonResponse(user));
+  }
+  if (path === "/api/internal/menu/effective") {
+    return Promise.resolve(jsonResponse(fallbackMenuFor(user)));
+  }
+  if (path === "/api/internal/menu/configuration") {
+    return Promise.resolve(jsonResponse(createMenuConfiguration()));
+  }
+  if (path === "/api/internal/menu/configuration/customers/reset") {
+    return Promise.resolve(jsonResponse(createMenuConfiguration()));
+  }
+  if (path === "/api/crm/customers") {
+    return Promise.resolve(jsonResponse({ customers: [] }));
+  }
+  if (path === "/api/internal/business-flows/records") {
+    return Promise.resolve(jsonResponse({ records: [] }));
+  }
+  if (path === "/api/internal/business-flows/metrics") {
+    return Promise.resolve(jsonResponse({ definitions: [], counters: [] }));
+  }
+  if (path === "/api/internal/platform/overview") {
+    return Promise.resolve(jsonResponse(createPlatformOverview()));
+  }
+  if (path === "/api/internal/menu/configuration" && init?.method === "PATCH") {
+    return Promise.resolve(jsonResponse(createMenuConfiguration()));
+  }
+  return Promise.resolve(jsonResponse({}));
+}
 
 function jsonResponse(payload: unknown): Response {
   return {
@@ -167,7 +165,42 @@ function jsonResponse(payload: unknown): Response {
   } as Response;
 }
 
-function createPlatformOverview() {
+function createMenuConfiguration(): MenuConfiguration {
+  return {
+    defaults: [
+      {
+        key: "workbench",
+        label: "工作台",
+        icon: "home",
+        order: 10,
+        children: [
+          { key: "overview", label: "总览看板", route: "/workbench/overview", roles: ["sales", "presales", "admin"], order: 10 }
+        ]
+      },
+      {
+        key: "customers",
+        label: "客户与方案",
+        icon: "customer",
+        order: 20,
+        children: [
+          { key: "customer_management", label: "客户管理", route: "/customers", roles: ["sales", "presales", "admin"], order: 10 }
+        ]
+      },
+      {
+        key: "system",
+        label: "系统管理",
+        icon: "system",
+        order: 60,
+        children: [
+          { key: "secondary_menu_config", label: "二级菜单配置", route: "/system/secondary-menu", roles: ["admin"], order: 40 }
+        ]
+      }
+    ],
+    overrides: []
+  };
+}
+
+function createPlatformOverview(): PlatformOverview {
   return {
     dashboard: {
       filters: {},
@@ -195,10 +228,46 @@ function createPlatformOverview() {
       }
     ],
     recentSessions: [],
-    agents: [{ agentId: "agent-1", name: "售前编排 Agent", status: "active", purpose: "编排", allowedScopes: [], ownerRole: "presales" }],
-    skills: [{ skillId: "skill-1", name: "知识库检索", status: "approved", requestedScopes: [], scan: { riskLevel: "low", findings: [] } }],
-    workflows: [{ workflowId: "workflow-1", name: "客户信号触达工作流", status: "active", trigger: "cip", complexity: "controlled", agentIds: [], skillIds: [] }],
-    products: [{ productId: "ip-guard", name: "IP-Guard", status: "enabled", version: "v4", ownerTeam: "产品线", pendingInputs: [] }],
+    agents: [
+      {
+        agentId: "agent-1",
+        name: "售前编排 Agent",
+        status: "active",
+        purpose: "编排",
+        allowedScopes: [],
+        ownerRole: "presales"
+      }
+    ],
+    skills: [
+      {
+        skillId: "skill-1",
+        name: "知识库检索",
+        status: "approved",
+        requestedScopes: [],
+        scan: { riskLevel: "low", findings: [] }
+      }
+    ],
+    workflows: [
+      {
+        workflowId: "workflow-1",
+        name: "客户信号触达工作流",
+        status: "active",
+        trigger: "cip",
+        complexity: "controlled",
+        agentIds: [],
+        skillIds: []
+      }
+    ],
+    products: [
+      {
+        productId: "ip-guard",
+        name: "IP-Guard",
+        status: "enabled",
+        version: "v4",
+        ownerTeam: "产品线",
+        pendingInputs: []
+      }
+    ],
     cipSignals: [],
     tenant: {
       tenantId: "internal-hyyn",

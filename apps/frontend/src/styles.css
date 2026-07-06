@@ -74,11 +74,38 @@ body {
   padding: 18px 10px;
 }
 
+.pas-brand-block {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 0 6px 16px;
+}
+
+.pas-brand-mark {
+  display: inline-flex;
+  width: 34px;
+  height: 34px;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  border-radius: 9px;
+  background: #007aff;
+  color: #ffffff;
+  font-weight: 700;
+}
+
 .pas-brand.ant-typography {
-  margin: 0 8px 12px;
+  margin: 0;
   font-size: 18px;
   font-weight: 600;
   letter-spacing: 0;
+}
+
+.pas-brand-caption.ant-typography {
+  display: block;
+  color: #86868b;
+  font-size: 11px;
+  line-height: 1.2;
 }
 
 .pas-menu.ant-menu {
@@ -87,12 +114,26 @@ body {
   border-inline-end: 0 !important;
 }
 
-.pas-menu .ant-menu-item {
+.pas-menu.ant-menu:focus,
+.pas-menu.ant-menu:focus-visible {
+  outline: none;
+}
+
+.pas-menu .ant-menu-item,
+.pas-menu .ant-menu-submenu-title {
   width: auto;
   height: 36px;
   margin: 4px 0;
   border-radius: 9px;
   color: #424245;
+}
+
+.pas-menu .ant-menu-submenu-title {
+  font-weight: 600;
+}
+
+.pas-menu .ant-menu-item {
+  padding-left: 38px !important;
 }
 
 .pas-menu .ant-menu-item-selected {
@@ -137,9 +178,16 @@ body {
   letter-spacing: 0;
 }
 
+.pas-view-kicker.ant-typography {
+  display: block;
+  margin-bottom: 2px;
+  color: #86868b;
+  font-size: 12px;
+}
+
 .pas-content.ant-layout-content {
   width: 100%;
-  max-width: 980px;
+  max-width: 1120px;
   margin: 0 auto;
   padding: 0 24px 28px;
 }
@@ -356,6 +404,83 @@ body {
   word-break: break-word;
 }
 
+.menu-config-page {
+  display: grid;
+  gap: 12px;
+}
+
+.menu-config-layout {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr) 230px;
+  gap: 12px;
+  align-items: start;
+}
+
+.menu-config-primary .ant-card-body {
+  padding: 8px;
+}
+
+.menu-config-primary-list {
+  display: grid;
+  gap: 4px;
+}
+
+.menu-config-primary .ant-btn {
+  justify-content: flex-start;
+  height: 34px;
+}
+
+.menu-config-table .ant-card-body {
+  padding: 0;
+}
+
+.menu-config-secondary-list {
+  display: grid;
+}
+
+.menu-config-secondary-item {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border-bottom: 1px solid #ededf1;
+}
+
+.menu-config-secondary-item:last-child {
+  border-bottom: 0;
+}
+
+.menu-config-secondary-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.menu-config-secondary-controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  align-items: center;
+}
+
+.menu-config-secondary-controls .ant-input-number,
+.menu-config-secondary-controls .ant-btn {
+  width: 100%;
+}
+
+.menu-config-secondary-controls .ant-select {
+  min-width: 0;
+}
+
+.menu-config-secondary-controls .ant-tag {
+  justify-self: start;
+  margin-inline-end: 0;
+}
+
+.menu-config-rail .ant-typography {
+  margin-bottom: 0;
+}
+
 @media (max-width: 760px) {
   .pas-shell.ant-layout {
     display: block;
@@ -378,6 +503,10 @@ body {
 
   .pas-sidebar-user {
     display: none;
+  }
+
+  .pas-menu .ant-menu-item {
+    padding-left: 34px !important;
   }
 
   .pas-main.ant-layout {
@@ -410,6 +539,14 @@ body {
 
   .pas-panel .ant-card-body {
     padding: 14px;
+  }
+
+  .menu-config-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .menu-config-secondary-controls {
+    grid-template-columns: 1fr;
   }
 
   .knowledge-list-item {
