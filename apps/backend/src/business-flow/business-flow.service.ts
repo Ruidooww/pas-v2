@@ -183,6 +183,7 @@ export class BusinessFlowService {
     const request: ProposalGenerationRequest = {
       customerId: record.outputs.meetingMinutes.customerId,
       userId: actor.userId,
+      user: actor,
       humanInputs: record.outputs.meetingMinutes.requirements.map((requirement, index) => ({
         inputId: `meeting-requirement-${index + 1}`,
         label: "Meeting requirement",

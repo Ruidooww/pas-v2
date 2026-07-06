@@ -1,9 +1,11 @@
+import type { AuthenticatedUser } from "../auth/auth.types";
 import type { FilesService } from "../files/files.service";
 import type { ExportPackage } from "../proposal/proposal.types";
 import { ExportAuditLogService } from "./export-audit-log.service";
 import {
   ExportDeliverableCheckFailedError,
   ExportFileNotReadyError,
+  ExportJobAccessDeniedError,
   ExportJobNotFoundError,
   ExportTemplateFieldMissingError,
   ExportTemplateMissingError
@@ -25,6 +27,7 @@ import type {
 export {
   ExportDeliverableCheckFailedError,
   ExportFileNotReadyError,
+  ExportJobAccessDeniedError,
   ExportJobNotFoundError,
   ExportTemplateFieldMissingError,
   ExportTemplateMissingError
@@ -41,7 +44,7 @@ export class ExportService {
 
   async createExport(request: ExportCreateRequest): Promise<ExportJob> {
     const userId = request.userId?.trim() || "anonymous-v0";
-    const job = this.jobStore.create(request.exportPackage.packageId, request.exportPackage.customerId);
+    const job = this.jobStore.create(request.exportPackage.packageId, request.exportPackage.customerId, userId);
     this.auditLog.record({
       event: "export_started",
       jobId: job.jobId,
@@ -71,8 +74,20 @@ export class ExportService {
     return job;
   }
 
-  async download(jobId: string, format: ExportFormat, userId = "anonymous-v0"): Promise<ExportDownloadResponse> {
+  getJobForUser(jobId: string, actor: AuthenticatedUser): ExportJob {
     const job = this.getJobOrThrow(jobId);
+    assertCanAccessJob(job, actor);
+    return job;
+  }
+
+  async download(
+    jobId: string,
+    format: ExportFormat,
+    actor: AuthenticatedUser | string = "anonymous-v0"
+  ): Promise<ExportDownloadResponse> {
+    const user = typeof actor === "string" ? { userId: actor, username: actor, displayName: actor, role: "presales" as const } : actor;
+    const job = this.getJobOrThrow(jobId);
+    assertCanAccessJob(job, user);
     const record = job.formats.find((item) => item.format === format);
     if (!record || record.status !== "completed") {
       throw new ExportFileNotReadyError(jobId, format);
@@ -82,7 +97,7 @@ export class ExportService {
     this.auditLog.record({
       event: "export_downloaded",
       jobId,
-      userId,
+      userId: user.userId,
       format
     });
 
@@ -165,6 +180,13 @@ export class ExportService {
       throw error;
     }
   }
+}
+
+function assertCanAccessJob(job: ExportJob, actor: AuthenticatedUser): void {
+  if (actor.role === "admin" || job.userId === actor.userId) {
+    return;
+  }
+  throw new ExportJobAccessDeniedError(job.jobId);
 }
 
 function formatsFor(exportPackage: ExportPackage, requestedFormats?: ExportFormat[]): ExportFormat[] {

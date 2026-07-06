@@ -1,10 +1,12 @@
 import type { QaCitation } from "../qa/qa.types";
+import type { AuthenticatedUser } from "../auth/auth.types";
 
 export type AnalysisBasis = "evidence" | "inferred";
 
 export type CustomerAnalysisRequest = {
   customerId: string;
   userId?: string;
+  user?: AuthenticatedUser;
 };
 
 export type CustomerAnalysisItem = {

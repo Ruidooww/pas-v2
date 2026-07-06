@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Alert, Button, Card, Col, Descriptions, Input, Row, Select, Spin, Statistic, Tag, Typography } from "antd";
 import { api } from "../api";
-import type { PlatformChannelKind, PlatformOverview, PlatformSkill } from "../types";
+import type { PlatformChannelKind, PlatformOverview, PlatformSkill, PublicUser } from "../types";
 
 const channelOptions: Array<{ value: PlatformChannelKind; label: string }> = [
   { value: "web", label: "Web" },
@@ -21,7 +21,7 @@ const signalLabels: Record<string, string> = {
   renewal_expansion: "续约扩容"
 };
 
-export function PlatformPage() {
+export function PlatformPage({ user }: { user: PublicUser }) {
   const [overview, setOverview] = useState<PlatformOverview | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -42,6 +42,8 @@ export function PlatformPage() {
     [overview?.skills]
   );
   const firstWorkflow = overview?.workflows[0];
+  const isAdmin = user.role === "admin";
+  const canRunWorkflow = user.role === "admin" || user.role === "presales";
 
   const refresh = async () => {
     try {
@@ -136,40 +138,44 @@ export function PlatformPage() {
             <div className="platform-form-grid">
               <Input value={skillName} onChange={(event) => setSkillName(event.target.value)} />
               <div className="platform-actions">
+                {isAdmin && (
+                  <>
+                    <Button
+                      type="primary"
+                      loading={loading}
+                      onClick={() =>
+                        void run(() =>
+                          api("/api/internal/platform/skills/import", {
+                            method: "POST",
+                            body: {
+                              name: skillName,
+                              description: "整理客户需求并生成方案提纲",
+                              requestedScopes: ["proposal:write", "knowledge:read"],
+                              packageManifest: `name: ${skillName}`
+                            }
+                          })
+                        )
+                      }
+                    >
+                      导入 Skill
+                    </Button>
+                    <Button
+                      disabled={!pendingSkill}
+                      onClick={() =>
+                        pendingSkill &&
+                        void run(() =>
+                          api(`/api/internal/platform/skills/${pendingSkill.skillId}/approve`, {
+                            method: "PATCH"
+                          })
+                        )
+                      }
+                    >
+                      审批 Skill
+                    </Button>
+                  </>
+                )}
                 <Button
-                  type="primary"
-                  loading={loading}
-                  onClick={() =>
-                    void run(() =>
-                      api("/api/internal/platform/skills/import", {
-                        method: "POST",
-                        body: {
-                          name: skillName,
-                          description: "整理客户需求并生成方案提纲",
-                          requestedScopes: ["proposal:write", "knowledge:read"],
-                          packageManifest: `name: ${skillName}`
-                        }
-                      })
-                    )
-                  }
-                >
-                  导入 Skill
-                </Button>
-                <Button
-                  disabled={!pendingSkill}
-                  onClick={() =>
-                    pendingSkill &&
-                    void run(() =>
-                      api(`/api/internal/platform/skills/${pendingSkill.skillId}/approve`, {
-                        method: "PATCH"
-                      })
-                    )
-                  }
-                >
-                  审批 Skill
-                </Button>
-                <Button
-                  disabled={!firstWorkflow}
+                  disabled={!canRunWorkflow || !firstWorkflow}
                   onClick={() =>
                     firstWorkflow &&
                     void run(() =>
@@ -198,31 +204,35 @@ export function PlatformPage() {
         <Col xs={24} lg={12}>
           <Card className="pas-panel" title="产品注册与扩展">
             <div className="platform-form-grid">
-              <Input value={productName} onChange={(event) => setProductName(event.target.value)} />
-              <Button
-                type="primary"
-                loading={loading}
-                onClick={() =>
-                  void run(() =>
-                    api("/api/internal/platform/products/register", {
-                      method: "POST",
-                      body: {
-                        name: productName,
-                        version: "1.0",
-                        ownerTeam: "渠道事业部",
-                        knowledgePartitionIds: ["partner-dlp"],
-                        proposalTemplateIds: ["proposal-partner-dlp-v1"],
-                        exportTemplateIds: ["docx-partner-dlp-v1", "pptx-partner-dlp-v1"],
-                        webhookEvents: ["product.enabled", "proposal.generated"],
-                        apiVersion: "v3",
-                        pluginDependencies: ["proposal-brief-builder"]
-                      }
-                    })
-                  )
-                }
-              >
-                注册产品
-              </Button>
+              {isAdmin && (
+                <>
+                  <Input value={productName} onChange={(event) => setProductName(event.target.value)} />
+                  <Button
+                    type="primary"
+                    loading={loading}
+                    onClick={() =>
+                      void run(() =>
+                        api("/api/internal/platform/products/register", {
+                          method: "POST",
+                          body: {
+                            name: productName,
+                            version: "1.0",
+                            ownerTeam: "渠道事业部",
+                            knowledgePartitionIds: ["partner-dlp"],
+                            proposalTemplateIds: ["proposal-partner-dlp-v1"],
+                            exportTemplateIds: ["docx-partner-dlp-v1", "pptx-partner-dlp-v1"],
+                            webhookEvents: ["product.enabled", "proposal.generated"],
+                            apiVersion: "v3",
+                            pluginDependencies: ["proposal-brief-builder"]
+                          }
+                        })
+                      )
+                    }
+                  >
+                    注册产品
+                  </Button>
+                </>
+              )}
             </div>
             <div className="platform-list">
               {overview.products.map((product) => (

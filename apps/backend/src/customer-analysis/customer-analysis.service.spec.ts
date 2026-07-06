@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
+import type { AuthenticatedUser } from "../auth/auth.types";
 import type { CrmClient } from "../crm/crm.types";
+import type { KnowledgeDocumentService } from "../knowledge/knowledge-document.service";
 import type { RagflowClient } from "../ragflow/ragflow.client";
 import { CustomerAnalysisAuditLogService } from "./customer-analysis-audit-log.service";
 import { CustomerAnalysisService } from "./customer-analysis.service";
@@ -52,12 +54,19 @@ describe("CustomerAnalysisService", () => {
       ])
     } as unknown as RagflowClient;
     const auditLog = new CustomerAnalysisAuditLogService();
+    const documents = {
+      getAccessibleDocumentIds: vi.fn().mockReturnValue(["doc-1"])
+    } as unknown as KnowledgeDocumentService;
     const service = new CustomerAnalysisService(crmClient, ragflowClient, auditLog, {
       datasetId: "pas-v0",
       topK: 5
-    });
+    }, undefined, documents);
 
-    const result = await service.analyze({ customerId: "demo-huaxin-manufacturing", userId: "user-1" });
+    const result = await service.analyze({
+      customerId: "demo-huaxin-manufacturing",
+      userId: "user-1",
+      user: createUser("sales")
+    });
 
     expect(result).toEqual(
       expect.objectContaining({
@@ -88,7 +97,8 @@ describe("CustomerAnalysisService", () => {
     expect(ragflowClient.retrieveKnowledgeChunks).toHaveBeenCalledWith({
       datasetId: "pas-v0",
       query: expect.stringContaining("华信精工"),
-      topK: 5
+      topK: 5,
+      allowedDocumentIds: ["doc-1"]
     });
     expect(auditLog.list()).toEqual(
       expect.arrayContaining([
@@ -128,4 +138,48 @@ describe("CustomerAnalysisService", () => {
     expect(result.evidence).toEqual([]);
     expect(result.painPoints.every((item) => item.basis === "inferred")).toBe(true);
   });
+
+  it("passes an empty document allow-list when the authenticated user has no accessible documents", async () => {
+    const crmClient = {
+      getCustomerContext: vi.fn().mockResolvedValue({
+        customerId: "demo-lanyun-software",
+        name: "岚云软件",
+        industry: "软件研发",
+        region: "华北",
+        accountOwner: "软件行业组",
+        contacts: [],
+        opportunities: [],
+        purchasedProducts: [],
+        followUps: []
+      })
+    } as unknown as CrmClient;
+    const ragflowClient = {
+      retrieveKnowledgeChunks: vi.fn().mockResolvedValue([])
+    } as unknown as RagflowClient;
+    const documents = {
+      getAccessibleDocumentIds: vi.fn().mockReturnValue([])
+    } as unknown as KnowledgeDocumentService;
+    const service = new CustomerAnalysisService(crmClient, ragflowClient, new CustomerAnalysisAuditLogService(), {
+      datasetId: "pas-v0",
+      topK: 5
+    }, undefined, documents);
+
+    await service.analyze({ customerId: "demo-lanyun-software", userId: "user-1", user: createUser("sales") });
+
+    expect(ragflowClient.retrieveKnowledgeChunks).toHaveBeenCalledWith({
+      datasetId: "pas-v0",
+      query: expect.stringContaining("岚云软件"),
+      topK: 5,
+      allowedDocumentIds: []
+    });
+  });
 });
+
+function createUser(role: AuthenticatedUser["role"]): AuthenticatedUser {
+  return {
+    userId: "user-1",
+    username: "user-1@example.com",
+    displayName: "User 1",
+    role
+  };
+}

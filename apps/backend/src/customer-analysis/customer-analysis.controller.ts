@@ -21,7 +21,8 @@ export class CustomerAnalysisController {
 
     return this.service.analyze({
       customerId,
-      userId: request.user.userId
+      userId: request.user.userId,
+      user: request.user
     });
   }
 }

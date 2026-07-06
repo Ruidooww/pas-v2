@@ -76,6 +76,7 @@ export type ExportJob = {
   jobId: string;
   sourcePackageId: string;
   customerId: string;
+  userId: string;
   status: ExportJobStatus;
   formats: ExportFormatRecord[];
   createdAt: string;

@@ -1,3 +1,4 @@
+import { ForbiddenException } from "@nestjs/common";
 import type { AuthenticatedUser } from "../auth/auth.types";
 import type { BusinessFlowService } from "../business-flow/business-flow.service";
 import type { BusinessFlowRecord } from "../business-flow/business-flow.types";
@@ -81,7 +82,7 @@ export class PlatformService {
 
   getDashboard(filters: DashboardFilter, actor: AuthenticatedUser): DashboardSnapshot {
     const state = this.store.getState();
-    const records = this.businessFlowService.listRecords(actor);
+    const records = this.businessFlowService.listRecords(actor).filter((record) => recordMatchesFilters(record, filters));
     const metrics = this.businessFlowService.getMetrics(actor);
     const opportunities = records.filter((record) => record.kind === "opportunity");
     const channelRecords = records.filter((record) => record.kind === "channel");
@@ -142,7 +143,7 @@ export class PlatformService {
           (record) => record.outputs.channelContext?.partnerName ?? record.source.system,
           "channel"
         ),
-        productMix: state.products.map((product) => ({
+        productMix: state.products.filter((product) => productMatchesFilters(product, filters)).map((product) => ({
           product: product.name,
           count: product.status === "enabled" ? 1 : 0
         })),
@@ -220,6 +221,7 @@ export class PlatformService {
   }
 
   importSkill(request: ImportSkillRequest, actor: AuthenticatedUser): SkillDefinition {
+    assertAdmin(actor);
     const now = nowIso();
     const scan = scanSkillManifest(request.packageManifest);
     const skill: SkillDefinition = {
@@ -244,9 +246,7 @@ export class PlatformService {
   }
 
   approveSkill(skillId: string, actor: AuthenticatedUser): SkillDefinition {
-    if (actor.role !== "admin") {
-      throw new Error("Only admin can approve skills");
-    }
+    assertAdmin(actor);
     let approved: SkillDefinition | undefined;
     const auditEvent = createAuditEvent("skill_approval", actor.userId, "info", skillId, "Skill 已审批通过");
     this.store.update((draft) => {
@@ -267,6 +267,7 @@ export class PlatformService {
   }
 
   runWorkflow(request: RunWorkflowRequest, actor: AuthenticatedUser): WorkflowExecution {
+    assertAdminOrPresales(actor);
     const state = this.store.getState();
     const workflow = state.workflows.find((item) => item.workflowId === request.workflowId);
     if (!workflow || workflow.status !== "active") {
@@ -312,6 +313,7 @@ export class PlatformService {
   }
 
   registerProduct(request: RegisterProductRequest, actor: AuthenticatedUser): ProductRegistration {
+    assertAdmin(actor);
     const now = nowIso();
     const product: ProductRegistration = {
       productId: createId("product"),
@@ -338,6 +340,7 @@ export class PlatformService {
   }
 
   detectCipSignals(request: DetectCipSignalsRequest, actor: AuthenticatedUser): CipSignal[] {
+    assertAdminOrPresales(actor);
     const signals = detectSignals(request);
     const auditEvent = createAuditEvent("cip_signal", actor.userId, "info", request.customerId, `识别到 ${signals.length} 个客户动态信号`);
     this.store.update((draft) => {
@@ -617,6 +620,47 @@ function detectSignals(request: DetectCipSignalsRequest): CipSignal[] {
       suggestion: rule.suggestion,
       createdAt: nowIso()
     }));
+}
+
+function recordMatchesFilters(record: BusinessFlowRecord, filters: DashboardFilter): boolean {
+  if (filters.department && !recordText(record).includes(normalizeFilter(filters.department))) {
+    return false;
+  }
+  if (filters.product && record.kind !== "channel" && !recordText(record).includes(normalizeFilter(filters.product))) {
+    return false;
+  }
+  if (
+    filters.channel &&
+    record.kind === "channel" &&
+    !recordText(record).includes(normalizeFilter(filters.channel))
+  ) {
+    return false;
+  }
+  return true;
+}
+
+function productMatchesFilters(product: ProductRegistration, filters: DashboardFilter): boolean {
+  return !filters.product || recordText(product).includes(normalizeFilter(filters.product));
+}
+
+function recordText(value: unknown): string {
+  return JSON.stringify(value).toLowerCase();
+}
+
+function normalizeFilter(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+function assertAdmin(actor: AuthenticatedUser): void {
+  if (actor.role !== "admin") {
+    throw new ForbiddenException("admin role is required");
+  }
+}
+
+function assertAdminOrPresales(actor: AuthenticatedUser): void {
+  if (actor.role !== "admin" && actor.role !== "presales") {
+    throw new ForbiddenException("admin or presales role is required");
+  }
 }
 
 function countBy<T, K extends string>(

@@ -1,3 +1,4 @@
+import type { AuthenticatedUser } from "../auth/auth.types";
 import type { CustomerAnalysisResult } from "../customer-analysis/customer-analysis.types";
 import type { QaCitation } from "../qa/qa.types";
 
@@ -12,6 +13,7 @@ export type ProposalHumanInput = {
 export type ProposalGenerationRequest = {
   customerId: string;
   userId?: string;
+  user?: AuthenticatedUser;
   humanInputs?: ProposalHumanInput[];
 };
 

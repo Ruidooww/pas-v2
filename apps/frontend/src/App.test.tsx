@@ -88,6 +88,75 @@ describe("App", () => {
     expect(screen.getByText("多渠道入口")).toBeTruthy();
     expect(screen.getByText("Agent / Skill 编排")).toBeTruthy();
   });
+
+  it("hides management consoles from sales users", async () => {
+    localStorage.setItem("pas.access-token", "token");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL) => {
+        const path = String(input);
+        if (path === "/api/me") {
+          return jsonResponse({
+            userId: "sales-1",
+            username: "sales@example.com",
+            displayName: "Sales",
+            role: "sales",
+            active: true
+          });
+        }
+        if (path === "/api/crm/customers") {
+          return jsonResponse({ customers: [] });
+        }
+        return jsonResponse({});
+      })
+    );
+
+    render(<App />);
+
+    expect(await screen.findByRole("heading", { name: "客户与方案" })).toBeTruthy();
+    expect(screen.queryByText("V3 平台化")).toBeNull();
+    expect(screen.queryByText("文档运营")).toBeNull();
+    expect(screen.queryByText("知识块运营")).toBeNull();
+    expect(screen.queryByText("模板运营")).toBeNull();
+  });
+
+  it("hides admin-only V3 actions from presales users", async () => {
+    localStorage.setItem("pas.access-token", "token");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL) => {
+        const path = String(input);
+        if (path === "/api/me") {
+          return jsonResponse({
+            userId: "presales-1",
+            username: "presales@example.com",
+            displayName: "Presales",
+            role: "presales",
+            active: true
+          });
+        }
+        if (path === "/api/internal/platform/overview") {
+          return jsonResponse(createPlatformOverview());
+        }
+        if (path === "/api/crm/customers") {
+          return jsonResponse({ customers: [] });
+        }
+        return jsonResponse({});
+      })
+    );
+
+    render(<App />);
+
+    const menuItem = await screen.findByText("V3 平台化");
+    fireEvent.click(menuItem);
+
+    expect(await screen.findByRole("heading", { name: "V3 平台化" })).toBeTruthy();
+    expect(screen.queryByText("导入 Skill")).toBeNull();
+    expect(screen.queryByText("审批 Skill")).toBeNull();
+    expect(screen.queryByText("注册产品")).toBeNull();
+    expect(screen.getByText("运行工作流")).toBeTruthy();
+    expect(screen.getByText("识别信号")).toBeTruthy();
+  });
 });
 
 function jsonResponse(payload: unknown): Response {

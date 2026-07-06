@@ -44,7 +44,8 @@ describe("CustomerAnalysisController", () => {
     ).resolves.toEqual(response);
     expect(service.analyze).toHaveBeenCalledWith({
       customerId: "demo-huaxin-manufacturing",
-      userId: "authenticated-user"
+      userId: "authenticated-user",
+      user: request.user
     });
   });
 });
