@@ -481,6 +481,106 @@ body {
   margin-bottom: 0;
 }
 
+.system-page {
+  display: grid;
+  gap: 12px;
+}
+
+.system-form-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  align-items: center;
+}
+
+.system-loading {
+  display: flex;
+  min-height: 160px;
+  align-items: center;
+  justify-content: center;
+}
+
+.system-list {
+  display: grid;
+}
+
+.system-list-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid #ededf1;
+}
+
+.system-list-item:last-child {
+  border-bottom: 0;
+}
+
+.system-list-main,
+.system-list-meta {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+
+.system-list-main .ant-typography,
+.system-list-meta .ant-typography {
+  min-width: 0;
+  word-break: break-word;
+}
+
+.system-list-meta {
+  justify-items: end;
+}
+
+.system-row-actions {
+  display: grid;
+  grid-template-columns: minmax(136px, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.system-path-grid,
+.system-settings-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.system-subpanel.ant-card {
+  border: 1px solid #ededf1;
+  border-radius: 14px;
+  box-shadow: none;
+}
+
+.system-subpanel .ant-card-body {
+  padding: 16px;
+}
+
+.system-path-header {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.system-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.system-setting-label {
+  display: inline-flex;
+  max-width: 100%;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
 @media (max-width: 760px) {
   .pas-shell.ant-layout {
     display: block;
@@ -547,6 +647,19 @@ body {
 
   .menu-config-secondary-controls {
     grid-template-columns: 1fr;
+  }
+
+  .system-form-grid,
+  .system-list-item,
+  .system-row-actions,
+  .system-path-grid,
+  .system-settings-grid,
+  .system-stat-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .system-list-meta {
+    justify-items: start;
   }
 
   .knowledge-list-item {

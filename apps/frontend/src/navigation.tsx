@@ -25,6 +25,10 @@ export type View =
   | "knowledge"
   | "documents"
   | "templates"
+  | "accounts"
+  | "auditLogs"
+  | "dataAttachments"
+  | "systemSettings"
   | "menuConfig";
 
 const DEFAULT_MENU: PrimaryMenuDefinition[] = [
@@ -167,7 +171,11 @@ export function routeToView(route: string): View {
   if (route.startsWith("/delivery/")) return "templates";
   if (route.startsWith("/business/")) return "business";
   if (route.startsWith("/platform/")) return "platform";
-  if (route.startsWith("/system/")) return "menuConfig";
+  if (route === "/system/accounts") return "accounts";
+  if (route === "/system/audit-logs") return "auditLogs";
+  if (route === "/system/data-attachments") return "dataAttachments";
+  if (route === "/system/settings") return "systemSettings";
+  if (route === "/system/secondary-menu") return "menuConfig";
   return "workbench";
 }
 
@@ -185,6 +193,14 @@ export function viewToTitle(view: View): string {
       return "文档运营";
     case "templates":
       return "模板库";
+    case "accounts":
+      return "账号管理";
+    case "auditLogs":
+      return "日志中心";
+    case "dataAttachments":
+      return "数据与附件";
+    case "systemSettings":
+      return "系统设置";
     case "menuConfig":
       return "系统管理";
     default:

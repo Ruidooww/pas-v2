@@ -93,6 +93,87 @@ describe("AuthService", () => {
     );
   });
 
+  it("lets an admin list and update users", async () => {
+    const { service, auditLog } = createAuthService();
+    const admin = await service.bootstrapAdmin({
+      username: "admin@example.com",
+      password: "admin-secret",
+      displayName: "V0 Admin"
+    });
+    const sales = await service.createUser(admin, {
+      username: "sales@example.com",
+      password: "sales-secret",
+      displayName: "Sales User",
+      role: "sales"
+    });
+
+    const updated = service.updateUser(admin, sales.userId, {
+      displayName: "Sales Lead",
+      role: "presales",
+      active: false
+    });
+
+    expect(updated).toEqual(
+      expect.objectContaining({
+        userId: sales.userId,
+        displayName: "Sales Lead",
+        role: "presales",
+        active: false
+      })
+    );
+    expect(service.listUsers(admin).map((user) => user.username)).toEqual(["admin@example.com", "sales@example.com"]);
+    expect(auditLog.list()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          action: "user_updated",
+          actorUserId: admin.userId,
+          objectId: sales.userId,
+          result: "success"
+        })
+      ])
+    );
+  });
+
+  it("rejects non-admin user listing and updates", async () => {
+    const { service, auditLog } = createAuthService();
+    const admin = await service.bootstrapAdmin({
+      username: "admin@example.com",
+      password: "admin-secret",
+      displayName: "V0 Admin"
+    });
+    const sales = await service.createUser(admin, {
+      username: "sales@example.com",
+      password: "sales-secret",
+      displayName: "Sales User",
+      role: "sales"
+    });
+
+    expect(() => service.listUsers(sales)).toThrow(ForbiddenException);
+    expect(() => service.updateUser(sales, admin.userId, { active: false })).toThrow(ForbiddenException);
+    expect(auditLog.list()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          action: "user_updated",
+          actorUserId: sales.userId,
+          result: "failure",
+          failureReason: "INSUFFICIENT_ROLE"
+        })
+      ])
+    );
+  });
+
+  it("keeps at least one active admin account", async () => {
+    const { service } = createAuthService();
+    const admin = await service.bootstrapAdmin({
+      username: "admin@example.com",
+      password: "admin-secret",
+      displayName: "V0 Admin"
+    });
+
+    expect(() => service.updateUser(admin, admin.userId, { active: false })).toThrow("at least one active admin");
+    expect(() => service.updateUser(admin, admin.userId, { role: "sales" })).toThrow("at least one active admin");
+  });
+
   it("rejects invalid login credentials", async () => {
     const { service, auditLog } = createAuthService();
     await service.bootstrapAdmin({

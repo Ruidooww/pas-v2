@@ -8,14 +8,16 @@ const adminUser: PublicUser = {
   userId: "admin-1",
   username: "admin",
   displayName: "Admin",
-  role: "admin"
+  role: "admin",
+  active: true
 };
 
 const salesUser: PublicUser = {
   userId: "sales-1",
   username: "sales",
   displayName: "Sales",
-  role: "sales"
+  role: "sales",
+  active: true
 };
 
 describe("App", () => {
@@ -43,7 +45,7 @@ describe("App", () => {
     expect(screen.getByText("知识与交付")).toBeTruthy();
     expect(screen.getByText("系统管理")).toBeTruthy();
     fireEvent.click(screen.getByText("系统管理"));
-    expect(await screen.findByText("二级菜单配置")).toBeTruthy();
+    expect(await screen.findByText("账号列表")).toBeTruthy();
   });
 
   it("shows the business flow console from the business first-level menu", async () => {
@@ -139,6 +141,15 @@ function mockFetchForUser(user: PublicUser, input: RequestInfo | URL, init?: Req
   if (path === "/api/internal/menu/configuration/customers/reset") {
     return Promise.resolve(jsonResponse(createMenuConfiguration()));
   }
+  if (path === "/api/internal/auth/users") {
+    return Promise.resolve(jsonResponse([adminUser]));
+  }
+  if (path === "/api/internal/audit/events") {
+    return Promise.resolve(jsonResponse([]));
+  }
+  if (path === "/api/internal/system/overview") {
+    return Promise.resolve(jsonResponse(createSystemOverview()));
+  }
   if (path === "/api/crm/customers") {
     return Promise.resolve(jsonResponse({ customers: [] }));
   }
@@ -192,11 +203,22 @@ function createMenuConfiguration(): MenuConfiguration {
         icon: "system",
         order: 60,
         children: [
+          { key: "account_management", label: "账号管理", route: "/system/accounts", roles: ["admin"], order: 10 },
+          { key: "audit_logs", label: "日志中心", route: "/system/audit-logs", roles: ["admin"], order: 20 },
+          { key: "data_attachments", label: "数据与附件", route: "/system/data-attachments", roles: ["admin"], order: 30 },
           { key: "secondary_menu_config", label: "二级菜单配置", route: "/system/secondary-menu", roles: ["admin"], order: 40 }
         ]
       }
     ],
     overrides: []
+  };
+}
+
+function createSystemOverview() {
+  return {
+    generatedAt: "2026-07-06T00:00:00.000Z",
+    settings: [],
+    paths: []
   };
 }
 

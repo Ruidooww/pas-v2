@@ -1,6 +1,8 @@
 export type AuditAction =
   | "login"
   | "user_created"
+  | "user_listed"
+  | "user_updated"
   | "user_imported"
   | "qa"
   | "retrieval"
