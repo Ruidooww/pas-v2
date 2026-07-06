@@ -12,6 +12,7 @@ body {
   margin: 0;
   color: #1d1d1f;
   background: #eef0f5;
+  -webkit-font-smoothing: antialiased;
 }
 
 .pas-boot,
@@ -52,33 +53,34 @@ body {
 
 .pas-shell.ant-layout {
   min-height: 100vh;
-  padding: 24px 28px;
+  gap: 14px;
+  padding: 18px;
   background: #eef0f5;
 }
 
 .pas-sidebar.ant-layout-sider {
   position: sticky;
-  top: 24px;
-  height: calc(100vh - 48px);
+  top: 18px;
+  height: calc(100vh - 36px);
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.74) !important;
+  background: rgba(255, 255, 255, 0.82) !important;
   border: 1px solid #e5e5ea;
-  border-right: 0;
-  border-radius: 18px 0 0 18px;
+  border-radius: 22px;
+  box-shadow: 0 18px 45px rgba(29, 29, 31, 0.06);
 }
 
 .pas-sidebar .ant-layout-sider-children {
   display: flex;
   flex-direction: column;
   min-height: 100%;
-  padding: 18px 10px;
+  padding: 18px 12px;
 }
 
 .pas-brand-block {
   display: flex;
   gap: 10px;
   align-items: center;
-  padding: 0 6px 16px;
+  padding: 0 8px 18px;
 }
 
 .pas-brand-mark {
@@ -122,9 +124,9 @@ body {
 .pas-menu .ant-menu-item,
 .pas-menu .ant-menu-submenu-title {
   width: auto;
-  height: 36px;
-  margin: 4px 0;
-  border-radius: 9px;
+  height: 38px;
+  margin: 3px 0;
+  border-radius: 11px;
   color: #424245;
 }
 
@@ -133,7 +135,7 @@ body {
 }
 
 .pas-menu .ant-menu-item {
-  padding-left: 38px !important;
+  padding-left: 42px !important;
 }
 
 .pas-menu .ant-menu-item-selected {
@@ -148,32 +150,36 @@ body {
 .pas-sidebar-user {
   display: flex;
   flex-wrap: wrap;
-  gap: 2px;
-  padding: 12px 8px 0;
+  gap: 4px;
+  margin-top: 12px;
+  padding: 12px 10px 0;
+  border-top: 1px solid #ededf1;
   font-size: 12px;
 }
 
 .pas-main.ant-layout {
   min-width: 0;
   overflow: hidden;
-  background: #f5f5f7;
+  background: rgba(255, 255, 255, 0.5);
   border: 1px solid #e5e5ea;
-  border-radius: 0 18px 18px 0;
+  border-radius: 22px;
+  box-shadow: 0 18px 45px rgba(29, 29, 31, 0.05);
 }
 
 .pas-topbar.ant-layout-header {
   display: flex;
   height: auto;
-  min-height: 76px;
+  min-height: 82px;
   align-items: center;
   justify-content: space-between;
-  padding: 18px 24px;
-  background: transparent;
+  padding: 20px 26px 16px;
+  background: rgba(255, 255, 255, 0.58);
+  border-bottom: 1px solid rgba(229, 229, 234, 0.8);
 }
 
 .pas-view-title.ant-typography {
   margin: 0;
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 600;
   letter-spacing: 0;
 }
@@ -187,9 +193,9 @@ body {
 
 .pas-content.ant-layout-content {
   width: 100%;
-  max-width: 1120px;
+  max-width: 1180px;
   margin: 0 auto;
-  padding: 0 24px 28px;
+  padding: 22px 26px 30px;
 }
 
 .pas-page-stack {
@@ -198,9 +204,9 @@ body {
 
 .pas-panel.ant-card {
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.88);
+  background: rgba(255, 255, 255, 0.92);
   border: 1px solid #e5e5ea;
-  border-radius: 16px;
+  border-radius: 14px;
   box-shadow: none;
 }
 
@@ -225,6 +231,93 @@ body {
 
 .workbench-toolbar {
   width: 100%;
+}
+
+.workbench-hero {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.85fr) minmax(0, 1.65fr);
+  gap: 14px;
+  align-items: stretch;
+}
+
+.workbench-hero-copy {
+  display: grid;
+  min-height: 172px;
+  align-content: space-between;
+  padding: 22px;
+  border: 1px solid rgba(0, 122, 255, 0.12);
+  border-radius: 18px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.92), rgba(244, 248, 255, 0.9)),
+    #ffffff;
+  box-shadow: 0 18px 45px rgba(0, 122, 255, 0.07);
+}
+
+.workbench-eyebrow.ant-typography {
+  color: #007aff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.workbench-hero-copy .ant-typography {
+  margin: 0;
+}
+
+.workbench-hero-copy h2.ant-typography {
+  margin-top: 6px;
+  font-size: 26px;
+  font-weight: 650;
+  letter-spacing: 0;
+}
+
+.workbench-hero-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.workbench-hero-tags .ant-tag {
+  margin-inline-end: 0;
+  border-radius: 999px;
+}
+
+.workbench-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.workbench-metric {
+  display: grid;
+  min-height: 172px;
+  align-content: space-between;
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid #e5e5ea;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 14px 32px rgba(29, 29, 31, 0.04);
+}
+
+.workbench-metric strong {
+  min-width: 0;
+  overflow: hidden;
+  color: #1d1d1f;
+  font-size: 24px;
+  font-weight: 650;
+  letter-spacing: 0;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workbench-metric .ant-typography {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .customer-select.ant-select {
@@ -583,30 +676,69 @@ body {
 
 @media (max-width: 760px) {
   .pas-shell.ant-layout {
-    display: block;
-    padding: 12px;
+    display: grid;
+    gap: 10px;
+    padding: 10px;
   }
 
   .pas-sidebar.ant-layout-sider {
-    position: static;
+    position: sticky;
+    top: 10px;
+    z-index: 10;
     width: 100% !important;
     min-width: 0 !important;
     max-width: none !important;
     height: auto;
-    border-right: 1px solid #e5e5ea;
-    border-radius: 16px 16px 0 0;
+    border-radius: 18px;
   }
 
   .pas-sidebar .ant-layout-sider-children {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 8px 10px;
+    align-items: center;
     min-height: 0;
+    padding: 12px;
+  }
+
+  .pas-brand-block {
+    padding: 0;
   }
 
   .pas-sidebar-user {
     display: none;
   }
 
+  .pas-menu.ant-menu-horizontal {
+    grid-column: 1 / -1;
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    border-bottom: 0;
+    line-height: 38px;
+    white-space: nowrap;
+  }
+
+  .pas-menu.ant-menu-horizontal > .ant-menu-item,
+  .pas-menu.ant-menu-horizontal > .ant-menu-submenu {
+    border-radius: 11px;
+  }
+
+  .pas-menu.ant-menu-horizontal > .ant-menu-item {
+    padding-inline: 12px !important;
+  }
+
+  .pas-menu.ant-menu-horizontal .ant-menu-submenu-title {
+    margin: 0;
+  }
+
   .pas-menu .ant-menu-item {
     padding-left: 34px !important;
+  }
+
+  .pas-menu.ant-menu-horizontal > .ant-menu-item {
+    padding-right: 12px !important;
+    padding-left: 12px !important;
   }
 
   .pas-main.ant-layout {
@@ -614,18 +746,40 @@ body {
     width: 100%;
     min-width: 100%;
     overflow: visible;
-    border-top: 0;
-    border-radius: 0 0 16px 16px;
+    border-radius: 18px;
   }
 
   .pas-topbar.ant-layout-header {
     gap: 12px;
     align-items: flex-start;
+    min-height: 72px;
     padding: 16px;
   }
 
   .pas-content.ant-layout-content {
-    padding: 0 14px 18px;
+    padding: 14px;
+  }
+
+  .workbench-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .workbench-hero-copy {
+    min-height: 140px;
+    padding: 18px;
+  }
+
+  .workbench-metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .workbench-metric {
+    min-height: 122px;
+    padding: 14px;
+  }
+
+  .workbench-metric strong {
+    font-size: 20px;
   }
 
   .workbench-toolbar {
@@ -668,5 +822,19 @@ body {
 
   .knowledge-list-actions {
     justify-content: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .pas-view-title.ant-typography {
+    font-size: 21px;
+  }
+
+  .workbench-metric-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .workbench-metric {
+    min-height: 104px;
   }
 }

@@ -27,7 +27,9 @@ describe("MenuService", () => {
     expect(menu.some((item) => item.key === "system")).toBe(false);
     expect(menu.find((item) => item.key === "customers")?.children.map((item) => item.key)).toEqual([
       "customer_management",
-      "customer_insights"
+      "customer_insights",
+      "opportunities",
+      "meeting_minutes"
     ]);
   });
 
@@ -54,7 +56,7 @@ describe("MenuService", () => {
   it("keeps first-level menus fixed when overrides are applied", () => {
     const service = createService();
 
-    service.updateOverride({ primaryKey: "customers", secondaryKey: "proposal_library", visible: false }, adminUser);
+    service.updateOverride({ primaryKey: "customers", secondaryKey: "customer_insights", visible: false }, adminUser);
 
     expect(service.getConfiguration(adminUser).defaults.map((item) => item.key)).toEqual([
       "workbench",
@@ -70,7 +72,7 @@ describe("MenuService", () => {
     const service = createService();
 
     expect(() =>
-      service.updateOverride({ primaryKey: "customers", secondaryKey: "proposal_library", visible: false }, salesUser)
+      service.updateOverride({ primaryKey: "customers", secondaryKey: "customer_insights", visible: false }, salesUser)
     ).toThrow(ForbiddenException);
   });
 
@@ -87,12 +89,12 @@ describe("MenuService", () => {
 
   it("resets one first-level menu to defaults", () => {
     const service = createService();
-    service.updateOverride({ primaryKey: "customers", secondaryKey: "proposal_library", visible: false }, adminUser);
+    service.updateOverride({ primaryKey: "customers", secondaryKey: "customer_insights", visible: false }, adminUser);
 
     service.resetPrimary("customers", adminUser);
 
     const customerChildren = service.getEffectiveMenu(adminUser).find((item) => item.key === "customers")?.children ?? [];
-    expect(customerChildren.some((item) => item.key === "proposal_library")).toBe(true);
+    expect(customerChildren.some((item) => item.key === "customer_insights")).toBe(true);
   });
 });
 

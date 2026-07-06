@@ -136,10 +136,51 @@ export function WorkbenchPage() {
   };
 
   const draft = proposalJob?.draft;
+  const selectedCustomer = customers.find((customer) => customer.customerId === customerId);
+  const completedExports = exportJob?.formats.filter((format) => format.status === "completed").length ?? 0;
+  const workbenchMetrics = [
+    { label: "客户池", value: String(customers.length), hint: "CRM 可选客户" },
+    {
+      label: "当前客户",
+      value: selectedCustomer?.name ?? "未选择",
+      hint: selectedCustomer ? `${selectedCustomer.industry} / ${selectedCustomer.region}` : "等待选择"
+    },
+    {
+      label: "方案任务",
+      value: proposalJob ? statusText(proposalJob.status) : "未启动",
+      hint: proposalJob?.jobId ?? "待生成"
+    },
+    {
+      label: "导出包",
+      value: exportJob ? `${completedExports}/${exportJob.formats.length}` : "未生成",
+      hint: "docx / pptx / xlsx"
+    }
+  ];
 
   return (
     <Space className="pas-page-stack" orientation="vertical" size="middle">
-      <Card className="pas-panel pas-toolbar-panel" title="选择客户">
+      <section className="workbench-hero">
+        <div className="workbench-hero-copy">
+          <Typography.Text className="workbench-eyebrow">TODAY</Typography.Text>
+          <Typography.Title level={2}>售前作战台</Typography.Title>
+          <div className="workbench-hero-tags">
+            <Tag color="blue">客户分析</Tag>
+            <Tag color="geekblue">方案生成</Tag>
+            <Tag color="default">导出交付</Tag>
+          </div>
+        </div>
+        <div className="workbench-metric-grid">
+          {workbenchMetrics.map((metric) => (
+            <div className="workbench-metric" key={metric.label}>
+              <Typography.Text type="secondary">{metric.label}</Typography.Text>
+              <strong>{metric.value}</strong>
+              <Typography.Text type="secondary">{metric.hint}</Typography.Text>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <Card className="pas-panel pas-toolbar-panel" title="客户与方案生产">
         <Space className="workbench-toolbar" wrap>
           <Select
             showSearch
@@ -264,4 +305,17 @@ export function WorkbenchPage() {
       )}
     </Space>
   );
+}
+
+function statusText(status: ProposalJob["status"]): string {
+  switch (status) {
+    case "completed":
+      return "已完成";
+    case "failed":
+      return "失败";
+    case "running":
+      return "生成中";
+    default:
+      return "排队中";
+  }
 }
