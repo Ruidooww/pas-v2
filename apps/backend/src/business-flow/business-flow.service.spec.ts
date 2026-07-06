@@ -105,6 +105,7 @@ describe("BusinessFlowService", () => {
     expect(generate).toHaveBeenCalledWith({
       customerId: "demo-huaxin-manufacturing",
       userId: "presales-1",
+      user: presalesActor,
       humanInputs: expect.arrayContaining([
         expect.objectContaining({
           inputId: "meeting-requirement-1",
