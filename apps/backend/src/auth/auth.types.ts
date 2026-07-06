@@ -24,6 +24,12 @@ export type CreateUserRequest = {
   role: UserRole;
 };
 
+export type UpdateUserRequest = {
+  displayName?: string;
+  role?: UserRole;
+  active?: boolean;
+};
+
 export type LoginRequest = {
   username: string;
   password: string;

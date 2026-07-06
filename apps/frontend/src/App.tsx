@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { Button, ConfigProvider, Layout, Menu, Space, Spin, Typography } from "antd";
 import { api, clearToken, getToken } from "./api";
+import { AccountsPage } from "./pages/AccountsPage";
+import { AuditLogsPage } from "./pages/AuditLogsPage";
 import { BusinessFlowsPage } from "./pages/BusinessFlowsPage";
+import { DataAttachmentsPage } from "./pages/DataAttachmentsPage";
 import { ExportTemplatesPage } from "./pages/ExportTemplatesPage";
 import { LoginPage } from "./pages/LoginPage";
 import { KnowledgeBlocksPage } from "./pages/KnowledgeBlocksPage";
@@ -9,9 +12,11 @@ import { KnowledgeDocumentsPage } from "./pages/KnowledgeDocumentsPage";
 import { MenuConfigPage } from "./pages/MenuConfigPage";
 import { PlatformPage } from "./pages/PlatformPage";
 import { QaPage } from "./pages/QaPage";
+import { SystemSettingsPage } from "./pages/SystemSettingsPage";
 import { WorkbenchPage } from "./pages/WorkbenchPage";
 import {
   buildAntMenuItems,
+  buildPrimaryMenuItems,
   defaultSecondaryForPrimary,
   fallbackMenuFor,
   findPrimaryBySecondary,
@@ -61,7 +66,11 @@ export function App() {
   const activePrimary = findPrimaryBySecondary(menu, activeSecondaryKey);
   const activeView = routeToView(activeSecondary?.route ?? "");
   const activeTitle = activeSecondary?.label ?? viewToTitle(activeView);
-  const menuItems = useMemo(() => buildAntMenuItems(menu), [menu]);
+  const compactNavigation = useCompactNavigation();
+  const menuItems = useMemo(
+    () => (compactNavigation ? buildPrimaryMenuItems(menu) : buildAntMenuItems(menu)),
+    [compactNavigation, menu]
+  );
 
   const handleLogin = async (nextUser: PublicUser) => {
     setUser(nextUser);
@@ -111,7 +120,7 @@ export function App() {
         <LoginPage onLogin={handleLogin} />
       ) : (
         <Layout className="pas-shell">
-          <Layout.Sider className="pas-sidebar" theme="light" width={214}>
+          <Layout.Sider className="pas-sidebar" theme="light" width={236}>
             <div className="pas-brand-block">
               <span className="pas-brand-mark">P</span>
               <span>
@@ -123,10 +132,16 @@ export function App() {
             </div>
             <Menu
               className="pas-menu"
-              mode="inline"
+              mode={compactNavigation ? "horizontal" : "inline"}
               items={menuItems}
-              openKeys={openKeys}
-              selectedKeys={activeSecondaryKey ? [activeSecondaryKey] : []}
+              openKeys={compactNavigation ? undefined : openKeys}
+              selectedKeys={
+                compactNavigation && activePrimary
+                  ? [primaryKeyToMenuKey(activePrimary.key)]
+                  : activeSecondaryKey
+                    ? [activeSecondaryKey]
+                    : []
+              }
               onClick={({ key }) => {
                 const primaryKey = menuKeyToPrimaryKey(String(key));
                 if (primaryKey) {
@@ -135,15 +150,19 @@ export function App() {
                 }
                 navigateToSecondary(key as SecondaryMenuKey);
               }}
-              onOpenChange={(keys) => {
-                const latestKey = keys.find((key) => !openKeys.includes(String(key))) ?? keys[keys.length - 1];
-                setOpenKeys(latestKey ? [String(latestKey)] : []);
-                const primaryKey = latestKey ? menuKeyToPrimaryKey(String(latestKey)) : null;
-                const defaultKey = primaryKey ? defaultSecondaryForPrimary(menu, primaryKey) : null;
-                if (defaultKey) {
-                  setActiveSecondaryKey(defaultKey);
-                }
-              }}
+              onOpenChange={
+                compactNavigation
+                  ? undefined
+                  : (keys) => {
+                      const latestKey = keys.find((key) => !openKeys.includes(String(key))) ?? keys[keys.length - 1];
+                      setOpenKeys(latestKey ? [String(latestKey)] : []);
+                      const primaryKey = latestKey ? menuKeyToPrimaryKey(String(latestKey)) : null;
+                      const defaultKey = primaryKey ? defaultSecondaryForPrimary(menu, primaryKey) : null;
+                      if (defaultKey) {
+                        setActiveSecondaryKey(defaultKey);
+                      }
+                    }
+              }
             />
             <div className="pas-sidebar-user">
               <Typography.Text>{user.displayName}</Typography.Text>
@@ -205,9 +224,31 @@ function renderActiveContent(view: View, user: PublicUser) {
       return <KnowledgeDocumentsPage />;
     case "templates":
       return <ExportTemplatesPage />;
+    case "accounts":
+      return <AccountsPage />;
+    case "auditLogs":
+      return <AuditLogsPage />;
+    case "dataAttachments":
+      return <DataAttachmentsPage />;
+    case "systemSettings":
+      return <SystemSettingsPage />;
     case "menuConfig":
       return <MenuConfigPage />;
     default:
       return <WorkbenchPage />;
   }
+}
+
+function useCompactNavigation(): boolean {
+  const [compact, setCompact] = useState(() => window.matchMedia("(max-width: 760px)").matches);
+
+  useEffect(() => {
+    const query = window.matchMedia("(max-width: 760px)");
+    const update = () => setCompact(query.matches);
+    update();
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
+
+  return compact;
 }

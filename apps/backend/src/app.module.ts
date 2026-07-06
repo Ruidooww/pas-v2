@@ -17,6 +17,7 @@ import { MenuModule } from "./menu/menu.module";
 import { QaModule } from "./qa/qa.module";
 import { ProposalModule } from "./proposal/proposal.module";
 import { RagflowModule } from "./ragflow/ragflow.module";
+import { SystemModule } from "./system/system.module";
 
 @Module({
   controllers: [HealthController],
@@ -41,7 +42,8 @@ import { RagflowModule } from "./ragflow/ragflow.module";
     BusinessFlowModule,
     PlatformModule,
     IntegrationModule,
-    RagflowModule
+    RagflowModule,
+    SystemModule
   ],
   providers: [
     {

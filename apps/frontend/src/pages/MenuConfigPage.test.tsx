@@ -14,9 +14,9 @@ describe("MenuConfigPage", () => {
 
     render(<MenuConfigPage />);
 
-    expect((await screen.findAllByText("客户与方案")).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText("客户作战")).length).toBeGreaterThan(0);
     expect(screen.getByText("客户管理")).toBeTruthy();
-    expect(screen.getByText("方案任务")).toBeTruthy();
+    expect(screen.getByText("商机推进")).toBeTruthy();
   });
 
   it("sends a visibility update for a second-level item", async () => {
@@ -24,7 +24,7 @@ describe("MenuConfigPage", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     render(<MenuConfigPage />);
-    fireEvent.click(await screen.findByRole("switch", { name: "方案任务" }));
+    fireEvent.click(await screen.findByRole("switch", { name: "商机推进" }));
 
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/internal/menu/configuration",
@@ -82,23 +82,24 @@ function createMenuConfiguration(): MenuConfiguration {
       },
       {
         key: "customers",
-        label: "客户与方案",
+        label: "客户作战",
         icon: "customer",
         order: 20,
         children: [
           { key: "customer_management", label: "客户管理", route: "/customers", roles: ["sales", "presales", "admin"], order: 10 },
           { key: "customer_insights", label: "客户画像", route: "/customers/insights", roles: ["sales", "presales", "admin"], order: 20 },
-          { key: "proposal_tasks", label: "方案任务", route: "/proposals/tasks", roles: ["presales", "admin"], order: 30 },
-          { key: "proposal_library", label: "方案库", route: "/proposals/library", roles: ["presales", "admin"], order: 40 }
+          { key: "opportunities", label: "商机推进", route: "/business/opportunities", roles: ["sales", "presales", "admin"], order: 30 },
+          { key: "meeting_minutes", label: "会议纪要", route: "/business/meetings", roles: ["sales", "presales", "admin"], order: 40 },
+          { key: "contracts_after_sales", label: "合同售后", route: "/business/contracts-after-sales", roles: ["presales", "admin"], order: 50 }
         ]
       },
       {
         key: "system",
-        label: "系统管理",
+        label: "系统底座",
         icon: "system",
         order: 60,
         children: [
-          { key: "secondary_menu_config", label: "二级菜单配置", route: "/system/secondary-menu", roles: ["admin"], order: 40 }
+          { key: "platform_governance", label: "平台治理", route: "/platform/governance", roles: ["admin"], order: 10 }
         ]
       }
     ],

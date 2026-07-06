@@ -8,14 +8,16 @@ const adminUser: PublicUser = {
   userId: "admin-1",
   username: "admin",
   displayName: "Admin",
-  role: "admin"
+  role: "admin",
+  active: true
 };
 
 const salesUser: PublicUser = {
   userId: "sales-1",
   username: "sales",
   displayName: "Sales",
-  role: "sales"
+  role: "sales",
+  active: true
 };
 
 describe("App", () => {
@@ -39,11 +41,12 @@ describe("App", () => {
     render(<App />);
 
     expect((await screen.findAllByText("工作台")).length).toBeGreaterThan(0);
-    expect(screen.getByText("客户与方案")).toBeTruthy();
-    expect(screen.getByText("知识与交付")).toBeTruthy();
-    expect(screen.getByText("系统管理")).toBeTruthy();
-    fireEvent.click(screen.getByText("系统管理"));
-    expect(await screen.findByText("二级菜单配置")).toBeTruthy();
+    expect(screen.getByText("客户作战")).toBeTruthy();
+    expect(screen.getByText("方案生产")).toBeTruthy();
+    expect(screen.getByText("平台管理")).toBeTruthy();
+    fireEvent.click(screen.getByText("平台管理"));
+    fireEvent.click(await screen.findByText("账号权限"));
+    expect(await screen.findByText("账号列表")).toBeTruthy();
   });
 
   it("shows the business flow console from the business first-level menu", async () => {
@@ -52,9 +55,10 @@ describe("App", () => {
 
     render(<App />);
 
-    fireEvent.click(await screen.findByText("业务闭环"));
+    fireEvent.click(await screen.findByText("客户作战"));
+    fireEvent.click(await screen.findByText("商机推进"));
 
-    expect(await screen.findByRole("heading", { name: "商机管理" })).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "商机推进" })).toBeTruthy();
     expect(screen.getByText("V2 Records")).toBeTruthy();
   });
 
@@ -64,9 +68,9 @@ describe("App", () => {
 
     render(<App />);
 
-    fireEvent.click(await screen.findByText("平台运营"));
+    fireEvent.click(await screen.findByText("平台管理"));
 
-    expect(await screen.findByRole("heading", { name: "平台治理" })).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "产品与集成" })).toBeTruthy();
     expect(screen.getByText("Agent / Skill 编排")).toBeTruthy();
   });
 
@@ -77,7 +81,7 @@ describe("App", () => {
     render(<App />);
 
     expect((await screen.findAllByText("工作台")).length).toBeGreaterThan(0);
-    expect(screen.getByText("客户与方案")).toBeTruthy();
+    expect(screen.getByText("客户作战")).toBeTruthy();
   });
 
   it("routes secondary menu configuration to the admin page", async () => {
@@ -86,10 +90,10 @@ describe("App", () => {
 
     render(<App />);
 
-    fireEvent.click(await screen.findByText("系统管理"));
-    fireEvent.click(await screen.findByText("二级菜单配置"));
+    fireEvent.click(await screen.findByText("平台管理"));
+    fireEvent.click(await screen.findByText("菜单配置"));
 
-    expect(await screen.findByRole("heading", { name: "二级菜单配置" })).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "菜单配置" })).toBeTruthy();
   });
 
   it("hides management menus from sales users", async () => {
@@ -99,8 +103,8 @@ describe("App", () => {
     render(<App />);
 
     expect(await screen.findByRole("heading", { name: "总览看板" })).toBeTruthy();
-    expect(screen.queryByText("平台运营")).toBeNull();
-    expect(screen.queryByText("系统管理")).toBeNull();
+    expect(screen.queryByText("平台管理")).toBeNull();
+    expect(screen.queryByText("系统底座")).toBeNull();
     expect(screen.queryByText("文档运营")).toBeNull();
   });
 });
@@ -138,6 +142,15 @@ function mockFetchForUser(user: PublicUser, input: RequestInfo | URL, init?: Req
   }
   if (path === "/api/internal/menu/configuration/customers/reset") {
     return Promise.resolve(jsonResponse(createMenuConfiguration()));
+  }
+  if (path === "/api/internal/auth/users") {
+    return Promise.resolve(jsonResponse([adminUser]));
+  }
+  if (path === "/api/internal/audit/events") {
+    return Promise.resolve(jsonResponse([]));
+  }
+  if (path === "/api/internal/system/overview") {
+    return Promise.resolve(jsonResponse(createSystemOverview()));
   }
   if (path === "/api/crm/customers") {
     return Promise.resolve(jsonResponse({ customers: [] }));
@@ -179,7 +192,7 @@ function createMenuConfiguration(): MenuConfiguration {
       },
       {
         key: "customers",
-        label: "客户与方案",
+        label: "客户作战",
         icon: "customer",
         order: 20,
         children: [
@@ -187,16 +200,27 @@ function createMenuConfiguration(): MenuConfiguration {
         ]
       },
       {
-        key: "system",
-        label: "系统管理",
-        icon: "system",
-        order: 60,
+        key: "platform_ops",
+        label: "平台管理",
+        icon: "platform",
+        order: 50,
         children: [
-          { key: "secondary_menu_config", label: "二级菜单配置", route: "/system/secondary-menu", roles: ["admin"], order: 40 }
+          { key: "account_management", label: "账号权限", route: "/system/accounts", roles: ["admin"], order: 10 },
+          { key: "audit_logs", label: "审计日志", route: "/system/audit-logs", roles: ["admin"], order: 20 },
+          { key: "data_attachments", label: "数据与附件", route: "/system/data-attachments", roles: ["admin"], order: 30 },
+          { key: "secondary_menu_config", label: "菜单配置", route: "/system/secondary-menu", roles: ["admin"], order: 40 }
         ]
       }
     ],
     overrides: []
+  };
+}
+
+function createSystemOverview() {
+  return {
+    generatedAt: "2026-07-06T00:00:00.000Z",
+    settings: [],
+    paths: []
   };
 }
 

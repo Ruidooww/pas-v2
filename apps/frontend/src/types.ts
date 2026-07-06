@@ -3,6 +3,53 @@ export type PublicUser = {
   username: string;
   displayName: string;
   role: "sales" | "presales" | "admin";
+  active: boolean;
+};
+
+export type UserRole = PublicUser["role"];
+
+export type UpdateUserRequest = {
+  displayName?: string;
+  role?: UserRole;
+  active?: boolean;
+};
+
+export type AuditEvent = {
+  auditId: string;
+  action: string;
+  actorUserId?: string;
+  objectType: string;
+  objectId: string;
+  result: "success" | "failure";
+  failureReason?: string;
+  occurredAt: string;
+};
+
+export type SystemSettingStatus = "configured" | "default" | "enabled" | "disabled" | "missing";
+
+export type SystemSettingItem = {
+  group: "ragflow" | "llm" | "storage" | "database" | "export";
+  key: string;
+  label: string;
+  value: string;
+  status: SystemSettingStatus;
+  secret: boolean;
+};
+
+export type SystemPathStatus = {
+  label: string;
+  path: string;
+  exists: boolean;
+  writable: boolean;
+  fileCount: number;
+  totalBytes: number;
+  truncated: boolean;
+};
+
+export type SystemOverview = {
+  generatedAt: string;
+  settings: SystemSettingItem[];
+  paths: SystemPathStatus[];
 };
 
 export type LoginResponse = {

@@ -1,4 +1,10 @@
-import { ConflictException, ForbiddenException, UnauthorizedException } from "@nestjs/common";
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  NotFoundException,
+  UnauthorizedException
+} from "@nestjs/common";
 import type { AuditLogService } from "../audit/audit-log.service";
 import type {
   AuthenticatedUser,
@@ -6,6 +12,7 @@ import type {
   LoginRequest,
   LoginResponse,
   PublicUser,
+  UpdateUserRequest,
   UserRecord
 } from "./auth.types";
 import { JwtTokenService } from "./jwt-token.service";
@@ -40,17 +47,7 @@ export class AuthService {
   }
 
   async createUser(actor: AuthenticatedUser, request: CreateUserRequest): Promise<PublicUser> {
-    if (actor.role !== "admin") {
-      this.auditLog.record({
-        action: "user_created",
-        actorUserId: actor.userId,
-        objectType: "user",
-        objectId: request.username,
-        result: "failure",
-        failureReason: "INSUFFICIENT_ROLE"
-      });
-      throw new ForbiddenException("admin role is required");
-    }
+    this.requireAdmin(actor, "user_created", request.username);
 
     try {
       const passwordHash = await this.passwordHasher.hash(request.password);
@@ -69,6 +66,40 @@ export class AuthService {
       }
       throw error;
     }
+  }
+
+  listUsers(actor: AuthenticatedUser): PublicUser[] {
+    this.requireAdmin(actor, "user_listed", "list");
+    return this.userStore
+      .listUsers()
+      .map(toPublicUser)
+      .sort((left, right) => left.username.localeCompare(right.username));
+  }
+
+  updateUser(actor: AuthenticatedUser, userId: string, request: UpdateUserRequest): PublicUser {
+    this.requireAdmin(actor, "user_updated", userId);
+    const current = this.userStore.findById(userId);
+    if (!current) {
+      throw new NotFoundException("user not found");
+    }
+
+    if (request.role === undefined && request.active === undefined && request.displayName === undefined) {
+      throw new BadRequestException("at least one user field is required");
+    }
+
+    this.assertActiveAdminRemains(current, request);
+    const updated = this.userStore.updateUser(userId, request);
+    if (!updated) {
+      throw new NotFoundException("user not found");
+    }
+    this.auditLog.record({
+      action: "user_updated",
+      actorUserId: actor.userId,
+      objectType: "user",
+      objectId: updated.userId,
+      result: "success"
+    });
+    return toPublicUser(updated);
   }
 
   async importUsers(actor: AuthenticatedUser, requests: CreateUserRequest[]): Promise<PublicUser[]> {
@@ -129,6 +160,37 @@ export class AuthService {
   async authenticateAuthorizationHeader(header: string | undefined): Promise<PublicUser> {
     const token = parseBearerToken(header);
     return this.getMe(token);
+  }
+
+  private requireAdmin(actor: AuthenticatedUser, action: "user_created" | "user_listed" | "user_updated", objectId: string): void {
+    if (actor.role === "admin") {
+      return;
+    }
+
+    this.auditLog.record({
+      action,
+      actorUserId: actor.userId,
+      objectType: "user",
+      objectId,
+      result: "failure",
+      failureReason: "INSUFFICIENT_ROLE"
+    });
+    throw new ForbiddenException("admin role is required");
+  }
+
+  private assertActiveAdminRemains(current: UserRecord, request: UpdateUserRequest): void {
+    const nextRole = request.role ?? current.role;
+    const nextActive = request.active ?? current.active;
+    if (current.role !== "admin" || !current.active || (nextRole === "admin" && nextActive)) {
+      return;
+    }
+
+    const remainingActiveAdmins = this.userStore
+      .listUsers()
+      .filter((user) => user.userId !== current.userId && user.role === "admin" && user.active).length;
+    if (remainingActiveAdmins === 0) {
+      throw new BadRequestException("at least one active admin is required");
+    }
   }
 }
 

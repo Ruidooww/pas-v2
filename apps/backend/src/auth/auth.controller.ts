@@ -1,7 +1,14 @@
-import { BadRequestException, Body, Controller, Get, Headers, Inject, Post, Req } from "@nestjs/common";
+import { BadRequestException, Body, Controller, Get, Headers, Inject, Param, Patch, Post, Req } from "@nestjs/common";
 import { AUTH_SERVICE } from "./auth.tokens";
 import { AuthService } from "./auth.service";
-import type { AuthenticatedUser, CreateUserRequest, LoginRequest, LoginResponse, PublicUser } from "./auth.types";
+import type {
+  AuthenticatedUser,
+  CreateUserRequest,
+  LoginRequest,
+  LoginResponse,
+  PublicUser,
+  UpdateUserRequest
+} from "./auth.types";
 
 type RequestWithUser = {
   user?: AuthenticatedUser;
@@ -28,6 +35,20 @@ export class AuthController {
   @Post("api/internal/auth/users")
   async createUser(@Req() request: RequestWithUser, @Body() body: CreateUserRequest): Promise<PublicUser> {
     return this.authService.createUser(requireUser(request), body);
+  }
+
+  @Get("api/internal/auth/users")
+  listUsers(@Req() request: RequestWithUser): PublicUser[] {
+    return this.authService.listUsers(requireUser(request));
+  }
+
+  @Patch("api/internal/auth/users/:userId")
+  updateUser(
+    @Req() request: RequestWithUser,
+    @Param("userId") userId: string,
+    @Body() body: UpdateUserRequest
+  ): PublicUser {
+    return this.authService.updateUser(requireUser(request), userId, body);
   }
 
   @Post("api/internal/auth/users/import")

@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 import type { PersistenceSink } from "../persistence/persistence-sink";
-import type { CreateUserRequest, UserRecord } from "./auth.types";
+import type { CreateUserRequest, UpdateUserRequest, UserRecord } from "./auth.types";
 
 export class UserAlreadyExistsError extends Error {
   constructor(username: string) {
@@ -53,6 +53,27 @@ export class InMemoryUserStore {
   findById(userId: string): UserRecord | undefined {
     const user = this.usersById.get(userId);
     return user ? cloneUser(user) : undefined;
+  }
+
+  listUsers(): UserRecord[] {
+    return Array.from(this.usersById.values()).map(cloneUser);
+  }
+
+  updateUser(userId: string, request: UpdateUserRequest): UserRecord | undefined {
+    const current = this.usersById.get(userId);
+    if (!current) {
+      return undefined;
+    }
+
+    const next: UserRecord = {
+      ...current,
+      displayName: request.displayName?.trim() || current.displayName,
+      role: request.role ?? current.role,
+      active: request.active ?? current.active
+    };
+    this.usersById.set(userId, next);
+    this.sink?.mirrorUser(next);
+    return cloneUser(next);
   }
 }
 
