@@ -54,6 +54,29 @@ describe("ProposalController", () => {
     });
   });
 
+  it("delegates proposal job listing using the authenticated user", () => {
+    const response = [
+      {
+        jobId: "proposal-job-1",
+        status: "completed",
+        progress: [],
+        request: {
+          customerId: "demo-huaxin-manufacturing",
+          userId: "authenticated-user"
+        },
+        createdAt: "2026-07-02T00:00:00.000Z",
+        updatedAt: "2026-07-02T00:00:00.000Z"
+      }
+    ];
+    const service = {
+      listJobsForUser: vi.fn().mockReturnValue(response)
+    } as unknown as ProposalService;
+    const controller = new ProposalController(service);
+
+    expect(controller.listJobs(request)).toEqual(response);
+    expect(service.listJobsForUser).toHaveBeenCalledWith(request.user);
+  });
+
   it("delegates status lookup and retry using the authenticated user", async () => {
     const response = {
       jobId: "proposal-job-1",

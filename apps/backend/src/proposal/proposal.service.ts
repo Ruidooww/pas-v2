@@ -67,6 +67,13 @@ export class ProposalService {
     return job;
   }
 
+  listJobsForUser(actor: AuthenticatedUser): ProposalJob[] {
+    return this.jobStore
+      .list()
+      .filter((job) => canAccessJob(job, actor))
+      .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
+  }
+
   listLibrary(actor: AuthenticatedUser): ProposalLibraryItem[] {
     const generated = this.jobStore
       .list()

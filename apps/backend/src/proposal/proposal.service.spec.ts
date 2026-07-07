@@ -224,6 +224,31 @@ describe("ProposalService", () => {
     );
   });
 
+  it("lists proposal jobs visible to the requesting user", async () => {
+    const customerAnalysisService = {
+      analyze: vi.fn().mockResolvedValue(completedAnalysis)
+    } as unknown as CustomerAnalysisService;
+    const { service } = createService(customerAnalysisService);
+
+    const ownerJob = await service.generate({
+      customerId: "demo-huaxin-manufacturing",
+      userId: "owner-1",
+      user: createUser("owner-1", "presales")
+    });
+    const otherJob = await service.generate({
+      customerId: "demo-chenyu-energy",
+      userId: "other-1",
+      user: createUser("other-1", "sales")
+    });
+
+    expect(service.listJobsForUser(createUser("owner-1", "presales")).map((job) => job.jobId)).toEqual([
+      ownerJob.jobId
+    ]);
+    const adminJobIds = service.listJobsForUser(createUser("admin-1", "admin")).map((job) => job.jobId);
+    expect(adminJobIds).toHaveLength(2);
+    expect(adminJobIds).toEqual(expect.arrayContaining([ownerJob.jobId, otherJob.jobId]));
+  });
+
   it("lists generated proposal drafts plus mock samples for the proposal library", async () => {
     const customerAnalysisService = {
       analyze: vi.fn().mockResolvedValue(completedAnalysis)

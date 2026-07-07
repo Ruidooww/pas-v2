@@ -34,6 +34,8 @@ export function WorkbenchPage({ mode = "customerInsights" }: { mode?: WorkbenchP
   const [analysis, setAnalysis] = useState<CustomerAnalysisResult | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [proposalJob, setProposalJob] = useState<ProposalJob | null>(null);
+  const [proposalJobs, setProposalJobs] = useState<ProposalJob[]>([]);
+  const [loadingProposalJobs, setLoadingProposalJobs] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [exportJob, setExportJob] = useState<ExportJob | null>(null);
   const [exporting, setExporting] = useState(false);
@@ -47,6 +49,24 @@ export function WorkbenchPage({ mode = "customerInsights" }: { mode?: WorkbenchP
       .then((response) => setCustomers(response.customers))
       .catch((err) => setError(err instanceof Error ? err.message : "客户列表加载失败"));
   }, []);
+
+  const loadProposalJobs = async () => {
+    if (!isProposalTasks) return;
+    setLoadingProposalJobs(true);
+    try {
+      const jobs = await api<ProposalJob[]>("/api/internal/proposals");
+      setProposalJobs(jobs);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "方案任务加载失败");
+    } finally {
+      setLoadingProposalJobs(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!isProposalTasks) return;
+    void loadProposalJobs();
+  }, [isProposalTasks]);
 
   const analyze = async () => {
     if (!customerId) return;
@@ -76,6 +96,7 @@ export function WorkbenchPage({ mode = "customerInsights" }: { mode?: WorkbenchP
       setTimeout(() => void pollProposal(jobId).catch(handlePollError), POLL_INTERVAL_MS);
     } else {
       setGenerating(false);
+      void loadProposalJobs();
     }
   };
 
@@ -96,6 +117,7 @@ export function WorkbenchPage({ mode = "customerInsights" }: { mode?: WorkbenchP
         body: { customerId }
       });
       setProposalJob(job);
+      await loadProposalJobs();
       setTimeout(() => void pollProposal(job.jobId).catch(handlePollError), POLL_INTERVAL_MS);
     } catch (err) {
       setGenerating(false);
@@ -282,6 +304,37 @@ export function WorkbenchPage({ mode = "customerInsights" }: { mode?: WorkbenchP
         </Card>
       )}
 
+      {isProposalTasks && (
+        <Card className="pas-panel" title="最近方案任务" loading={loadingProposalJobs}>
+          {proposalJobs.length === 0 ? (
+            <Typography.Text type="secondary">暂无方案任务</Typography.Text>
+          ) : (
+            <div className="proposal-job-list">
+              {proposalJobs.map((job) => {
+                const latestProgress = job.progress[job.progress.length - 1];
+                return (
+                  <div className="proposal-job-list-item" key={job.jobId}>
+                    <Space className="proposal-job-row" direction="vertical" size={4}>
+                      <Space wrap>
+                        <Typography.Text strong>{job.request.customerId}</Typography.Text>
+                        <Tag color={statusColor(job.status)}>{statusText(job.status)}</Tag>
+                      </Space>
+                      <Typography.Text type="secondary">{job.jobId}</Typography.Text>
+                      <Typography.Text type="secondary">
+                        {(latestProgress?.message ?? "暂无进度") + " · " + formatDateTime(job.updatedAt)}
+                      </Typography.Text>
+                    </Space>
+                    <Button size="small" onClick={() => setProposalJob(job)}>
+                      查看进度
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </Card>
+      )}
+
       {isProposalTasks && draft && (
         <Card
           className="pas-panel"
@@ -348,4 +401,25 @@ function statusText(status: ProposalJob["status"]): string {
     default:
       return "排队中";
   }
+}
+
+function statusColor(status: ProposalJob["status"]): string {
+  switch (status) {
+    case "completed":
+      return "green";
+    case "failed":
+      return "red";
+    case "running":
+      return "blue";
+    default:
+      return "default";
+  }
+}
+
+function formatDateTime(value: string): string {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return value;
+  }
+  return parsed.toLocaleString("zh-CN", { hour12: false });
 }

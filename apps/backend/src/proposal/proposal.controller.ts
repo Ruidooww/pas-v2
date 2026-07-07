@@ -28,6 +28,11 @@ type RequestWithUser = {
 export class ProposalController {
   constructor(@Inject(PROPOSAL_SERVICE) private readonly proposalService: ProposalService) {}
 
+  @Get()
+  listJobs(@Req() request: RequestWithUser): ProposalJob[] {
+    return this.proposalService.listJobsForUser(request.user);
+  }
+
   @Post("generate")
   async generate(@Req() request: RequestWithUser, @Body() body: ProposalGenerationRequest): Promise<ProposalJob> {
     const customerId = body.customerId?.trim();

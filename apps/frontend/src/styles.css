@@ -399,6 +399,34 @@ body {
   color: #6e6e73;
 }
 
+.proposal-job-list {
+  display: grid;
+  gap: 8px;
+}
+
+.proposal-job-list-item {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid #ededf1;
+}
+
+.proposal-job-list-item:last-child {
+  border-bottom: 0;
+}
+
+.proposal-job-row {
+  min-width: 0;
+}
+
+.proposal-job-row .ant-typography {
+  min-width: 0;
+  word-break: break-word;
+}
+
 .knowledge-toolbar {
   width: 100%;
   margin-bottom: 12px;
