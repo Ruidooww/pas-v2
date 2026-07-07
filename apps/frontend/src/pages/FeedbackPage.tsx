@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { Alert, Card, List, Space, Tag, Typography } from "antd";
+import { Alert, Card, Space, Tag, Typography } from "antd";
 import { api } from "../api";
+import { PlainList as List } from "../components/PlainList";
 
 type FeedbackRecord = {
   feedbackId: string;

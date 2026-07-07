@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { Alert, Card, Col, List, Row, Space, Statistic, Tag, Typography } from "antd";
+import { Alert, Card, Col, Row, Space, Statistic, Tag, Typography } from "antd";
 import { api } from "../api";
+import { PlainList as List } from "../components/PlainList";
 import type { WorkbenchOverview, WorkbenchTask, WorkbenchTaskScope } from "../types";
 
 type WorkbenchMode = "overview" | "myTasks" | "teamTasks";

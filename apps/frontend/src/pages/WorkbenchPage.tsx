@@ -5,7 +5,6 @@ import {
   Card,
   Collapse,
   Descriptions,
-  List,
   message,
   Select,
   Space,
@@ -14,6 +13,7 @@ import {
   Typography
 } from "antd";
 import { api } from "../api";
+import { PlainList as List } from "../components/PlainList";
 import type {
   CrmCustomerSummary,
   CustomerAnalysisResult,

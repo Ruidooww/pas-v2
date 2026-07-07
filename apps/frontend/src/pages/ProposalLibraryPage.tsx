@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { Alert, Card, List, Space, Tag, Typography } from "antd";
+import { Alert, Card, Space, Tag, Typography } from "antd";
 import { api } from "../api";
 import { EmptyState } from "../components/EmptyState";
+import { PlainList as List } from "../components/PlainList";
 import type { ProposalLibraryItem } from "../types";
 
 export function ProposalLibraryPage() {
