@@ -26,7 +26,9 @@ import type {
 const POLL_INTERVAL_MS = 1500;
 const MAX_POLLS = 200;
 
-export function WorkbenchPage() {
+export type WorkbenchPageMode = "customerInsights" | "proposalTasks";
+
+export function WorkbenchPage({ mode = "customerInsights" }: { mode?: WorkbenchPageMode }) {
   const [customers, setCustomers] = useState<CrmCustomerSummary[]>([]);
   const [customerId, setCustomerId] = useState<string | undefined>();
   const [analysis, setAnalysis] = useState<CustomerAnalysisResult | null>(null);
@@ -37,6 +39,8 @@ export function WorkbenchPage() {
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const pollCount = useRef(0);
+  const isCustomerInsights = mode === "customerInsights";
+  const isProposalTasks = mode === "proposalTasks";
 
   useEffect(() => {
     api<{ customers: CrmCustomerSummary[] }>("/api/crm/customers")
@@ -138,35 +142,57 @@ export function WorkbenchPage() {
   const draft = proposalJob?.draft;
   const selectedCustomer = customers.find((customer) => customer.customerId === customerId);
   const completedExports = exportJob?.formats.filter((format) => format.status === "completed").length ?? 0;
-  const workbenchMetrics = [
-    { label: "客户池", value: String(customers.length), hint: "CRM 可选客户" },
-    {
-      label: "当前客户",
-      value: selectedCustomer?.name ?? "未选择",
-      hint: selectedCustomer ? `${selectedCustomer.industry} / ${selectedCustomer.region}` : "等待选择"
-    },
-    {
-      label: "方案任务",
-      value: proposalJob ? statusText(proposalJob.status) : "未启动",
-      hint: proposalJob?.jobId ?? "待生成"
-    },
-    {
-      label: "导出包",
-      value: exportJob ? `${completedExports}/${exportJob.formats.length}` : "未生成",
-      hint: "docx / pptx / xlsx"
-    }
-  ];
+  const pageCopy = isCustomerInsights
+    ? {
+        eyebrow: "CUSTOMER INSIGHTS",
+        title: "客户画像",
+        tags: ["客户分析", "痛点识别", "切入建议"]
+      }
+    : {
+        eyebrow: "PROPOSAL TASKS",
+        title: "方案生成",
+        tags: ["方案草稿", "交付导出", "人工审核"]
+      };
+  const workbenchMetrics = isCustomerInsights
+    ? [
+        { label: "客户池", value: String(customers.length), hint: "CRM 可选客户" },
+        {
+          label: "当前客户",
+          value: selectedCustomer?.name ?? "未选择",
+          hint: selectedCustomer ? `${selectedCustomer.industry} / ${selectedCustomer.region}` : "等待选择"
+        },
+        {
+          label: "画像状态",
+          value: analysis ? "已生成" : "未生成",
+          hint: analysis?.analysisId ?? "待分析"
+        }
+      ]
+    : [
+        { label: "客户池", value: String(customers.length), hint: "CRM 可选客户" },
+        {
+          label: "方案任务",
+          value: proposalJob ? statusText(proposalJob.status) : "未启动",
+          hint: proposalJob?.jobId ?? "待生成"
+        },
+        {
+          label: "导出包",
+          value: exportJob ? `${completedExports}/${exportJob.formats.length}` : "未生成",
+          hint: "docx / pptx / xlsx"
+        }
+      ];
 
   return (
     <Space className="pas-page-stack" orientation="vertical" size="middle">
       <section className="workbench-hero">
         <div className="workbench-hero-copy">
-          <Typography.Text className="workbench-eyebrow">TODAY</Typography.Text>
-          <Typography.Title level={2}>售前作战台</Typography.Title>
+          <Typography.Text className="workbench-eyebrow">{pageCopy.eyebrow}</Typography.Text>
+          <Typography.Title level={2}>{pageCopy.title}</Typography.Title>
           <div className="workbench-hero-tags">
-            <Tag color="blue">客户分析</Tag>
-            <Tag color="geekblue">方案生成</Tag>
-            <Tag color="default">导出交付</Tag>
+            {pageCopy.tags.map((tag, index) => (
+              <Tag color={index === 0 ? "blue" : index === 1 ? "geekblue" : "default"} key={tag}>
+                {tag}
+              </Tag>
+            ))}
           </div>
         </div>
         <div className="workbench-metric-grid">
@@ -180,7 +206,7 @@ export function WorkbenchPage() {
         </div>
       </section>
 
-      <Card className="pas-panel pas-toolbar-panel" title="客户与方案生产">
+      <Card className="pas-panel pas-toolbar-panel" title={pageCopy.title}>
         <Space className="workbench-toolbar" wrap>
           <Select
             showSearch
@@ -194,18 +220,22 @@ export function WorkbenchPage() {
               label: `${customer.name}（${customer.industry} / ${customer.region}）`
             }))}
           />
-          <Button type="primary" onClick={() => void analyze()} loading={analyzing} disabled={!customerId}>
-            生成客户分析
-          </Button>
-          <Button onClick={() => void generate()} loading={generating} disabled={!customerId}>
-            一键生成方案
-          </Button>
+          {isCustomerInsights && (
+            <Button type="primary" onClick={() => void analyze()} loading={analyzing} disabled={!customerId}>
+              生成客户画像
+            </Button>
+          )}
+          {isProposalTasks && (
+            <Button type="primary" onClick={() => void generate()} loading={generating} disabled={!customerId}>
+              生成方案
+            </Button>
+          )}
         </Space>
       </Card>
 
       {error && <Alert type="error" message={error} closable onClose={() => setError(null)} />}
 
-      {analysis && (
+      {isCustomerInsights && analysis && (
         <Card className="pas-panel" title={`客户情况分析：${analysis.customerName}`}>
           <Alert type="warning" message="AI 生成内容，需人工核实后使用" showIcon style={{ marginBottom: 12 }} />
           {analysis.narrativeSummary && (
@@ -234,7 +264,7 @@ export function WorkbenchPage() {
         </Card>
       )}
 
-      {proposalJob && (
+      {isProposalTasks && proposalJob && (
         <Card className="pas-panel" title="方案生成进度">
           <Steps
             size="small"
@@ -252,7 +282,7 @@ export function WorkbenchPage() {
         </Card>
       )}
 
-      {draft && (
+      {isProposalTasks && draft && (
         <Card
           className="pas-panel"
           title={draft.title}

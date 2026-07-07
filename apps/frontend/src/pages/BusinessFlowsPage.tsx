@@ -33,17 +33,19 @@ export type BusinessFlowTabKey =
   | "customer-signal"
   | "metrics";
 
+export type BusinessFlowPageMode = "opportunities" | "meeting" | "contractsAfterSales";
+
 type BusinessFlowsPageProps = {
-  initialTab?: BusinessFlowTabKey;
+  mode?: BusinessFlowPageMode;
 };
 
-export function BusinessFlowsPage({ initialTab = "opportunity" }: BusinessFlowsPageProps) {
+export function BusinessFlowsPage({ mode = "opportunities" }: BusinessFlowsPageProps) {
   const [records, setRecords] = useState<BusinessFlowRecord[]>([]);
   const [metrics, setMetrics] = useState<BusinessMetrics>({ definitions: [], counters: [] });
   const [lastRecord, setLastRecord] = useState<BusinessFlowRecord | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<BusinessFlowTabKey>(initialTab);
+  const [activeTab, setActiveTab] = useState<BusinessFlowTabKey>(firstBusinessFlowTab(mode));
   const [opportunityText, setOpportunityText] = useState(
     "客户：华信精工；需求：终端数据防泄漏；预算：38万；时间：2026-09；联系人：周明；阶段：方案；来源：销售记录"
   );
@@ -60,8 +62,8 @@ export function BusinessFlowsPage({ initialTab = "opportunity" }: BusinessFlowsP
   }, []);
 
   useEffect(() => {
-    setActiveTab(initialTab);
-  }, [initialTab]);
+    setActiveTab(firstBusinessFlowTab(mode));
+  }, [mode]);
 
   const refresh = async () => {
     try {
@@ -72,7 +74,7 @@ export function BusinessFlowsPage({ initialTab = "opportunity" }: BusinessFlowsP
       setRecords(recordResponse.records);
       setMetrics(metricResponse);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "V2 数据加载失败");
+      setError(err instanceof Error ? err.message : "业务数据加载失败");
     }
   };
 
@@ -84,7 +86,7 @@ export function BusinessFlowsPage({ initialTab = "opportunity" }: BusinessFlowsP
       setLastRecord(record);
       await refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "V2 操作失败");
+      setError(err instanceof Error ? err.message : "业务操作失败");
     } finally {
       setLoading(false);
     }
@@ -92,6 +94,7 @@ export function BusinessFlowsPage({ initialTab = "opportunity" }: BusinessFlowsP
 
   const latestOpportunity = lastRecord?.kind === "opportunity" ? lastRecord : undefined;
   const latestMeeting = lastRecord?.kind === "meeting" ? lastRecord : undefined;
+  const visibleTabs = businessFlowTabsForMode(mode);
 
   return (
     <div className="pas-page-stack">
@@ -100,13 +103,13 @@ export function BusinessFlowsPage({ initialTab = "opportunity" }: BusinessFlowsP
       <Row gutter={[12, 12]} className="business-flow-metrics">
         <Col xs={24} md={8}>
           <Card className="pas-panel">
-            <Statistic title="V2 Records" value={records.length} />
+            <Statistic title="业务记录" value={records.length} />
           </Card>
         </Col>
         <Col xs={24} md={8}>
           <Card className="pas-panel">
             <Statistic
-              title="Pending Inputs"
+              title="待外部输入"
               value={records.filter((record) => record.pendingInputs.length > 0).length}
             />
           </Card>
@@ -114,7 +117,7 @@ export function BusinessFlowsPage({ initialTab = "opportunity" }: BusinessFlowsP
         <Col xs={24} md={8}>
           <Card className="pas-panel">
             <Statistic
-              title="Confirmed / Sync"
+              title="确认与同步"
               value={records.filter((record) => record.status === "confirmed" || record.status === "sync_pending").length}
             />
           </Card>
@@ -125,6 +128,7 @@ export function BusinessFlowsPage({ initialTab = "opportunity" }: BusinessFlowsP
         <Tabs
           activeKey={activeTab}
           onChange={(key) => setActiveTab(key as BusinessFlowTabKey)}
+          tabBarStyle={visibleTabs.length > 1 ? undefined : { display: "none" }}
           items={[
             {
               key: "opportunity",
@@ -247,7 +251,7 @@ export function BusinessFlowsPage({ initialTab = "opportunity" }: BusinessFlowsP
                             method: "POST",
                             body: {
                               customerId: "demo-huaxin-manufacturing",
-                              contractTitle: "V2 合同样本",
+                              contractTitle: "合同样本",
                               contractText,
                               sourceRef: "v2-console-contract"
                             }
@@ -386,7 +390,7 @@ export function BusinessFlowsPage({ initialTab = "opportunity" }: BusinessFlowsP
                 </div>
               )
             }
-          ]}
+          ].filter((item) => visibleTabs.includes(item.key as BusinessFlowTabKey))}
         />
       </Card>
 
@@ -394,7 +398,7 @@ export function BusinessFlowsPage({ initialTab = "opportunity" }: BusinessFlowsP
 
       <Card className="pas-panel" title="最近业务记录">
         {records.length === 0 ? (
-          <Typography.Text type="secondary">暂无 V2 业务记录</Typography.Text>
+          <Typography.Text type="secondary">暂无业务记录</Typography.Text>
         ) : (
           <div className="business-flow-list">
             {records
@@ -420,6 +424,22 @@ export function BusinessFlowsPage({ initialTab = "opportunity" }: BusinessFlowsP
       </Card>
     </div>
   );
+}
+
+function businessFlowTabsForMode(mode: BusinessFlowPageMode): BusinessFlowTabKey[] {
+  switch (mode) {
+    case "meeting":
+      return ["meeting"];
+    case "contractsAfterSales":
+      return ["contract", "after-sales"];
+    case "opportunities":
+    default:
+      return ["opportunity"];
+  }
+}
+
+function firstBusinessFlowTab(mode: BusinessFlowPageMode): BusinessFlowTabKey {
+  return businessFlowTabsForMode(mode)[0] ?? "opportunity";
 }
 
 function BusinessFlowResult({ record }: { record: BusinessFlowRecord }) {

@@ -19,18 +19,18 @@ export function CustomerManagementPage() {
         <div className="workbench-hero-copy">
           <Typography.Text className="workbench-eyebrow">CUSTOMERS</Typography.Text>
           <Typography.Title level={2}>客户管理</Typography.Title>
-          <Typography.Paragraph type="secondary">当前使用 mock CRM 客户池，真实 CRM 接口就绪后替换数据源。</Typography.Paragraph>
+          <Typography.Paragraph type="secondary">当前使用内置客户样例池，真实 CRM 接口就绪后替换数据源。</Typography.Paragraph>
         </div>
         <div className="workbench-metric-grid">
           <div className="workbench-metric">
             <Typography.Text type="secondary">客户数</Typography.Text>
             <strong>{customers.length}</strong>
-            <Typography.Text type="secondary">mock CRM</Typography.Text>
+            <Typography.Text type="secondary">客户样例池</Typography.Text>
           </div>
           <div className="workbench-metric">
             <Typography.Text type="secondary">行业数</Typography.Text>
             <strong>{new Set(customers.map((customer) => customer.industry)).size}</strong>
-            <Typography.Text type="secondary">演示维度</Typography.Text>
+            <Typography.Text type="secondary">样例维度</Typography.Text>
           </div>
           <div className="workbench-metric">
             <Typography.Text type="secondary">区域数</Typography.Text>
@@ -54,7 +54,7 @@ export function CustomerManagementPage() {
             { title: "负责人", dataIndex: "accountOwner" },
             {
               title: "状态",
-              render: () => <Tag color="blue">mock</Tag>
+              render: () => <Tag color="blue">样例</Tag>
             }
           ]}
         />
