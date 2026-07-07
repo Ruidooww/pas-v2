@@ -87,6 +87,40 @@ export type CrmCustomerSummary = {
   accountOwner: string;
 };
 
+export type WorkbenchMetric = {
+  key: string;
+  label: string;
+  value: number | string;
+  hint: string;
+};
+
+export type WorkbenchTaskScope = "mine" | "team";
+
+export type WorkbenchTask = {
+  taskId: string;
+  title: string;
+  customerName: string;
+  owner: string;
+  status: "pending" | "in_progress" | "blocked" | "done";
+  priority: "high" | "medium" | "low";
+  dueAt: string;
+  source: "crm" | "proposal" | "qa" | "manual";
+};
+
+export type WorkbenchActivity = {
+  activityId: string;
+  title: string;
+  description: string;
+  happenedAt: string;
+};
+
+export type WorkbenchOverview = {
+  generatedAt: string;
+  metrics: WorkbenchMetric[];
+  tasks: WorkbenchTask[];
+  activities: WorkbenchActivity[];
+};
+
 export type CustomerAnalysisItem = {
   title: string;
   detail: string;
@@ -144,6 +178,17 @@ export type ProposalJob = {
   draft?: ProposalDraft;
   exportPackage?: ExportPackage;
   failureReason?: string;
+};
+
+export type ProposalLibraryItem = {
+  libraryId: string;
+  title: string;
+  customerName: string;
+  status: "review_ready" | "export_ready" | "sample";
+  source: "generated" | "mock";
+  formats: ExportFormat[];
+  tags: string[];
+  updatedAt: string;
 };
 
 export type ExportFormat = "docx" | "pptx" | "xlsx";
@@ -537,7 +582,6 @@ export type SecondaryMenuKey =
   | "contracts_after_sales"
   | "customer_feedback"
   | "platform_governance"
-  | "product_registry"
   | "analytics"
   | "account_management"
   | "audit_logs"

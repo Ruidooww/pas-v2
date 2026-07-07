@@ -20,7 +20,14 @@ import type {
 } from "./types";
 
 export type View =
-  | "workbench"
+  | "workbenchOverview"
+  | "workbenchMyTasks"
+  | "workbenchTeamTasks"
+  | "customerManagement"
+  | "customerInsights"
+  | "proposalTasks"
+  | "proposalLibrary"
+  | "feedback"
   | "qa"
   | "business"
   | "platform"
@@ -178,12 +185,17 @@ export function menuIcon(icon: string): ReactNode {
 }
 
 export function routeToView(route: string): View {
+  if (route === "/workbench/overview") return "workbenchOverview";
+  if (route === "/workbench/my-tasks") return "workbenchMyTasks";
+  if (route === "/workbench/team-tasks") return "workbenchTeamTasks";
+  if (route === "/customers") return "customerManagement";
+  if (route === "/customers/insights") return "customerInsights";
+  if (route === "/proposals/tasks") return "proposalTasks";
+  if (route === "/proposals/library") return "proposalLibrary";
+  if (route === "/business/feedback") return "feedback";
   if (route === "/knowledge/qa") return "qa";
   if (route === "/knowledge/documents") return "documents";
   if (route === "/knowledge/blocks") return "knowledge";
-  if (route.startsWith("/customers")) return "workbench";
-  if (route === "/proposals/tasks") return "workbench";
-  if (route === "/proposals/library") return "templates";
   if (route.startsWith("/delivery/")) return "templates";
   if (route.startsWith("/business/")) return "business";
   if (route === "/platform/analytics") return "platform";
@@ -193,11 +205,27 @@ export function routeToView(route: string): View {
   if (route === "/system/data-attachments") return "dataAttachments";
   if (route === "/system/settings") return "systemSettings";
   if (route === "/system/secondary-menu") return "menuConfig";
-  return "workbench";
+  return "workbenchOverview";
 }
 
 export function viewToTitle(view: View): string {
   switch (view) {
+    case "workbenchOverview":
+      return "总览看板";
+    case "workbenchMyTasks":
+      return "我的待办";
+    case "workbenchTeamTasks":
+      return "团队任务";
+    case "customerManagement":
+      return "客户管理";
+    case "customerInsights":
+      return "客户画像";
+    case "proposalTasks":
+      return "方案生成";
+    case "proposalLibrary":
+      return "方案库";
+    case "feedback":
+      return "反馈闭环";
     case "qa":
       return "知识库问答";
     case "business":

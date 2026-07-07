@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { App } from "./App";
 import { fallbackMenuFor } from "./navigation";
-import type { MenuConfiguration, PlatformOverview, PublicUser } from "./types";
+import type { MenuConfiguration, PlatformOverview, PublicUser, WorkbenchOverview } from "./types";
 
 const adminUser: PublicUser = {
   userId: "admin-1",
@@ -120,7 +120,7 @@ describe("App", () => {
 
     render(<App />);
 
-    expect(await screen.findByRole("heading", { name: "总览看板" })).toBeTruthy();
+    expect((await screen.findAllByRole("heading", { name: "总览看板" })).length).toBeGreaterThan(0);
     expect(screen.queryByText("运营分析")).toBeNull();
     expect(screen.queryByText("系统设置")).toBeNull();
     expect(screen.queryByText("文档运营")).toBeNull();
@@ -170,8 +170,20 @@ function mockFetchForUser(user: PublicUser, input: RequestInfo | URL, init?: Req
   if (path === "/api/internal/system/overview") {
     return Promise.resolve(jsonResponse(createSystemOverview()));
   }
+  if (path === "/api/internal/workbench/overview") {
+    return Promise.resolve(jsonResponse(createWorkbenchOverview()));
+  }
+  if (path.startsWith("/api/internal/workbench/tasks")) {
+    return Promise.resolve(jsonResponse({ scope: "mine", tasks: createWorkbenchOverview().tasks }));
+  }
   if (path === "/api/crm/customers") {
     return Promise.resolve(jsonResponse({ customers: [] }));
+  }
+  if (path === "/api/internal/proposals/library") {
+    return Promise.resolve(jsonResponse([]));
+  }
+  if (path === "/api/internal/feedback") {
+    return Promise.resolve(jsonResponse([]));
   }
   if (path === "/api/internal/business-flows/records") {
     return Promise.resolve(jsonResponse({ records: [] }));
@@ -249,6 +261,36 @@ function createSystemOverview() {
     generatedAt: "2026-07-06T00:00:00.000Z",
     settings: [],
     paths: []
+  };
+}
+
+function createWorkbenchOverview(): WorkbenchOverview {
+  return {
+    generatedAt: "2026-07-07T00:00:00.000Z",
+    metrics: [
+      { key: "active_tasks", label: "待处理任务", value: 2, hint: "mock" },
+      { key: "high_priority", label: "高优先级", value: 1, hint: "mock" }
+    ],
+    tasks: [
+      {
+        taskId: "task-1",
+        title: "方案初稿",
+        customerName: "华信精工",
+        owner: "Admin",
+        status: "in_progress",
+        priority: "high",
+        dueAt: "2026-07-08",
+        source: "proposal"
+      }
+    ],
+    activities: [
+      {
+        activityId: "activity-1",
+        title: "任务创建",
+        description: "mock activity",
+        happenedAt: "2026-07-07T00:00:00.000Z"
+      }
+    ]
   };
 }
 

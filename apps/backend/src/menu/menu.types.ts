@@ -26,7 +26,6 @@ export type SecondaryMenuKey =
   | "contracts_after_sales"
   | "customer_feedback"
   | "platform_governance"
-  | "product_registry"
   | "analytics"
   | "account_management"
   | "audit_logs"

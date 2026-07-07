@@ -1,0 +1,1 @@
+export const WORKBENCH_SERVICE = Symbol("WORKBENCH_SERVICE");

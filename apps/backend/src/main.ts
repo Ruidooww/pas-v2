@@ -1,9 +1,11 @@
 import "reflect-metadata";
 import { NestFactory } from "@nestjs/core";
 import helmet from "helmet";
-import { AppModule } from "./app.module";
+import { loadLocalEnv } from "./env-loader";
 
 async function bootstrap(): Promise<void> {
+  loadLocalEnv();
+  const { AppModule } = await import("./app.module.js");
   const app = await NestFactory.create(AppModule);
   app.use(helmet());
   const port = Number(process.env.PORT || 3000);

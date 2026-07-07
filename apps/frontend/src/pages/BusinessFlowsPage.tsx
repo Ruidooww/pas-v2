@@ -24,12 +24,26 @@ const kindLabels: Record<BusinessFlowKind, string> = {
   customer_signal: "CIP"
 };
 
-export function BusinessFlowsPage() {
+export type BusinessFlowTabKey =
+  | "opportunity"
+  | "meeting"
+  | "contract"
+  | "after-sales"
+  | "channel"
+  | "customer-signal"
+  | "metrics";
+
+type BusinessFlowsPageProps = {
+  initialTab?: BusinessFlowTabKey;
+};
+
+export function BusinessFlowsPage({ initialTab = "opportunity" }: BusinessFlowsPageProps) {
   const [records, setRecords] = useState<BusinessFlowRecord[]>([]);
   const [metrics, setMetrics] = useState<BusinessMetrics>({ definitions: [], counters: [] });
   const [lastRecord, setLastRecord] = useState<BusinessFlowRecord | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<BusinessFlowTabKey>(initialTab);
   const [opportunityText, setOpportunityText] = useState(
     "客户：华信精工；需求：终端数据防泄漏；预算：38万；时间：2026-09；联系人：周明；阶段：方案；来源：销售记录"
   );
@@ -44,6 +58,10 @@ export function BusinessFlowsPage() {
   useEffect(() => {
     void refresh();
   }, []);
+
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
 
   const refresh = async () => {
     try {
@@ -105,6 +123,8 @@ export function BusinessFlowsPage() {
 
       <Card className="pas-panel">
         <Tabs
+          activeKey={activeTab}
+          onChange={(key) => setActiveTab(key as BusinessFlowTabKey)}
           items={[
             {
               key: "opportunity",

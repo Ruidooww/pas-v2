@@ -86,6 +86,17 @@ export type ProposalJob = {
   failureReason?: ProposalFailureReason;
 };
 
+export type ProposalLibraryItem = {
+  libraryId: string;
+  title: string;
+  customerName: string;
+  status: "review_ready" | "export_ready" | "sample";
+  source: "generated" | "mock";
+  formats: ProposalFormat[];
+  tags: string[];
+  updatedAt: string;
+};
+
 export type ProposalAuditEvent = {
   event: "proposal_generation_started" | "proposal_generation_completed" | "proposal_generation_failed";
   jobId: string;

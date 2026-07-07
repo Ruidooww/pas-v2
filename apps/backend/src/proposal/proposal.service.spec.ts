@@ -224,6 +224,37 @@ describe("ProposalService", () => {
     );
   });
 
+  it("lists generated proposal drafts plus mock samples for the proposal library", async () => {
+    const customerAnalysisService = {
+      analyze: vi.fn().mockResolvedValue(completedAnalysis)
+    } as unknown as CustomerAnalysisService;
+    const { service } = createService(customerAnalysisService);
+
+    const job = await service.generate({
+      customerId: "demo-huaxin-manufacturing",
+      userId: "owner-1",
+      user: createUser("owner-1", "presales")
+    });
+    const ownerLibrary = service.listLibrary(createUser("owner-1", "presales"));
+    const otherLibrary = service.listLibrary(createUser("other-1", "presales"));
+
+    expect(ownerLibrary).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          libraryId: job.draft?.draftId,
+          source: "generated",
+          status: "export_ready"
+        }),
+        expect.objectContaining({
+          libraryId: "sample-huaxin-dlp",
+          source: "mock"
+        })
+      ])
+    );
+    expect(otherLibrary.some((item) => item.libraryId === job.draft?.draftId)).toBe(false);
+    expect(otherLibrary.some((item) => item.source === "mock")).toBe(true);
+  });
+
   it("stores failed jobs without an export package when draft provider fails", async () => {
     const customerAnalysisService = {
       analyze: vi.fn().mockResolvedValue(completedAnalysis)

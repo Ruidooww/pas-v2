@@ -18,6 +18,7 @@ import { QaModule } from "./qa/qa.module";
 import { ProposalModule } from "./proposal/proposal.module";
 import { RagflowModule } from "./ragflow/ragflow.module";
 import { SystemModule } from "./system/system.module";
+import { WorkbenchModule } from "./workbench/workbench.module";
 
 @Module({
   controllers: [HealthController],
@@ -43,7 +44,8 @@ import { SystemModule } from "./system/system.module";
     PlatformModule,
     IntegrationModule,
     RagflowModule,
-    SystemModule
+    SystemModule,
+    WorkbenchModule
   ],
   providers: [
     {
