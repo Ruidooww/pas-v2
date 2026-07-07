@@ -17,6 +17,11 @@ type RequestWithUser = {
 export class ExportController {
   constructor(@Inject(EXPORT_SERVICE) private readonly exportService: ExportService) {}
 
+  @Get()
+  list(@Req() request: RequestWithUser): ExportJob[] {
+    return this.exportService.listJobsForUser(request.user);
+  }
+
   @Post()
   async create(@Req() request: RequestWithUser, @Body() body: ExportCreateRequest): Promise<ExportJob> {
     if (!body.exportPackage?.packageId) {

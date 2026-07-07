@@ -199,8 +199,13 @@ export type ExportFormatRecord =
 
 export type ExportJob = {
   jobId: string;
+  sourcePackageId: string;
+  customerId: string;
+  userId: string;
   status: "completed" | "partial" | "failed";
   formats: ExportFormatRecord[];
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type ExportDownloadResponse = {

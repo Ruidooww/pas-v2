@@ -6,6 +6,7 @@ import { AuditLogsPage } from "./pages/AuditLogsPage";
 import { BusinessFlowsPage, type BusinessFlowPageMode } from "./pages/BusinessFlowsPage";
 import { CustomerManagementPage } from "./pages/CustomerManagementPage";
 import { DataAttachmentsPage } from "./pages/DataAttachmentsPage";
+import { ExportJobsPage } from "./pages/ExportJobsPage";
 import { ExportTemplatesPage } from "./pages/ExportTemplatesPage";
 import { FeedbackPage } from "./pages/FeedbackPage";
 import { LoginPage } from "./pages/LoginPage";
@@ -247,6 +248,8 @@ function renderActiveContent(view: View, user: PublicUser, activeSecondaryKey: S
       return <WorkbenchPage mode="proposalTasks" />;
     case "proposalLibrary":
       return <ProposalLibraryPage />;
+    case "exportJobs":
+      return <ExportJobsPage />;
     case "feedback":
       return <FeedbackPage />;
     case "qa":

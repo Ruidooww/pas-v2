@@ -275,6 +275,19 @@ describe("ExportService", () => {
     );
     expect(filesService.readFile).toHaveBeenCalledTimes(1);
   });
+
+  it("lists only owned export jobs for non-admin users and all jobs for admins", async () => {
+    const service = createService(createRenderer(), createFilesService(), new ExportAuditLogService());
+    const ownerJob = await service.createExport({ exportPackage, formats: ["docx"], userId: "owner-1" });
+    const otherJob = await service.createExport({ exportPackage, formats: ["pptx"], userId: "other-1" });
+
+    expect(service.listJobsForUser(createUser("owner-1", "presales")).map((job) => job.jobId)).toEqual([
+      ownerJob.jobId
+    ]);
+    expect(service.listJobsForUser(createUser("admin-1", "admin")).map((job) => job.jobId).sort()).toEqual(
+      [ownerJob.jobId, otherJob.jobId].sort()
+    );
+  });
 });
 
 function createService(

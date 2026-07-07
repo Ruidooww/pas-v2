@@ -84,8 +84,8 @@ const menuChecks = {
     assert(["answered", "no_hit"].includes(response.status), `unexpected QA status ${response.status}`);
   },
   export_jobs: async () => {
-    const response = await getJson("/api/internal/export-templates", authHeaders());
-    assert(Array.isArray(response), "export template list must be an array");
+    const response = await getJson("/api/internal/exports", authHeaders());
+    assert(Array.isArray(response), "export job list must be an array");
   },
   proposal_library: async () => {
     const response = await getJson("/api/internal/proposals/library", authHeaders());

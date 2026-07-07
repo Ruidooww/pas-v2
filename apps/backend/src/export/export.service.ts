@@ -80,6 +80,11 @@ export class ExportService {
     return job;
   }
 
+  listJobsForUser(actor: AuthenticatedUser): ExportJob[] {
+    const jobs = this.jobStore.list();
+    return actor.role === "admin" ? jobs : jobs.filter((job) => job.userId === actor.userId);
+  }
+
   async download(
     jobId: string,
     format: ExportFormat,

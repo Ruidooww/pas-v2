@@ -34,6 +34,12 @@ export class ExportJobStoreService {
     return job ? cloneJob(job) : undefined;
   }
 
+  list(): ExportJob[] {
+    return Array.from(this.jobs.values())
+      .map(cloneJob)
+      .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
+  }
+
   appendFormat(jobId: string, record: ExportFormatRecord): ExportJob | undefined {
     const job = this.jobs.get(jobId);
     if (!job) {
