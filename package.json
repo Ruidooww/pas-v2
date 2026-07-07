@@ -8,6 +8,7 @@
     "ci:images": "node scripts/build-images.mjs",
     "compose:config": "node scripts/verify-compose.mjs",
     "lint": "pnpm -r lint",
+    "smoke:local": "node scripts/smoke-local-menu.mjs",
     "test": "pnpm -r test",
     "typecheck": "pnpm -r typecheck"
   },
