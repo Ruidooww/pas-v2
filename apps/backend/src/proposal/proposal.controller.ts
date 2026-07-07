@@ -18,7 +18,7 @@ import {
   ProposalJobRetryRejectedError,
   ProposalService
 } from "./proposal.service";
-import type { ProposalGenerationRequest, ProposalJob } from "./proposal.types";
+import type { ProposalGenerationRequest, ProposalJob, ProposalLibraryItem } from "./proposal.types";
 
 type RequestWithUser = {
   user: AuthenticatedUser;
@@ -41,6 +41,11 @@ export class ProposalController {
       user: request.user,
       humanInputs: body.humanInputs
     });
+  }
+
+  @Get("library")
+  listLibrary(@Req() request: RequestWithUser): ProposalLibraryItem[] {
+    return this.proposalService.listLibrary(request.user);
   }
 
   @Get(":jobId")

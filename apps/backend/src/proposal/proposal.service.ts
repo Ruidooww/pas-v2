@@ -9,6 +9,7 @@ import type {
   ProposalFailureReason,
   ProposalGenerationRequest,
   ProposalJob,
+  ProposalLibraryItem,
   ProposalProgressRecord,
   ProposalDraftProvider
 } from "./proposal.types";
@@ -64,6 +65,24 @@ export class ProposalService {
     const job = this.getJobOrThrow(jobId);
     assertCanAccessJob(job, actor);
     return job;
+  }
+
+  listLibrary(actor: AuthenticatedUser): ProposalLibraryItem[] {
+    const generated = this.jobStore
+      .list()
+      .filter((job) => job.status === "completed" && job.draft && canAccessJob(job, actor))
+      .map((job) => ({
+        libraryId: job.draft?.draftId ?? job.jobId,
+        title: job.draft?.title ?? "Untitled proposal",
+        customerName: job.draft?.customerName ?? job.request.customerId,
+        status: "export_ready" as const,
+        source: "generated" as const,
+        formats: job.exportPackage?.formats ?? ["docx", "pptx", "xlsx"],
+        tags: ["已生成", "待人工复核"],
+        updatedAt: job.updatedAt
+      }));
+
+    return [...generated, ...SAMPLE_PROPOSAL_LIBRARY];
   }
 
   async retry(jobId: string, actor: AuthenticatedUser): Promise<ProposalJob> {
@@ -156,10 +175,14 @@ export class ProposalService {
 }
 
 function assertCanAccessJob(job: ProposalJob, actor: AuthenticatedUser): void {
-  if (actor.role === "admin" || job.request.userId === actor.userId) {
+  if (canAccessJob(job, actor)) {
     return;
   }
   throw new ProposalJobAccessDeniedError(job.jobId);
+}
+
+function canAccessJob(job: ProposalJob, actor: AuthenticatedUser): boolean {
+  return actor.role === "admin" || job.request.userId === actor.userId;
 }
 
 function normalizeRequest(request: ProposalGenerationRequest): ProposalGenerationRequest {
@@ -191,3 +214,26 @@ function buildExportPackage(analysis: CustomerAnalysisResult, draft: ProposalDra
 function createExportPackageId(): string {
   return `export-package-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
+
+const SAMPLE_PROPOSAL_LIBRARY: ProposalLibraryItem[] = [
+  {
+    libraryId: "sample-huaxin-dlp",
+    title: "华信精工终端数据防泄漏建设方案",
+    customerName: "华信精工",
+    status: "sample",
+    source: "mock",
+    formats: ["docx", "pptx", "xlsx"],
+    tags: ["制造业", "IP-Guard", "透明加密"],
+    updatedAt: "2026-07-07T09:00:00.000Z"
+  },
+  {
+    libraryId: "sample-finance-audit",
+    title: "金融行业外发审计与终端管控方案",
+    customerName: "融盛金服",
+    status: "sample",
+    source: "mock",
+    formats: ["docx", "pptx"],
+    tags: ["金融", "审计", "合规"],
+    updatedAt: "2026-07-06T16:30:00.000Z"
+  }
+];

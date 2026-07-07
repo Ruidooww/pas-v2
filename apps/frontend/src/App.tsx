@@ -3,17 +3,21 @@ import { Button, ConfigProvider, Layout, Menu, Space, Spin, Typography } from "a
 import { api, clearToken, getToken } from "./api";
 import { AccountsPage } from "./pages/AccountsPage";
 import { AuditLogsPage } from "./pages/AuditLogsPage";
-import { BusinessFlowsPage } from "./pages/BusinessFlowsPage";
+import { BusinessFlowsPage, type BusinessFlowTabKey } from "./pages/BusinessFlowsPage";
+import { CustomerManagementPage } from "./pages/CustomerManagementPage";
 import { DataAttachmentsPage } from "./pages/DataAttachmentsPage";
 import { ExportTemplatesPage } from "./pages/ExportTemplatesPage";
+import { FeedbackPage } from "./pages/FeedbackPage";
 import { LoginPage } from "./pages/LoginPage";
 import { KnowledgeBlocksPage } from "./pages/KnowledgeBlocksPage";
 import { KnowledgeDocumentsPage } from "./pages/KnowledgeDocumentsPage";
 import { MenuConfigPage } from "./pages/MenuConfigPage";
 import { PlatformPage } from "./pages/PlatformPage";
+import { ProposalLibraryPage } from "./pages/ProposalLibraryPage";
 import { QaPage } from "./pages/QaPage";
 import { SystemSettingsPage } from "./pages/SystemSettingsPage";
 import { WorkbenchPage } from "./pages/WorkbenchPage";
+import { WorkbenchOverviewPage } from "./pages/WorkbenchOverviewPage";
 import {
   buildAntMenuItems,
   buildPrimaryMenuItems,
@@ -200,7 +204,9 @@ export function App() {
                 ))}
               </div>
             )}
-            <Layout.Content className="pas-content">{renderActiveContent(activeView, user)}</Layout.Content>
+            <Layout.Content className="pas-content">
+              {renderActiveContent(activeView, user, activeSecondaryKey)}
+            </Layout.Content>
           </Layout>
         </Layout>
       )}
@@ -225,12 +231,28 @@ async function loadMenuForUser(user: PublicUser): Promise<EffectivePrimaryMenuIt
   }
 }
 
-function renderActiveContent(view: View, user: PublicUser) {
+function renderActiveContent(view: View, user: PublicUser, activeSecondaryKey: SecondaryMenuKey | null) {
   switch (view) {
+    case "workbenchOverview":
+      return <WorkbenchOverviewPage mode="overview" />;
+    case "workbenchMyTasks":
+      return <WorkbenchOverviewPage mode="myTasks" />;
+    case "workbenchTeamTasks":
+      return <WorkbenchOverviewPage mode="teamTasks" />;
+    case "customerManagement":
+      return <CustomerManagementPage />;
+    case "customerInsights":
+      return <WorkbenchPage />;
+    case "proposalTasks":
+      return <WorkbenchPage />;
+    case "proposalLibrary":
+      return <ProposalLibraryPage />;
+    case "feedback":
+      return <FeedbackPage />;
     case "qa":
       return <QaPage />;
     case "business":
-      return <BusinessFlowsPage />;
+      return <BusinessFlowsPage initialTab={businessTabForSecondary(activeSecondaryKey)} />;
     case "platform":
       return <PlatformPage user={user} mode="analytics" />;
     case "platformGovernance":
@@ -253,6 +275,19 @@ function renderActiveContent(view: View, user: PublicUser) {
       return <MenuConfigPage />;
     default:
       return <WorkbenchPage />;
+  }
+}
+
+function businessTabForSecondary(key: SecondaryMenuKey | null): BusinessFlowTabKey {
+  switch (key) {
+    case "meeting_minutes":
+      return "meeting";
+    case "contracts_after_sales":
+      return "contract";
+    case "opportunities":
+      return "opportunity";
+    default:
+      return "opportunity";
   }
 }
 

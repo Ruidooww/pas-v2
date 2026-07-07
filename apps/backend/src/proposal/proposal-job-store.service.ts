@@ -66,6 +66,10 @@ export class ProposalJobStoreService {
     return job ? cloneJob(job) : undefined;
   }
 
+  list(): ProposalJob[] {
+    return Array.from(this.jobs.values()).map(cloneJob);
+  }
+
   resetForRetry(jobId: string): ProposalJob | undefined {
     const job = this.jobs.get(jobId);
     if (!job) {
