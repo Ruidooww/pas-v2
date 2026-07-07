@@ -25,7 +25,7 @@ export function ProposalLibraryPage() {
           <div className="workbench-metric">
             <Typography.Text type="secondary">方案数</Typography.Text>
             <strong>{items.length}</strong>
-            <Typography.Text type="secondary">generated + mock</Typography.Text>
+            <Typography.Text type="secondary">生成 + 样例</Typography.Text>
           </div>
           <div className="workbench-metric">
             <Typography.Text type="secondary">生成方案</Typography.Text>
@@ -35,7 +35,7 @@ export function ProposalLibraryPage() {
           <div className="workbench-metric">
             <Typography.Text type="secondary">样例</Typography.Text>
             <strong>{items.filter((item) => item.source === "mock").length}</strong>
-            <Typography.Text type="secondary">V0 演示</Typography.Text>
+            <Typography.Text type="secondary">内置样例</Typography.Text>
           </div>
         </div>
       </section>
@@ -52,7 +52,9 @@ export function ProposalLibraryPage() {
                 title={
                   <Space wrap>
                     <Typography.Text strong>{item.title}</Typography.Text>
-                    <Tag color={item.source === "generated" ? "blue" : "default"}>{item.source}</Tag>
+                    <Tag color={item.source === "generated" ? "blue" : "default"}>
+                      {item.source === "generated" ? "生成" : "样例"}
+                    </Tag>
                     <Tag color={item.status === "export_ready" ? "green" : "gold"}>{item.status}</Tag>
                   </Space>
                 }

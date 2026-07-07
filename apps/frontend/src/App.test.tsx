@@ -61,7 +61,9 @@ describe("App", () => {
     fireEvent.click(await screen.findByText("商机推进"));
 
     expect(await screen.findByRole("heading", { name: "商机推进" })).toBeTruthy();
-    expect(screen.getByText("V2 Records")).toBeTruthy();
+    expect(screen.getByText("业务记录")).toBeTruthy();
+    expect(screen.queryByText("会议")).toBeNull();
+    expect(screen.queryByText("合同")).toBeNull();
   });
 
   it("shows only analytics metrics from the analytics first-level menu", async () => {

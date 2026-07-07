@@ -63,7 +63,7 @@ export function PlatformPage({ user, mode }: { user: PublicUser; mode: PlatformP
       const response = await api<PlatformOverview>("/api/internal/platform/overview");
       setOverview(response);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "V3 数据加载失败");
+      setError(err instanceof Error ? err.message : "平台数据加载失败");
     }
   };
 
@@ -74,7 +74,7 @@ export function PlatformPage({ user, mode }: { user: PublicUser; mode: PlatformP
       await action();
       await refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "V3 操作失败");
+      setError(err instanceof Error ? err.message : "平台操作失败");
     } finally {
       setLoading(false);
     }
@@ -329,7 +329,7 @@ export function PlatformPage({ user, mode }: { user: PublicUser; mode: PlatformP
           </div>
           <div className="platform-list">
             {overview.cipSignals.length === 0 ? (
-              <Typography.Text type="secondary">暂无 V3 CIP 信号</Typography.Text>
+              <Typography.Text type="secondary">暂无 CIP 信号</Typography.Text>
             ) : (
               overview.cipSignals.slice(0, 6).map((signal) => (
                 <div className="platform-list-item" key={signal.signalId}>

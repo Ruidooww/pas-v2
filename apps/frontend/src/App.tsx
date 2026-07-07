@@ -3,7 +3,7 @@ import { Button, ConfigProvider, Layout, Menu, Space, Spin, Typography } from "a
 import { api, clearToken, getToken } from "./api";
 import { AccountsPage } from "./pages/AccountsPage";
 import { AuditLogsPage } from "./pages/AuditLogsPage";
-import { BusinessFlowsPage, type BusinessFlowTabKey } from "./pages/BusinessFlowsPage";
+import { BusinessFlowsPage, type BusinessFlowPageMode } from "./pages/BusinessFlowsPage";
 import { CustomerManagementPage } from "./pages/CustomerManagementPage";
 import { DataAttachmentsPage } from "./pages/DataAttachmentsPage";
 import { ExportTemplatesPage } from "./pages/ExportTemplatesPage";
@@ -242,9 +242,9 @@ function renderActiveContent(view: View, user: PublicUser, activeSecondaryKey: S
     case "customerManagement":
       return <CustomerManagementPage />;
     case "customerInsights":
-      return <WorkbenchPage />;
+      return <WorkbenchPage mode="customerInsights" />;
     case "proposalTasks":
-      return <WorkbenchPage />;
+      return <WorkbenchPage mode="proposalTasks" />;
     case "proposalLibrary":
       return <ProposalLibraryPage />;
     case "feedback":
@@ -252,7 +252,7 @@ function renderActiveContent(view: View, user: PublicUser, activeSecondaryKey: S
     case "qa":
       return <QaPage />;
     case "business":
-      return <BusinessFlowsPage initialTab={businessTabForSecondary(activeSecondaryKey)} />;
+      return <BusinessFlowsPage mode={businessModeForSecondary(activeSecondaryKey)} />;
     case "platform":
       return <PlatformPage user={user} mode="analytics" />;
     case "platformGovernance":
@@ -274,20 +274,20 @@ function renderActiveContent(view: View, user: PublicUser, activeSecondaryKey: S
     case "menuConfig":
       return <MenuConfigPage />;
     default:
-      return <WorkbenchPage />;
+      return <WorkbenchPage mode="proposalTasks" />;
   }
 }
 
-function businessTabForSecondary(key: SecondaryMenuKey | null): BusinessFlowTabKey {
+function businessModeForSecondary(key: SecondaryMenuKey | null): BusinessFlowPageMode {
   switch (key) {
     case "meeting_minutes":
       return "meeting";
     case "contracts_after_sales":
-      return "contract";
+      return "contractsAfterSales";
     case "opportunities":
-      return "opportunity";
+      return "opportunities";
     default:
-      return "opportunity";
+      return "opportunities";
   }
 }
 
