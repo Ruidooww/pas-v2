@@ -269,6 +269,22 @@ body {
   padding: 18px;
 }
 
+.pas-empty-state.ant-empty {
+  margin: 22px auto;
+}
+
+.pas-empty-state .ant-empty-description {
+  color: #1d1d1f;
+  font-weight: 600;
+}
+
+.pas-empty-state-description.ant-typography {
+  display: block;
+  max-width: 460px;
+  margin: 6px auto 0;
+  line-height: 1.6;
+}
+
 .pas-toolbar-panel .ant-card-body {
   padding-top: 16px;
 }

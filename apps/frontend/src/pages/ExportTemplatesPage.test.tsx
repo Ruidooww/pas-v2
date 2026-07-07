@@ -48,4 +48,20 @@ describe("ExportTemplatesPage", () => {
       })
     );
   });
+
+  it("explains how to prepare the first export template", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => []
+      })
+    );
+
+    render(<ExportTemplatesPage />);
+
+    expect(await screen.findByText("暂无模板元数据")).toBeInTheDocument();
+    expect(screen.getByText("正式模板上传前，可先登记模板文件名、版本和适用场景。")).toBeInTheDocument();
+  });
 });

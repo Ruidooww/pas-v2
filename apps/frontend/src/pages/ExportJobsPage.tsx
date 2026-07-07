@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { Alert, Button, Card, Empty, List, message, Space, Statistic, Tag, Typography } from "antd";
+import { Alert, Button, Card, List, message, Space, Tag, Typography } from "antd";
 import { api } from "../api";
+import { EmptyState } from "../components/EmptyState";
 import type { ExportDownloadResponse, ExportFormat, ExportJob } from "../types";
 
 export function ExportJobsPage() {
@@ -47,7 +48,10 @@ export function ExportJobsPage() {
 
       <Card className="pas-panel" title="导出任务" loading={loading}>
         {jobs.length === 0 ? (
-          <Empty description="暂无导出任务" />
+          <EmptyState
+            title="暂无导出任务"
+            description="从方案生成页发起导出后，会在这里看到 docx / pptx / xlsx 状态。"
+          />
         ) : (
           <List
             dataSource={jobs}

@@ -61,4 +61,20 @@ describe("KnowledgeBlocksPage", () => {
       })
     );
   });
+
+  it("explains how to create the first knowledge block", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => []
+      })
+    );
+
+    render(<KnowledgeBlocksPage />);
+
+    expect(await screen.findByText("暂无知识块")).toBeInTheDocument();
+    expect(screen.getByText("先在上方新建草稿，审核发布后才会进入方案生成引用范围。")).toBeInTheDocument();
+  });
 });

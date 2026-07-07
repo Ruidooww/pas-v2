@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Alert, Card, Space, Table, Tag, Typography } from "antd";
 import { api } from "../api";
+import { EmptyState } from "../components/EmptyState";
 import type { CrmCustomerSummary } from "../types";
 
 export function CustomerManagementPage() {
@@ -45,6 +46,14 @@ export function CustomerManagementPage() {
       <Card className="pas-panel" title="客户列表">
         <Table
           dataSource={customers}
+          locale={{
+            emptyText: (
+              <EmptyState
+                title="暂无客户样例"
+                description="当前使用假数据；真实 CRM API 接好后会自动展示客户池。"
+              />
+            )
+          }}
           pagination={false}
           rowKey="customerId"
           columns={[
