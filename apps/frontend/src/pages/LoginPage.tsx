@@ -37,7 +37,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
         <Typography.Paragraph className="login-subtitle" type="secondary">
           账号由管理员分配，如无账号请联系管理员
         </Typography.Paragraph>
-        {error && <Alert type="error" message={error} style={{ marginBottom: 16 }} />}
+        {error && <Alert type="error" title={error} style={{ marginBottom: 16 }} />}
         <Form layout="vertical" onFinish={handleFinish} requiredMark={false}>
           <Form.Item name="username" label="账号" rules={[{ required: true, message: "请输入账号" }]}>
             <Input autoComplete="username" />

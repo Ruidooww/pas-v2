@@ -33,7 +33,7 @@ export function SystemSettingsPage() {
 
   return (
     <div className="system-page">
-      {error && <Alert type="error" showIcon message={error} closable onClose={() => setError(null)} />}
+      {error && <Alert type="error" showIcon title={error} closable onClose={() => setError(null)} />}
       <section className="system-hero">
         <div className="system-hero-copy">
           <Typography.Text className="system-eyebrow">CONFIG</Typography.Text>

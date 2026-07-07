@@ -92,7 +92,7 @@ export function PlatformPage({ user, mode }: { user: PublicUser; mode: PlatformP
             <Alert
               type="error"
               showIcon
-              message={error}
+              title={error}
               action={
                 <Button size="small" onClick={() => void refresh()} loading={loading}>
                   重试
@@ -116,7 +116,7 @@ export function PlatformPage({ user, mode }: { user: PublicUser; mode: PlatformP
 
   return (
     <div className="pas-page-stack platform-page">
-      {error && <Alert type="error" message={error} closable onClose={() => setError(null)} />}
+      {error && <Alert type="error" title={error} closable onClose={() => setError(null)} />}
 
       <section className="system-hero platform-hero">
         <div className="system-hero-copy">

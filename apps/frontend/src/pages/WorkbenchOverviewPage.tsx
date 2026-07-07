@@ -76,7 +76,7 @@ export function WorkbenchOverviewPage({ mode }: WorkbenchOverviewPageProps) {
         )}
       </section>
 
-      {error && <Alert type="error" message={error} closable onClose={() => setError(null)} />}
+      {error && <Alert type="error" title={error} closable onClose={() => setError(null)} />}
 
       {!overview && (
         <Row gutter={[12, 12]}>
