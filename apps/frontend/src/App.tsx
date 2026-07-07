@@ -133,6 +133,7 @@ export function App() {
             <Menu
               className="pas-menu"
               mode={compactNavigation ? "horizontal" : "inline"}
+              disabledOverflow={compactNavigation}
               items={menuItems}
               openKeys={compactNavigation ? undefined : openKeys}
               selectedKeys={
@@ -185,6 +186,20 @@ export function App() {
                 </Button>
               </Space>
             </Layout.Header>
+            {compactNavigation && activePrimary && (
+              <div className="pas-secondary-strip" aria-label={`${activePrimary.label}二级菜单`}>
+                {activePrimary.children.map((child) => (
+                  <button
+                    className={child.key === activeSecondaryKey ? "is-active" : undefined}
+                    key={child.key}
+                    type="button"
+                    onClick={() => navigateToSecondary(child.key)}
+                  >
+                    {child.label}
+                  </button>
+                ))}
+              </div>
+            )}
             <Layout.Content className="pas-content">{renderActiveContent(activeView, user)}</Layout.Content>
           </Layout>
         </Layout>

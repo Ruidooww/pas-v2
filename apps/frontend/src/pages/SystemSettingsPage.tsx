@@ -27,10 +27,33 @@ export function SystemSettingsPage() {
     }
     return Array.from(groups.entries());
   }, [overview]);
+  const settings = overview?.settings ?? [];
+  const configuredSettings = settings.filter((item) => item.status === "configured" || item.status === "enabled").length;
+  const missingSettings = settings.filter((item) => item.status === "missing" || item.status === "disabled").length;
 
   return (
     <div className="system-page">
       {error && <Alert type="error" showIcon message={error} closable onClose={() => setError(null)} />}
+      <section className="system-hero">
+        <div className="system-hero-copy">
+          <Typography.Text className="system-eyebrow">CONFIG</Typography.Text>
+          <Typography.Title level={3}>系统设置</Typography.Title>
+          <Typography.Text type="secondary">集中查看外部服务、存储、数据库和导出链路配置状态。</Typography.Text>
+        </div>
+        <div className="system-hero-stat">
+          <Typography.Text type="secondary">配置项</Typography.Text>
+          <strong>{settings.length}</strong>
+        </div>
+        <div className="system-hero-stat">
+          <Typography.Text type="secondary">已配置</Typography.Text>
+          <strong>{configuredSettings}</strong>
+        </div>
+        <div className="system-hero-stat">
+          <Typography.Text type="secondary">待处理</Typography.Text>
+          <strong>{missingSettings}</strong>
+        </div>
+      </section>
+
       <Card className="pas-panel" title="系统设置">
         {loading ? (
           <div className="system-loading">

@@ -75,11 +75,35 @@ export function PlatformPage({ user }: { user: PublicUser }) {
     );
   }
 
+  const activeChannels = overview.channels.filter((item) => item.status === "active").length;
+  const approvedSkills = overview.skills.filter((skill) => skill.status === "approved").length;
+  const enabledProducts = overview.products.filter((product) => product.status === "enabled").length;
+
   return (
     <div className="pas-page-stack platform-page">
       {error && <Alert type="error" message={error} closable onClose={() => setError(null)} />}
 
-      <Card className="pas-panel" title="经营驾驶舱">
+      <section className="system-hero platform-hero">
+        <div className="system-hero-copy">
+          <Typography.Text className="system-eyebrow">PLATFORM</Typography.Text>
+          <Typography.Title level={3}>平台管理</Typography.Title>
+          <Typography.Text type="secondary">管理渠道入口、Agent/Skill、产品能力和平台级安全边界。</Typography.Text>
+        </div>
+        <div className="system-hero-stat">
+          <Typography.Text type="secondary">活跃渠道</Typography.Text>
+          <strong>{activeChannels}</strong>
+        </div>
+        <div className="system-hero-stat">
+          <Typography.Text type="secondary">已批准 Skill</Typography.Text>
+          <strong>{approvedSkills}</strong>
+        </div>
+        <div className="system-hero-stat">
+          <Typography.Text type="secondary">启用产品</Typography.Text>
+          <strong>{enabledProducts}</strong>
+        </div>
+      </section>
+
+      <Card className="pas-panel" title="运营指标">
         <Row gutter={[12, 12]}>
           {overview.dashboard.cards.map((card) => (
             <Col xs={12} md={8} key={card.key}>

@@ -11,10 +11,34 @@ export function DataAttachmentsPage() {
   useEffect(() => {
     void refreshOverview();
   }, []);
+  const paths = overview?.paths ?? [];
+  const missingPaths = paths.filter((item) => !item.exists).length;
+  const totalFiles = paths.reduce((total, item) => total + item.fileCount, 0);
+  const totalBytes = paths.reduce((total, item) => total + item.totalBytes, 0);
 
   return (
     <div className="system-page">
       {error && <Alert type="error" showIcon message={error} closable onClose={() => setError(null)} />}
+      <section className="system-hero">
+        <div className="system-hero-copy">
+          <Typography.Text className="system-eyebrow">STORAGE</Typography.Text>
+          <Typography.Title level={3}>数据与附件</Typography.Title>
+          <Typography.Text type="secondary">检查导出文件、附件目录和运行期数据路径是否可用。</Typography.Text>
+        </div>
+        <div className="system-hero-stat">
+          <Typography.Text type="secondary">路径数</Typography.Text>
+          <strong>{paths.length}</strong>
+        </div>
+        <div className="system-hero-stat">
+          <Typography.Text type="secondary">文件数</Typography.Text>
+          <strong>{totalFiles}</strong>
+        </div>
+        <div className="system-hero-stat">
+          <Typography.Text type="secondary">缺失路径</Typography.Text>
+          <strong>{missingPaths}</strong>
+        </div>
+      </section>
+
       <Card className="pas-panel" title="数据与附件">
         {loading ? (
           <div className="system-loading">
@@ -22,7 +46,7 @@ export function DataAttachmentsPage() {
           </div>
         ) : (
           <div className="system-path-grid">
-            {(overview?.paths ?? []).map((item) => (
+            {paths.map((item) => (
               <Card className="system-subpanel" key={item.label}>
                 <div className="system-path-header">
                   <Typography.Text strong>{item.label}</Typography.Text>
@@ -41,6 +65,11 @@ export function DataAttachmentsPage() {
           </div>
         )}
       </Card>
+      {!loading && (
+        <Typography.Text className="system-footnote" type="secondary">
+          当前路径总占用 {formatBytes(totalBytes)}
+        </Typography.Text>
+      )}
     </div>
   );
 
