@@ -94,6 +94,20 @@ describe("App", () => {
     expect(screen.queryByText("模板运营")).toBeNull();
   });
 
+  it("shows existing proposal jobs from the proposal generation page", async () => {
+    localStorage.setItem("pas.access-token", "token");
+    vi.stubGlobal("fetch", vi.fn(mockAdminFetch));
+
+    render(<App />);
+
+    fireEvent.click(await screen.findByText("方案生产"));
+
+    expect((await screen.findAllByRole("heading", { name: "方案生成" })).length).toBeGreaterThan(0);
+    expect(await screen.findByText("最近方案任务")).toBeTruthy();
+    expect(await screen.findByText("demo-huaxin-manufacturing")).toBeTruthy();
+    expect(await screen.findByText("proposal-job-1")).toBeTruthy();
+  });
+
   it("keeps platform governance tools under system settings", async () => {
     localStorage.setItem("pas.access-token", "token");
     vi.stubGlobal("fetch", vi.fn(mockAdminFetch));
@@ -197,6 +211,9 @@ function mockFetchForUser(user: PublicUser, input: RequestInfo | URL, init?: Req
   }
   if (path === "/api/internal/proposals/library") {
     return Promise.resolve(jsonResponse([]));
+  }
+  if (path === "/api/internal/proposals") {
+    return Promise.resolve(jsonResponse(createProposalJobs()));
   }
   if (path === "/api/internal/exports") {
     return Promise.resolve(jsonResponse([]));
@@ -311,6 +328,29 @@ function createWorkbenchOverview(): WorkbenchOverview {
       }
     ]
   };
+}
+
+function createProposalJobs() {
+  return [
+    {
+      jobId: "proposal-job-1",
+      status: "completed",
+      request: {
+        customerId: "demo-huaxin-manufacturing",
+        userId: "admin-1"
+      },
+      progress: [
+        {
+          step: "export_package_ready",
+          status: "completed",
+          message: "Export package is ready",
+          at: "2026-07-07T00:00:00.000Z"
+        }
+      ],
+      createdAt: "2026-07-07T00:00:00.000Z",
+      updatedAt: "2026-07-07T00:00:00.000Z"
+    }
+  ];
 }
 
 function createPlatformOverview(): PlatformOverview {

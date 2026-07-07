@@ -174,7 +174,13 @@ export type ExportPackage = {
 export type ProposalJob = {
   jobId: string;
   status: "running" | "completed" | "failed";
+  request: {
+    customerId: string;
+    userId?: string;
+  };
   progress: ProposalProgressRecord[];
+  createdAt: string;
+  updatedAt: string;
   draft?: ProposalDraft;
   exportPackage?: ExportPackage;
   failureReason?: string;

@@ -72,8 +72,8 @@ const menuChecks = {
   meeting_minutes: () => getJson("/api/internal/business-flows/records", authHeaders()),
   contracts_after_sales: () => getJson("/api/internal/business-flows/metrics", authHeaders()),
   proposal_tasks: async () => {
-    const response = await getJson("/api/crm/customers", authHeaders());
-    assert(Array.isArray(response.customers), "proposal task customer list must be an array");
+    const response = await getJson("/api/internal/proposals", authHeaders());
+    assert(Array.isArray(response), "proposal task list must be an array");
   },
   qa: async () => {
     const response = await postJson(
