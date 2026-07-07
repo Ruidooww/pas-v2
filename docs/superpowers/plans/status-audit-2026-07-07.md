@@ -7,11 +7,12 @@ Do not use historical checkbox state alone to decide what still needs coding.
 
 ## Evidence Checked
 
-- `main` is currently at `a8ca9a3 Replace deprecated frontend list usage (#51)`.
+- `main` is currently at `1dc6dab fix: replace deprecated alert props`.
 - GitHub returned no open issues and no open pull requests during this refresh.
-- PRs `#49` through `#51` landed after the original audit: platform overview
-  load errors are visible in the UI, empty states were polished, and remaining
-  frontend pages no longer import deprecated Ant Design `List`.
+- PRs `#49` through `#53` landed after the original audit: platform overview
+  load errors are visible in the UI, empty states were polished, remaining
+  frontend pages no longer import deprecated Ant Design `List`, and frontend
+  `Alert` usage now avoids the deprecated `message` prop.
 - Backend modules exist for `auth`, `audit`, `crm`, `ragflow`, `qa`,
   `customer-analysis`, `proposal`, `export`, `knowledge`, `business-flow`,
   `platform`, `menu`, `workbench`, `system`, `integration`, and `feedback`.
@@ -20,11 +21,11 @@ Do not use historical checkbox state alone to decide what still needs coding.
   feedback, knowledge blocks, knowledge documents, menu configuration,
   platform, proposal library, QA, system settings, workbench overview, and
   proposal tasks.
-- `scripts/smoke-local-menu.mjs` validates 6 primary menus and 23 secondary
-  menus, including login, `/api/health`, `/api/me`, effective menu loading, and
-  at least one backend endpoint for every visible secondary menu.
+- `scripts/smoke-local-menu.mjs` validates 6 primary menus and 23 visible
+  secondary menus, including login, `/api/health`, `/api/me`, effective menu
+  loading, and at least one backend endpoint for every visible secondary menu.
 - The latest local smoke on `2026-07-07` passed against
-  `http://127.0.0.1:5174` with backend on port `3000`.
+  `http://127.0.0.1:5174` with backend on port `3000` after PR `#53` merged.
 
 ## Code-Layer Status
 
@@ -42,7 +43,7 @@ Do not use historical checkbox state alone to decide what still needs coding.
 | V1 knowledge operations | Code-ready | Knowledge blocks, lifecycle review/publish, knowledge documents, document permissions, and template operations exist. |
 | V2 business flow | Code-ready | Opportunity, meeting, contract/after-sales, feedback, and metrics paths are implemented on fake/internal data. File/data ingestion is explicitly deferred. |
 | V3 platform | Code-ready | Platform dashboard/service/controller/store code exists. User-facing menu now exposes the platform access surface under system settings. |
-| Navigation/UI shell | Code-ready | Primary menu groups, left secondary menus, horizontal tertiary tabs, admin menu configuration, polished empty states, and deprecated-list cleanup are implemented and smoke-covered. |
+| Navigation/UI shell | Code-ready | Primary menu groups, left secondary menus, horizontal tertiary tabs, admin menu configuration, polished empty states, deprecated-list cleanup, and deprecated-Alert cleanup are implemented and smoke-covered. |
 | System/admin pages | Code-ready | Account permissions, audit logs, data/attachments, menu config, runtime config, and platform access all have backend-backed pages or smoke endpoints. |
 
 ## Historical Plan Files
