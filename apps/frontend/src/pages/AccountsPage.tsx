@@ -35,9 +35,32 @@ export function AccountsPage() {
     void refreshUsers();
   }, []);
 
+  const activeUsers = users.filter((user) => user.active).length;
+  const adminUsers = users.filter((user) => user.role === "admin").length;
+
   return (
     <div className="system-page">
       {error && <Alert type="error" showIcon message={error} closable onClose={() => setError(null)} />}
+      <section className="system-hero">
+        <div className="system-hero-copy">
+          <Typography.Text className="system-eyebrow">ACCESS</Typography.Text>
+          <Typography.Title level={3}>账号权限</Typography.Title>
+          <Typography.Text type="secondary">统一管理登录账号、角色边界和启用状态。</Typography.Text>
+        </div>
+        <div className="system-hero-stat">
+          <Typography.Text type="secondary">账号总数</Typography.Text>
+          <strong>{users.length}</strong>
+        </div>
+        <div className="system-hero-stat">
+          <Typography.Text type="secondary">启用账号</Typography.Text>
+          <strong>{activeUsers}</strong>
+        </div>
+        <div className="system-hero-stat">
+          <Typography.Text type="secondary">管理员</Typography.Text>
+          <strong>{adminUsers}</strong>
+        </div>
+      </section>
+
       <Card className="pas-panel" title="创建账号">
         <div className="system-form-grid">
           <Input

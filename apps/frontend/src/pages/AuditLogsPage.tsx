@@ -32,13 +32,35 @@ export function AuditLogsPage() {
       })
       .sort((left, right) => right.occurredAt.localeCompare(left.occurredAt));
   }, [events, query, result]);
+  const failureEvents = events.filter((event) => event.result === "failure").length;
+  const actorCount = new Set(events.map((event) => event.actorUserId).filter(Boolean)).size;
 
   return (
     <div className="system-page">
       {error && <Alert type="error" showIcon message={error} closable onClose={() => setError(null)} />}
+      <section className="system-hero">
+        <div className="system-hero-copy">
+          <Typography.Text className="system-eyebrow">AUDIT</Typography.Text>
+          <Typography.Title level={3}>审计日志</Typography.Title>
+          <Typography.Text type="secondary">追踪登录、权限、菜单和系统操作的可审计记录。</Typography.Text>
+        </div>
+        <div className="system-hero-stat">
+          <Typography.Text type="secondary">事件总数</Typography.Text>
+          <strong>{events.length}</strong>
+        </div>
+        <div className="system-hero-stat">
+          <Typography.Text type="secondary">当前结果</Typography.Text>
+          <strong>{filteredEvents.length}</strong>
+        </div>
+        <div className="system-hero-stat">
+          <Typography.Text type="secondary">失败事件</Typography.Text>
+          <strong>{failureEvents}</strong>
+        </div>
+      </section>
+
       <Card
         className="pas-panel"
-        title="日志中心"
+        title="事件列表"
         extra={
           <Space wrap>
             <Input.Search
@@ -52,6 +74,9 @@ export function AuditLogsPage() {
           </Space>
         }
       >
+        <Typography.Text className="system-filter-note" type="secondary">
+          涉及主体 {actorCount} 个
+        </Typography.Text>
         {loading ? (
           <div className="system-loading">
             <Spin />

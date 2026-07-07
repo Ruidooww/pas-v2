@@ -177,6 +177,10 @@ body {
   border-bottom: 1px solid rgba(229, 229, 234, 0.8);
 }
 
+.pas-secondary-strip {
+  display: none;
+}
+
 .pas-view-title.ant-typography {
   margin: 0;
   font-size: 24px;
@@ -454,6 +458,10 @@ body {
   gap: 12px;
 }
 
+.platform-hero {
+  margin-bottom: 2px;
+}
+
 .platform-methodology {
   display: flex;
   flex-wrap: wrap;
@@ -484,8 +492,8 @@ body {
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-  padding: 8px 0;
-  border-bottom: 1px solid #f0f0f0;
+  padding: 11px 0;
+  border-bottom: 1px solid #ededf1;
 }
 
 .platform-list-item:last-child {
@@ -579,6 +587,77 @@ body {
   gap: 12px;
 }
 
+.system-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) repeat(3, minmax(118px, 0.45fr));
+  gap: 10px;
+  align-items: stretch;
+  padding: 14px;
+  border: 1px solid rgba(229, 229, 234, 0.9);
+  border-radius: 18px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(246, 248, 252, 0.88)),
+    #ffffff;
+  box-shadow: 0 14px 34px rgba(29, 29, 31, 0.045);
+}
+
+.system-hero-copy {
+  display: grid;
+  gap: 5px;
+  align-content: center;
+  min-width: 0;
+  padding: 6px 8px;
+}
+
+.system-hero-copy .ant-typography {
+  margin: 0;
+}
+
+.system-hero-copy h3.ant-typography {
+  font-size: 22px;
+  font-weight: 650;
+  letter-spacing: 0;
+}
+
+.system-eyebrow.ant-typography {
+  color: #007aff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.system-hero-stat {
+  display: grid;
+  min-width: 0;
+  align-content: space-between;
+  min-height: 106px;
+  padding: 14px;
+  border: 1px solid #ededf1;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.74);
+}
+
+.system-hero-stat strong {
+  overflow: hidden;
+  color: #1d1d1f;
+  font-size: 24px;
+  font-weight: 650;
+  letter-spacing: 0;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.system-filter-note.ant-typography {
+  display: block;
+  margin-bottom: 10px;
+}
+
+.system-footnote.ant-typography {
+  padding: 0 4px;
+  font-size: 12px;
+}
+
 .system-form-grid {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -602,7 +681,7 @@ body {
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 14px;
   align-items: center;
-  padding: 14px 0;
+  padding: 15px 0;
   border-bottom: 1px solid #ededf1;
 }
 
@@ -642,8 +721,10 @@ body {
 }
 
 .system-subpanel.ant-card {
+  overflow: hidden;
   border: 1px solid #ededf1;
   border-radius: 14px;
+  background: rgba(255, 255, 255, 0.72);
   box-shadow: none;
 }
 
@@ -716,7 +797,12 @@ body {
     overflow-y: hidden;
     border-bottom: 0;
     line-height: 38px;
+    scrollbar-width: none;
     white-space: nowrap;
+  }
+
+  .pas-menu.ant-menu-horizontal::-webkit-scrollbar {
+    display: none;
   }
 
   .pas-menu.ant-menu-horizontal > .ant-menu-item,
@@ -756,6 +842,37 @@ body {
     padding: 16px;
   }
 
+  .pas-secondary-strip {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 10px 14px 0;
+    border-bottom: 1px solid rgba(229, 229, 234, 0.72);
+    scrollbar-width: none;
+  }
+
+  .pas-secondary-strip::-webkit-scrollbar {
+    display: none;
+  }
+
+  .pas-secondary-strip button {
+    height: 30px;
+    padding: 0 11px;
+    flex: 0 0 auto;
+    border: 1px solid #e5e5ea;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.74);
+    color: #424245;
+    font: inherit;
+    font-size: 13px;
+  }
+
+  .pas-secondary-strip button.is-active {
+    border-color: #007aff;
+    background: #007aff;
+    color: #ffffff;
+  }
+
   .pas-content.ant-layout-content {
     padding: 14px;
   }
@@ -780,6 +897,20 @@ body {
 
   .workbench-metric strong {
     font-size: 20px;
+  }
+
+  .system-hero {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .system-hero-copy {
+    grid-column: 1 / -1;
+    padding: 4px;
+  }
+
+  .system-hero-stat {
+    min-height: 98px;
+    padding: 12px;
   }
 
   .workbench-toolbar {
@@ -836,5 +967,13 @@ body {
 
   .workbench-metric {
     min-height: 104px;
+  }
+
+  .system-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .system-hero-stat {
+    min-height: 90px;
   }
 }

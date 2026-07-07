@@ -48,6 +48,11 @@ export function MenuConfigPage() {
     if (!config || !selectedPrimary) return [];
     return selectedPrimary.children.map((child) => toRow(child, findOverride(config.overrides, selectedPrimary.key, child.key), drafts));
   }, [config, drafts, selectedPrimary]);
+  const visibleRows = rows.filter((row) => row.visible).length;
+  const customRows =
+    config && selectedPrimary
+      ? config.overrides.filter((override) => override.primaryKey === selectedPrimary.key).length
+      : 0;
 
   if (loading) {
     return (
@@ -60,6 +65,26 @@ export function MenuConfigPage() {
   return (
     <div className="menu-config-page">
       {error && <Alert type="error" showIcon message={error} closable onClose={() => setError(null)} />}
+      <section className="system-hero">
+        <div className="system-hero-copy">
+          <Typography.Text className="system-eyebrow">MENU</Typography.Text>
+          <Typography.Title level={3}>菜单配置</Typography.Title>
+          <Typography.Text type="secondary">一级菜单固定，二级菜单支持展示名称、角色、排序和默认入口调整。</Typography.Text>
+        </div>
+        <div className="system-hero-stat">
+          <Typography.Text type="secondary">一级菜单</Typography.Text>
+          <strong>{config?.defaults.length ?? 0}</strong>
+        </div>
+        <div className="system-hero-stat">
+          <Typography.Text type="secondary">本组可见</Typography.Text>
+          <strong>{visibleRows}</strong>
+        </div>
+        <div className="system-hero-stat">
+          <Typography.Text type="secondary">本组改动</Typography.Text>
+          <strong>{customRows}</strong>
+        </div>
+      </section>
+
       <div className="menu-config-layout">
         <Card className="pas-panel menu-config-primary" title="固定一级菜单">
           <div className="menu-config-primary-list">
