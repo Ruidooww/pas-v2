@@ -69,7 +69,7 @@ export function QaPage() {
         </Button>
       </Card>
 
-      {error && <Alert type="error" message={error} />}
+      {error && <Alert type="error" title={error} />}
 
       {response && (
         <Card
@@ -88,7 +88,7 @@ export function QaPage() {
         >
           <Alert
             type="warning"
-            message="AI 生成内容，需人工核实后使用"
+            title="AI 生成内容，需人工核实后使用"
             style={{ marginBottom: 12 }}
             showIcon
           />

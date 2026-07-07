@@ -98,7 +98,7 @@ export function BusinessFlowsPage({ mode = "opportunities" }: BusinessFlowsPageP
 
   return (
     <div className="pas-page-stack">
-      {error && <Alert type="error" message={error} closable onClose={() => setError(null)} />}
+      {error && <Alert type="error" title={error} closable onClose={() => setError(null)} />}
 
       <Row gutter={[12, 12]} className="business-flow-metrics">
         <Col xs={24} md={8}>

@@ -255,11 +255,11 @@ export function WorkbenchPage({ mode = "customerInsights" }: { mode?: WorkbenchP
         </Space>
       </Card>
 
-      {error && <Alert type="error" message={error} closable onClose={() => setError(null)} />}
+      {error && <Alert type="error" title={error} closable onClose={() => setError(null)} />}
 
       {isCustomerInsights && analysis && (
         <Card className="pas-panel" title={`客户情况分析：${analysis.customerName}`}>
-          <Alert type="warning" message="AI 生成内容，需人工核实后使用" showIcon style={{ marginBottom: 12 }} />
+          <Alert type="warning" title="AI 生成内容，需人工核实后使用" showIcon style={{ marginBottom: 12 }} />
           {analysis.narrativeSummary && (
             <Typography.Paragraph strong style={{ whiteSpace: "pre-wrap" }}>
               {analysis.narrativeSummary}
@@ -299,7 +299,7 @@ export function WorkbenchPage({ mode = "customerInsights" }: { mode?: WorkbenchP
             }))}
           />
           {proposalJob.status === "failed" && (
-            <Alert type="error" message={`生成失败：${proposalJob.failureReason ?? "未知原因"}`} />
+            <Alert type="error" title={`生成失败：${proposalJob.failureReason ?? "未知原因"}`} />
           )}
         </Card>
       )}
@@ -347,7 +347,7 @@ export function WorkbenchPage({ mode = "customerInsights" }: { mode?: WorkbenchP
             </Space>
           }
         >
-          <Alert type="warning" message="方案草稿需售前人工审核后才能对客户使用" showIcon style={{ marginBottom: 12 }} />
+          <Alert type="warning" title="方案草稿需售前人工审核后才能对客户使用" showIcon style={{ marginBottom: 12 }} />
           <Collapse
             items={draft.sections.map((section) => ({
               key: section.sectionId,

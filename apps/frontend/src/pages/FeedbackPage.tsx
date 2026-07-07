@@ -52,7 +52,7 @@ export function FeedbackPage() {
         </div>
       </section>
 
-      {error && <Alert type="error" message={error} closable onClose={() => setError(null)} />}
+      {error && <Alert type="error" title={error} closable onClose={() => setError(null)} />}
 
       <Card className="pas-panel" title="反馈记录">
         <List

@@ -45,7 +45,7 @@ export function ExportJobsPage() {
         </div>
       </section>
 
-      {error && <Alert type="error" message={error} closable onClose={() => setError(null)} />}
+      {error && <Alert type="error" title={error} closable onClose={() => setError(null)} />}
 
       <Card className="pas-panel" title="导出任务" loading={loading}>
         {jobs.length === 0 ? (
