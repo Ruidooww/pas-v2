@@ -7,6 +7,8 @@ PAS v2 is the new implementation root for `C:\Users\Ruidoww\Documents\HYYA\AI\PA
 - Build a new PAS codebase from the V1.8 taskbook.
 - Reuse only RAGFlow assets and integration experience.
 - Do not migrate old PAS E0-E5 application code.
+- Use `docs/superpowers/plans/status-audit-2026-07-07.md` as the current
+  V0-V3 implementation status source before dispatching more code-layer work.
 - Keep PAS-owned runtime services to four containers:
   - service `pas-frontend`, container `HYYN-frontend`
   - service `pas-backend`, container `HYYN-backend`
