@@ -232,7 +232,9 @@ function renderActiveContent(view: View, user: PublicUser) {
     case "business":
       return <BusinessFlowsPage />;
     case "platform":
-      return <PlatformPage user={user} />;
+      return <PlatformPage user={user} mode="analytics" />;
+    case "platformGovernance":
+      return <PlatformPage user={user} mode="governance" />;
     case "knowledge":
       return <KnowledgeBlocksPage />;
     case "documents":

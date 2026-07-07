@@ -178,7 +178,47 @@ body {
 }
 
 .pas-secondary-strip {
+  display: flex;
+  width: 100%;
+  max-width: none;
+  gap: 8px;
+  overflow-x: auto;
+  margin: 0;
+  padding: 14px 26px 0;
+  scrollbar-width: none;
+}
+
+.pas-secondary-strip::-webkit-scrollbar {
   display: none;
+}
+
+.pas-secondary-strip button {
+  height: 32px;
+  padding: 0 13px;
+  flex: 0 0 auto;
+  border: 1px solid #e5e5ea;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.76);
+  color: #424245;
+  font: inherit;
+  font-size: 13px;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.pas-secondary-strip button:hover {
+  border-color: rgba(0, 122, 255, 0.45);
+  color: #007aff;
+}
+
+.pas-secondary-strip button.is-active {
+  border-color: #007aff;
+  background: #007aff;
+  color: #ffffff;
+  box-shadow: 0 8px 18px rgba(0, 122, 255, 0.18);
 }
 
 .pas-view-title.ant-typography {
@@ -197,8 +237,8 @@ body {
 
 .pas-content.ant-layout-content {
   width: 100%;
-  max-width: 1180px;
-  margin: 0 auto;
+  max-width: none;
+  margin: 0;
   padding: 22px 26px 30px;
 }
 
@@ -460,6 +500,41 @@ body {
 
 .platform-hero {
   margin-bottom: 2px;
+}
+
+.platform-tertiary-nav {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 2px 0 4px;
+  scrollbar-width: none;
+}
+
+.platform-tertiary-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.platform-tertiary-nav button {
+  height: 32px;
+  padding: 0 13px;
+  flex: 0 0 auto;
+  border: 1px solid #e5e5ea;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.76);
+  color: #424245;
+  font: inherit;
+  font-size: 13px;
+}
+
+.platform-tertiary-nav button.is-active {
+  border-color: #007aff;
+  background: #007aff;
+  color: #ffffff;
+  box-shadow: 0 8px 18px rgba(0, 122, 255, 0.18);
+}
+
+.platform-section-panel.ant-card {
+  min-height: 320px;
 }
 
 .platform-methodology {
@@ -843,34 +918,12 @@ body {
   }
 
   .pas-secondary-strip {
-    display: flex;
-    gap: 8px;
-    overflow-x: auto;
     padding: 10px 14px 0;
-    border-bottom: 1px solid rgba(229, 229, 234, 0.72);
-    scrollbar-width: none;
-  }
-
-  .pas-secondary-strip::-webkit-scrollbar {
-    display: none;
   }
 
   .pas-secondary-strip button {
     height: 30px;
     padding: 0 11px;
-    flex: 0 0 auto;
-    border: 1px solid #e5e5ea;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.74);
-    color: #424245;
-    font: inherit;
-    font-size: 13px;
-  }
-
-  .pas-secondary-strip button.is-active {
-    border-color: #007aff;
-    background: #007aff;
-    color: #ffffff;
   }
 
   .pas-content.ant-layout-content {

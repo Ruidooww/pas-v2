@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import type { MenuProps } from "antd";
 import {
   AppstoreOutlined,
+  BarChartOutlined,
   ClusterOutlined,
   DatabaseOutlined,
   FileDoneOutlined,
@@ -23,6 +24,7 @@ export type View =
   | "qa"
   | "business"
   | "platform"
+  | "platformGovernance"
   | "knowledge"
   | "documents"
   | "templates"
@@ -82,28 +84,26 @@ const DEFAULT_MENU: PrimaryMenuDefinition[] = [
     ]
   },
   {
-    key: "platform_ops",
-    label: "平台管理",
-    icon: "platform",
+    key: "analytics_ops",
+    label: "运营分析",
+    icon: "analytics",
     order: 50,
     children: [
-      { key: "product_registry", label: "产品与集成", route: "/platform/products", roles: ["admin"], order: 10 },
-      { key: "analytics", label: "运营分析", route: "/platform/analytics", roles: ["presales", "admin"], order: 20 },
-      { key: "account_management", label: "账号权限", route: "/system/accounts", roles: ["admin"], order: 30 },
-      { key: "audit_logs", label: "审计日志", route: "/system/audit-logs", roles: ["admin"], order: 40 },
-      { key: "data_attachments", label: "数据与附件", route: "/system/data-attachments", roles: ["admin"], order: 50 },
-      { key: "secondary_menu_config", label: "菜单配置", route: "/system/secondary-menu", roles: ["admin"], order: 60 },
-      { key: "system_settings", label: "系统设置", route: "/system/settings", roles: ["admin"], order: 70 }
+      { key: "analytics", label: "运营总览", route: "/platform/analytics", roles: ["presales", "admin"], order: 10 }
     ]
   },
   {
     key: "system",
-    label: "系统底座",
+    label: "系统设置",
     icon: "system",
     order: 60,
     children: [
-      { key: "platform_governance", label: "平台治理", route: "/platform/governance", roles: ["admin"], order: 10 },
-      { key: "integration_health", label: "集成健康", route: "/platform/integrations", roles: ["admin"], order: 20 }
+      { key: "account_management", label: "账号权限", route: "/system/accounts", roles: ["admin"], order: 10 },
+      { key: "audit_logs", label: "审计日志", route: "/system/audit-logs", roles: ["admin"], order: 20 },
+      { key: "data_attachments", label: "数据与附件", route: "/system/data-attachments", roles: ["admin"], order: 30 },
+      { key: "secondary_menu_config", label: "菜单配置", route: "/system/secondary-menu", roles: ["admin"], order: 40 },
+      { key: "system_settings", label: "运行配置", route: "/system/settings", roles: ["admin"], order: 50 },
+      { key: "platform_governance", label: "平台接入", route: "/platform/governance", roles: ["admin"], order: 60 }
     ]
   }
 ];
@@ -164,6 +164,8 @@ export function menuIcon(icon: string): ReactNode {
       return <DatabaseOutlined />;
     case "knowledge":
       return <FileDoneOutlined />;
+    case "analytics":
+      return <BarChartOutlined />;
     case "platform":
       return <ClusterOutlined />;
     case "system":
@@ -184,7 +186,8 @@ export function routeToView(route: string): View {
   if (route === "/proposals/library") return "templates";
   if (route.startsWith("/delivery/")) return "templates";
   if (route.startsWith("/business/")) return "business";
-  if (route.startsWith("/platform/")) return "platform";
+  if (route === "/platform/analytics") return "platform";
+  if (route.startsWith("/platform/")) return "platformGovernance";
   if (route === "/system/accounts") return "accounts";
   if (route === "/system/audit-logs") return "auditLogs";
   if (route === "/system/data-attachments") return "dataAttachments";
@@ -200,7 +203,9 @@ export function viewToTitle(view: View): string {
     case "business":
       return "客户作战";
     case "platform":
-      return "平台管理";
+      return "运营分析";
+    case "platformGovernance":
+      return "平台接入";
     case "knowledge":
       return "知识块审核";
     case "documents":

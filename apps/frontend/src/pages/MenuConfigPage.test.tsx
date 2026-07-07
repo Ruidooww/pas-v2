@@ -95,11 +95,11 @@ function createMenuConfiguration(): MenuConfiguration {
       },
       {
         key: "system",
-        label: "系统底座",
+        label: "系统设置",
         icon: "system",
         order: 60,
         children: [
-          { key: "platform_governance", label: "平台治理", route: "/platform/governance", roles: ["admin"], order: 10 }
+          { key: "platform_governance", label: "平台接入", route: "/platform/governance", roles: ["admin"], order: 10 }
         ]
       }
     ],

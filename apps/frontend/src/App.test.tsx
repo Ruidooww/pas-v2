@@ -34,7 +34,7 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: /登\s*录/ })).toBeTruthy();
   });
 
-  it("renders fixed first-level menus with second-level children", async () => {
+  it("renders fixed first-level menus with left secondary navigation on desktop", async () => {
     localStorage.setItem("pas.access-token", "token");
     vi.stubGlobal("fetch", vi.fn(mockAdminFetch));
 
@@ -43,9 +43,11 @@ describe("App", () => {
     expect((await screen.findAllByText("工作台")).length).toBeGreaterThan(0);
     expect(screen.getByText("客户作战")).toBeTruthy();
     expect(screen.getByText("方案生产")).toBeTruthy();
-    expect(screen.getByText("平台管理")).toBeTruthy();
-    fireEvent.click(screen.getByText("平台管理"));
-    fireEvent.click(await screen.findByText("账号权限"));
+    expect(screen.getByText("运营分析")).toBeTruthy();
+    expect(document.querySelector(".pas-secondary-strip")).toBeNull();
+    fireEvent.click(screen.getByText("系统设置"));
+    expect((await screen.findAllByText("账号权限")).length).toBeGreaterThan(0);
+    expect(await screen.findByText("菜单配置")).toBeTruthy();
     expect(await screen.findByText("账号列表")).toBeTruthy();
   });
 
@@ -62,16 +64,32 @@ describe("App", () => {
     expect(screen.getByText("V2 Records")).toBeTruthy();
   });
 
-  it("shows the platform console from the platform first-level menu", async () => {
+  it("shows only analytics metrics from the analytics first-level menu", async () => {
     localStorage.setItem("pas.access-token", "token");
     vi.stubGlobal("fetch", vi.fn(mockAdminFetch));
 
     render(<App />);
 
-    fireEvent.click(await screen.findByText("平台管理"));
+    fireEvent.click(await screen.findByText("运营分析"));
 
-    expect(await screen.findByRole("heading", { name: "产品与集成" })).toBeTruthy();
-    expect(screen.getByText("Agent / Skill 编排")).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "运营分析" })).toBeTruthy();
+    expect(await screen.findByText("运营指标")).toBeTruthy();
+    expect(screen.queryByText("Agent / Skill 编排")).toBeNull();
+    expect(screen.queryByText("多渠道入口")).toBeNull();
+  });
+
+  it("keeps platform governance tools under system settings", async () => {
+    localStorage.setItem("pas.access-token", "token");
+    vi.stubGlobal("fetch", vi.fn(mockAdminFetch));
+
+    render(<App />);
+
+    fireEvent.click(await screen.findByText("系统设置"));
+    fireEvent.click(await screen.findByText("平台接入"));
+
+    expect(await screen.findByRole("heading", { name: "平台接入" })).toBeTruthy();
+    fireEvent.click(screen.getByText("Agent / Skill 编排"));
+    expect(await screen.findByText("导入 Skill")).toBeTruthy();
   });
 
   it("falls back to default menu when effective menu fetch fails", async () => {
@@ -90,7 +108,7 @@ describe("App", () => {
 
     render(<App />);
 
-    fireEvent.click(await screen.findByText("平台管理"));
+    fireEvent.click(await screen.findByText("系统设置"));
     fireEvent.click(await screen.findByText("菜单配置"));
 
     expect(await screen.findByRole("heading", { name: "菜单配置" })).toBeTruthy();
@@ -103,8 +121,8 @@ describe("App", () => {
     render(<App />);
 
     expect(await screen.findByRole("heading", { name: "总览看板" })).toBeTruthy();
-    expect(screen.queryByText("平台管理")).toBeNull();
-    expect(screen.queryByText("系统底座")).toBeNull();
+    expect(screen.queryByText("运营分析")).toBeNull();
+    expect(screen.queryByText("系统设置")).toBeNull();
     expect(screen.queryByText("文档运营")).toBeNull();
   });
 });
@@ -200,15 +218,25 @@ function createMenuConfiguration(): MenuConfiguration {
         ]
       },
       {
-        key: "platform_ops",
-        label: "平台管理",
-        icon: "platform",
+        key: "analytics_ops",
+        label: "运营分析",
+        icon: "analytics",
         order: 50,
+        children: [
+          { key: "analytics", label: "运营总览", route: "/platform/analytics", roles: ["admin"], order: 10 }
+        ]
+      },
+      {
+        key: "system",
+        label: "系统设置",
+        icon: "system",
+        order: 60,
         children: [
           { key: "account_management", label: "账号权限", route: "/system/accounts", roles: ["admin"], order: 10 },
           { key: "audit_logs", label: "审计日志", route: "/system/audit-logs", roles: ["admin"], order: 20 },
           { key: "data_attachments", label: "数据与附件", route: "/system/data-attachments", roles: ["admin"], order: 30 },
-          { key: "secondary_menu_config", label: "菜单配置", route: "/system/secondary-menu", roles: ["admin"], order: 40 }
+          { key: "secondary_menu_config", label: "菜单配置", route: "/system/secondary-menu", roles: ["admin"], order: 40 },
+          { key: "system_settings", label: "运行配置", route: "/system/settings", roles: ["admin"], order: 50 }
         ]
       }
     ],
