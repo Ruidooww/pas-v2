@@ -59,11 +59,15 @@ export function PlatformPage({ user, mode }: { user: PublicUser; mode: PlatformP
   const canRunWorkflow = user.role === "admin" || user.role === "presales";
 
   const refresh = async () => {
+    setLoading(true);
+    setError(null);
     try {
       const response = await api<PlatformOverview>("/api/internal/platform/overview");
       setOverview(response);
     } catch (err) {
       setError(err instanceof Error ? err.message : "平台数据加载失败");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -82,8 +86,25 @@ export function PlatformPage({ user, mode }: { user: PublicUser; mode: PlatformP
 
   if (!overview) {
     return (
-      <div className="pas-boot">
-        <Spin />
+      <div className="pas-page-stack platform-page">
+        <Card className="pas-panel platform-section-panel">
+          {error ? (
+            <Alert
+              type="error"
+              showIcon
+              message={error}
+              action={
+                <Button size="small" onClick={() => void refresh()} loading={loading}>
+                  重试
+                </Button>
+              }
+            />
+          ) : (
+            <div className="platform-loading">
+              <Spin />
+            </div>
+          )}
+        </Card>
       </div>
     );
   }

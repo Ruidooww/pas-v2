@@ -565,6 +565,13 @@ body {
   min-height: 320px;
 }
 
+.platform-loading {
+  display: flex;
+  min-height: 220px;
+  align-items: center;
+  justify-content: center;
+}
+
 .platform-methodology {
   display: flex;
   flex-wrap: wrap;
