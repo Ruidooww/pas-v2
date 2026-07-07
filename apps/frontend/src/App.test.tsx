@@ -80,6 +80,20 @@ describe("App", () => {
     expect(screen.queryByText("多渠道入口")).toBeNull();
   });
 
+  it("routes export jobs to the export center page instead of template operations", async () => {
+    localStorage.setItem("pas.access-token", "token");
+    vi.stubGlobal("fetch", vi.fn(mockAdminFetch));
+
+    render(<App />);
+
+    fireEvent.click(await screen.findByText("方案生产"));
+    fireEvent.click(await screen.findByText("导出中心"));
+
+    expect((await screen.findAllByRole("heading", { name: "导出中心" })).length).toBeGreaterThan(0);
+    expect(screen.getByText("导出任务")).toBeTruthy();
+    expect(screen.queryByText("模板运营")).toBeNull();
+  });
+
   it("keeps platform governance tools under system settings", async () => {
     localStorage.setItem("pas.access-token", "token");
     vi.stubGlobal("fetch", vi.fn(mockAdminFetch));
@@ -182,6 +196,9 @@ function mockFetchForUser(user: PublicUser, input: RequestInfo | URL, init?: Req
     return Promise.resolve(jsonResponse({ customers: [] }));
   }
   if (path === "/api/internal/proposals/library") {
+    return Promise.resolve(jsonResponse([]));
+  }
+  if (path === "/api/internal/exports") {
     return Promise.resolve(jsonResponse([]));
   }
   if (path === "/api/internal/feedback") {

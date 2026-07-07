@@ -27,6 +27,7 @@ export type View =
   | "customerInsights"
   | "proposalTasks"
   | "proposalLibrary"
+  | "exportJobs"
   | "feedback"
   | "qa"
   | "business"
@@ -192,6 +193,7 @@ export function routeToView(route: string): View {
   if (route === "/customers/insights") return "customerInsights";
   if (route === "/proposals/tasks") return "proposalTasks";
   if (route === "/proposals/library") return "proposalLibrary";
+  if (route === "/delivery/exports") return "exportJobs";
   if (route === "/business/feedback") return "feedback";
   if (route === "/knowledge/qa") return "qa";
   if (route === "/knowledge/documents") return "documents";
@@ -224,6 +226,8 @@ export function viewToTitle(view: View): string {
       return "方案生成";
     case "proposalLibrary":
       return "方案库";
+    case "exportJobs":
+      return "导出中心";
     case "feedback":
       return "反馈闭环";
     case "qa":

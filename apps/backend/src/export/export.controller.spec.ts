@@ -83,4 +83,26 @@ describe("ExportController", () => {
     expect(service.getJobForUser).toHaveBeenCalledWith("export-job-1", request.user);
     expect(service.download).toHaveBeenCalledWith("export-job-1", "docx", request.user);
   });
+
+  it("lists export jobs visible to the authenticated user", () => {
+    const jobs = [
+      {
+        jobId: "export-job-1",
+        sourcePackageId: "export-package-1",
+        customerId: "demo-huaxin-manufacturing",
+        userId: "authenticated-user",
+        status: "completed",
+        formats: [],
+        createdAt: "2026-07-02T00:00:00.000Z",
+        updatedAt: "2026-07-02T00:00:00.000Z"
+      }
+    ];
+    const service = {
+      listJobsForUser: vi.fn().mockReturnValue(jobs)
+    } as unknown as ExportService;
+    const controller = new ExportController(service);
+
+    expect(controller.list(request)).toEqual(jobs);
+    expect(service.listJobsForUser).toHaveBeenCalledWith(request.user);
+  });
 });
