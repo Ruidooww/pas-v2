@@ -516,7 +516,7 @@ export type PrimaryMenuKey =
   | "customers"
   | "knowledge_delivery"
   | "business_loop"
-  | "platform_ops"
+  | "analytics_ops"
   | "system";
 
 export type SecondaryMenuKey =
@@ -538,7 +538,6 @@ export type SecondaryMenuKey =
   | "customer_feedback"
   | "platform_governance"
   | "product_registry"
-  | "integration_health"
   | "analytics"
   | "account_management"
   | "audit_logs"

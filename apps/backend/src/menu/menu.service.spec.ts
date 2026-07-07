@@ -63,7 +63,7 @@ describe("MenuService", () => {
       "customers",
       "knowledge_delivery",
       "business_loop",
-      "platform_ops",
+      "analytics_ops",
       "system"
     ]);
   });
