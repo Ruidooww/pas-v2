@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { Alert, Button, Card, List, message, Space, Tag, Typography } from "antd";
+import { Alert, Button, Card, message, Space, Tag, Typography } from "antd";
 import { api } from "../api";
 import { EmptyState } from "../components/EmptyState";
+import { PlainList as List } from "../components/PlainList";
 import type { ExportDownloadResponse, ExportFormat, ExportJob } from "../types";
 
 export function ExportJobsPage() {

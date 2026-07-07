@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Alert, Button, Card, Empty, Input, List, message, Space, Tag, Typography } from "antd";
+import { Alert, Button, Card, Empty, Input, message, Space, Tag, Typography } from "antd";
 import { DislikeOutlined, LikeOutlined } from "@ant-design/icons";
 import { api } from "../api";
+import { PlainList as List } from "../components/PlainList";
 import type { QaAskResponse } from "../types";
 
 export function QaPage() {

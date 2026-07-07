@@ -22,6 +22,7 @@ const salesUser: PublicUser = {
 
 describe("App", () => {
   afterEach(() => {
+    vi.restoreAllMocks();
     vi.unstubAllGlobals();
     localStorage.clear();
   });
@@ -32,6 +33,18 @@ describe("App", () => {
 
     expect(await screen.findByRole("heading", { name: /PAS/ })).toBeTruthy();
     expect(screen.getByRole("button", { name: /登\s*录/ })).toBeTruthy();
+  });
+
+  it("does not emit deprecated Ant Design List warnings on initial dashboard render", async () => {
+    localStorage.setItem("pas.access-token", "token");
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    vi.stubGlobal("fetch", vi.fn(mockAdminFetch));
+
+    render(<App />);
+
+    expect(await screen.findByText(/mock activity/)).toBeTruthy();
+    const messages = consoleError.mock.calls.map((call) => call.join(" ")).join("\n");
+    expect(messages).not.toContain("[antd: List]");
   });
 
   it("renders fixed first-level menus with left secondary navigation on desktop", async () => {
