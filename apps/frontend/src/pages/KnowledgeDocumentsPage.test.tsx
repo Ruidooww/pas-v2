@@ -51,4 +51,20 @@ describe("KnowledgeDocumentsPage", () => {
       })
     );
   });
+
+  it("explains why the document list is empty", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => []
+      })
+    );
+
+    render(<KnowledgeDocumentsPage />);
+
+    expect(await screen.findByText("暂无文档元数据")).toBeInTheDocument();
+    expect(screen.getByText("当前仅登记 PAS 侧索引；真实资料仍在 RAGFlow 控制台维护。")).toBeInTheDocument();
+  });
 });

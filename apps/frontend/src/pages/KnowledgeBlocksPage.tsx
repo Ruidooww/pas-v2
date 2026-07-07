@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { Alert, Button, Card, Empty, Input, Select, Space, Tag, Typography } from "antd";
+import { Alert, Button, Card, Input, Select, Space, Tag, Typography } from "antd";
 import { CheckOutlined, CloseOutlined, CloudUploadOutlined, StopOutlined } from "@ant-design/icons";
 import { api } from "../api";
+import { EmptyState } from "../components/EmptyState";
 import type { KnowledgeBlock, KnowledgeBlockStatus } from "../types";
 
 const statusOptions: Array<{ label: string; value: KnowledgeBlockStatus | "all" }> = [
@@ -142,7 +143,7 @@ export function KnowledgeBlocksPage() {
 
       <Card className="pas-panel" title="知识块列表" loading={loading}>
         {blocks.length === 0 ? (
-          <Empty description="暂无知识块" />
+          <EmptyState title="暂无知识块" description="先在上方新建草稿，审核发布后才会进入方案生成引用范围。" />
         ) : (
           <div className="knowledge-list">
             {blocks.map((block) => (

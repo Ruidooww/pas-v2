@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Alert, Card, List, Space, Tag, Typography } from "antd";
 import { api } from "../api";
+import { EmptyState } from "../components/EmptyState";
 import type { ProposalLibraryItem } from "../types";
 
 export function ProposalLibraryPage() {
@@ -45,7 +46,14 @@ export function ProposalLibraryPage() {
       <Card className="pas-panel" title="方案条目">
         <List
           dataSource={items}
-          locale={{ emptyText: "暂无方案" }}
+          locale={{
+            emptyText: (
+              <EmptyState
+                title="暂无方案条目"
+                description="在“方案生成”完成客户方案后，会自动进入方案库复用。"
+              />
+            )
+          }}
           renderItem={(item) => (
             <List.Item>
               <List.Item.Meta

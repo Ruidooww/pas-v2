@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { Alert, Button, Card, Empty, Input, Select, Space, Tag, Typography } from "antd";
+import { Alert, Button, Card, Input, Select, Space, Tag, Typography } from "antd";
 import { ReloadOutlined, StopOutlined } from "@ant-design/icons";
 import { api } from "../api";
+import { EmptyState } from "../components/EmptyState";
 import type { KnowledgeDocument, KnowledgeDocumentMaterialType, KnowledgeDocumentParseStatus } from "../types";
 
 const parseStatusOptions: Array<{ label: string; value: KnowledgeDocumentParseStatus | "all" }> = [
@@ -156,7 +157,7 @@ export function KnowledgeDocumentsPage() {
 
       <Card className="pas-panel" title="文档列表" loading={loading}>
         {documents.length === 0 ? (
-          <Empty description="暂无文档元数据" />
+          <EmptyState title="暂无文档元数据" description="当前仅登记 PAS 侧索引；真实资料仍在 RAGFlow 控制台维护。" />
         ) : (
           <div className="knowledge-list">
             {documents.map((document) => (

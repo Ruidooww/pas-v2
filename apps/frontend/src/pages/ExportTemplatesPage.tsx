@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { Alert, Button, Card, Empty, Input, Select, Space, Tag, Typography } from "antd";
+import { Alert, Button, Card, Input, Select, Space, Tag, Typography } from "antd";
 import { CheckCircleOutlined, StopOutlined } from "@ant-design/icons";
 import { api } from "../api";
+import { EmptyState } from "../components/EmptyState";
 import type { ExportFormat, ExportTemplate, ExportTemplateStatus } from "../types";
 
 const formatOptions: Array<{ label: string; value: ExportFormat | "all" }> = [
@@ -179,7 +180,7 @@ export function ExportTemplatesPage() {
 
       <Card className="pas-panel" title="模板列表" loading={loading}>
         {templates.length === 0 ? (
-          <Empty description="暂无模板元数据" />
+          <EmptyState title="暂无模板元数据" description="正式模板上传前，可先登记模板文件名、版本和适用场景。" />
         ) : (
           <div className="knowledge-list">
             {templates.map((template) => (
