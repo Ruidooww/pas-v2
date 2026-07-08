@@ -172,6 +172,16 @@ When enabled, callback signatures are checked before the event is handled. Messa
 `docker-compose.yml` defines the four PAS-owned services and their network/volume contract.
 Application Dockerfiles and app code are intentionally left for the module implementation issues.
 
+Before starting the PAS compose stack, copy `.env.example` to `.env` and set at least:
+
+```text
+POSTGRES_PASSWORD=
+REDIS_PASSWORD=
+JWT_SECRET=
+```
+
+`DATABASE_URL` and `REDIS_URL` can stay empty for the PAS-owned compose stack; the compose file derives authenticated internal service URLs from `POSTGRES_PASSWORD` and `REDIS_PASSWORD`.
+
 Deployment, smoke, and rollback SOP:
 
 - `docs/deployment/v0-sop.md`

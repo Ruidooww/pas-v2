@@ -30,8 +30,8 @@ services:
     environment:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: ${PAS_BACKEND_PORT_INTERNAL:-3000}
-      DATABASE_URL: ${DATABASE_URL:-postgresql://pas:change-me@pas-postgres:5432/pas?schema=public}
-      REDIS_URL: ${REDIS_URL:-redis://pas-redis:6379}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-pas}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD before starting PAS}@pas-postgres:5432/${POSTGRES_DB:-pas}?schema=public
+      REDIS_URL: redis://:${REDIS_PASSWORD:?Set REDIS_PASSWORD before starting PAS}@pas-redis:6379
       FILE_STORAGE_DRIVER: ${FILE_STORAGE_DRIVER:-local}
       FILE_STORAGE_ROOT: ${FILE_STORAGE_ROOT:-/data/pas-files}
       LLM_CLIENT_MODE: ${LLM_CLIENT_MODE:-mock}
@@ -85,7 +85,7 @@ services:
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-pas}
       POSTGRES_USER: ${POSTGRES_USER:-pas}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD before starting PAS}
     volumes:
       - pas_postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -100,11 +100,13 @@ services:
   pas-redis:
     container_name: HYYN-redis
     image: redis:7-alpine
-    command: ["redis-server", "--appendonly", "yes"]
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD:?Set REDIS_PASSWORD before starting PAS}"]
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD before starting PAS}
     volumes:
       - pas_redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD-SHELL", "redis-cli -a \"$${REDIS_PASSWORD}\" ping"]
       interval: 10s
       timeout: 5s
       retries: 10

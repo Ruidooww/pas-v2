@@ -1,11 +1,36 @@
 import { execFileSync } from "node:child_process";
+import { readFileSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { dockerCommand } from "./docker-cli.mjs";
 
 const expectedServices = ["pas-backend", "pas-frontend", "pas-postgres", "pas-redis"];
 const expectedContainers = ["HYYN-backend", "HYYN-frontend", "HYYN-postgres", "HYYN-redis"];
+const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+
+const forbiddenCredentialDefaults = [
+  { pattern: /change-me/i, label: "change-me placeholder password" },
+  { pattern: /redis:\/\/pas-redis:6379/i, label: "unauthenticated Redis URL" }
+];
+
+for (const relativePath of ["docker-compose.yml", ".env.example"]) {
+  const content = readFileSync(path.join(projectRoot, relativePath), "utf8");
+  const match = forbiddenCredentialDefaults.find(({ pattern }) => pattern.test(content));
+  if (match) {
+    console.error(`Forbidden compose credential default in ${relativePath}: ${match.label}`);
+    process.exit(1);
+  }
+}
+
+const composeEnv = {
+  ...process.env,
+  POSTGRES_PASSWORD: process.env.POSTGRES_PASSWORD || "pas-compose-verify-postgres-password",
+  REDIS_PASSWORD: process.env.REDIS_PASSWORD || "pas-compose-verify-redis-password"
+};
 
 const serviceOutput = execFileSync(dockerCommand(), ["compose", "config", "--services"], {
   encoding: "utf8",
+  env: composeEnv,
   stdio: ["ignore", "pipe", "pipe"]
 });
 
@@ -23,6 +48,7 @@ if (JSON.stringify(services) !== JSON.stringify(expectedServices)) {
 
 const configOutput = execFileSync(dockerCommand(), ["compose", "config"], {
   encoding: "utf8",
+  env: composeEnv,
   stdio: ["ignore", "pipe", "pipe"]
 });
 const containers = [...configOutput.matchAll(/container_name:\s*(\S+)/g)]
@@ -32,6 +58,16 @@ const containers = [...configOutput.matchAll(/container_name:\s*(\S+)/g)]
 if (JSON.stringify(containers) !== JSON.stringify(expectedContainers)) {
   console.error(`Expected PAS container names: ${expectedContainers.join(", ")}`);
   console.error(`Actual container names: ${containers.join(", ")}`);
+  process.exit(1);
+}
+
+if (!configOutput.includes("--requirepass")) {
+  console.error("Expected Redis service to enable --requirepass.");
+  process.exit(1);
+}
+
+if (!/REDIS_URL:\s+redis:\/\/:[^@\s]+@pas-redis:6379/i.test(configOutput)) {
+  console.error("Expected backend REDIS_URL to authenticate to pas-redis.");
   process.exit(1);
 }
 
