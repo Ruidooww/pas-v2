@@ -102,7 +102,7 @@ describe("App", () => {
     expect(document.querySelector(".pas-sidebar")?.className).not.toContain("ant-layout-sider-collapsed");
   });
 
-  it("does not show fixed notification items from the topbar bell", async () => {
+  it("routes notification items from the topbar bell", async () => {
     localStorage.setItem("pas.access-token", "token");
     vi.stubGlobal("fetch", vi.fn(mockAdminFetch));
 
@@ -110,7 +110,9 @@ describe("App", () => {
 
     fireEvent.click(await screen.findByRole("button", { name: "通知" }));
 
-    expect(screen.queryByText("待我评审：2 条方案需要处理")).toBeNull();
+    fireEvent.click(await screen.findByText("待我评审：2 条方案需要处理"));
+
+    expect((await screen.findAllByRole("heading", { name: "我的待办" })).length).toBeGreaterThan(0);
   });
 
   it("shows the business flow console from the business first-level menu", async () => {

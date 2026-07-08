@@ -37,6 +37,14 @@ import {
 import type { EffectivePrimaryMenuItem, PublicUser, SecondaryMenuKey } from "./types";
 import "./styles.css";
 
+type NotificationItemKey = "review" | "delivery" | "knowledge";
+
+const NOTIFICATION_TARGETS: Record<NotificationItemKey, SecondaryMenuKey> = {
+  review: "my_tasks",
+  delivery: "team_tasks",
+  knowledge: "knowledge_blocks"
+};
+
 export function App() {
   const [user, setUser] = useState<PublicUser | null>(null);
   const [booting, setBooting] = useState(true);
@@ -80,6 +88,11 @@ export function App() {
     () => (compactNavigation ? buildPrimaryMenuItems(menu) : buildAntMenuItems(menu)),
     [compactNavigation, menu]
   );
+  const notificationItems = [
+    { key: "review", label: "待我评审：2 条方案需要处理" },
+    { key: "delivery", label: "方案交付：1 个任务今日到期" },
+    { key: "knowledge", label: "知识库：1 条内容更新待确认" }
+  ];
   const handleLogin = async (nextUser: PublicUser) => {
     setUser(nextUser);
     applyMenu(await loadMenuForUser(nextUser));
@@ -94,13 +107,20 @@ export function App() {
   };
 
   const navigateToSecondary = (key: SecondaryMenuKey | null) => {
-    if (!key) return;
+    if (!key || !findSecondary(menu, key)) return;
     setActiveSecondaryKey(key);
     const nextPrimary = findPrimaryBySecondary(menu, key);
     if (nextPrimary) {
       const nextOpenKey = primaryKeyToMenuKey(nextPrimary.key);
       setOpenKeys([nextOpenKey]);
     }
+  };
+
+  const navigateToNotification = (key: string) => {
+    const target = NOTIFICATION_TARGETS[key as NotificationItemKey];
+    if (!target) return;
+    setNotificationsOpen(false);
+    navigateToSecondary(target);
   };
 
   return (
@@ -217,7 +237,10 @@ export function App() {
                 <Dropdown
                   open={notificationsOpen}
                   onOpenChange={setNotificationsOpen}
-                  menu={{ items: [{ key: "empty", label: "暂无通知", disabled: true }] }}
+                  menu={{
+                    items: notificationItems,
+                    onClick: ({ key }) => navigateToNotification(String(key))
+                  }}
                   trigger={["click"]}
                 >
                   <Button className="pas-icon-button" type="text" icon={<BellOutlined />} aria-label="通知" />
