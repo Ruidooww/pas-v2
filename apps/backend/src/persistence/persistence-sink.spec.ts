@@ -1,10 +1,68 @@
 import { describe, expect, it, vi } from "vitest";
+import type { AuditEvent } from "../audit/audit.types";
 import type { BusinessFlowRecord } from "../business-flow/business-flow.types";
 import type { RegressionRun } from "../feedback/feedback.types";
 import type { KnowledgeBlock, KnowledgeDocument } from "../knowledge/knowledge.types";
 import { PersistenceSink } from "./persistence-sink";
 
 describe("PersistenceSink", () => {
+  it("connects the Prisma client during module initialization", async () => {
+    const connect = vi.fn().mockResolvedValue(undefined);
+    const sink = new PersistenceSink("");
+    Object.defineProperty(sink, "client", {
+      value: {
+        $connect: connect
+      }
+    });
+
+    await (sink as unknown as { onModuleInit(): Promise<void> }).onModuleInit();
+
+    expect(connect).toHaveBeenCalledTimes(1);
+  });
+
+  it("limits hydrated users by default", async () => {
+    const findMany = vi.fn().mockResolvedValue([]);
+    const sink = new PersistenceSink("");
+    Object.defineProperty(sink, "client", {
+      value: {
+        user: {
+          findMany
+        }
+      }
+    });
+
+    await expect(sink.loadUsers()).resolves.toEqual([]);
+
+    expect(findMany).toHaveBeenCalledWith({
+      orderBy: { createdAt: "asc" },
+      take: 1000
+    });
+  });
+
+  it("queues mirror writes instead of running them concurrently", async () => {
+    const first = deferred<void>();
+    const create = vi.fn().mockReturnValueOnce(first.promise).mockResolvedValueOnce(undefined);
+    const sink = new PersistenceSink("");
+    Object.defineProperty(sink, "client", {
+      value: {
+        auditEvent: {
+          create
+        }
+      }
+    });
+
+    sink.mirrorAudit(createAuditEvent("audit-1"));
+    sink.mirrorAudit(createAuditEvent("audit-2"));
+    await flushMicrotasks();
+
+    expect(create).toHaveBeenCalledTimes(1);
+
+    first.resolve();
+    await flushMicrotasks();
+
+    expect(create).toHaveBeenCalledTimes(2);
+  });
+
   it("mirrors and loads knowledge block snapshots", async () => {
     const block = createBlock();
     const upsert = vi.fn().mockResolvedValue(undefined);
@@ -20,6 +78,7 @@ describe("PersistenceSink", () => {
     });
 
     sink.mirrorKnowledgeBlock(block);
+    await flushMicrotasks();
 
     expect(upsert).toHaveBeenCalledWith({
       where: { blockId: "kb-1" },
@@ -58,6 +117,7 @@ describe("PersistenceSink", () => {
     });
 
     sink.mirrorKnowledgeDocument(document);
+    await flushMicrotasks();
 
     expect(upsert).toHaveBeenCalledWith({
       where: { documentId: "doc-1" },
@@ -98,6 +158,7 @@ describe("PersistenceSink", () => {
     });
 
     sink.mirrorBusinessFlowRecord(record);
+    await flushMicrotasks();
 
     expect(upsert).toHaveBeenCalledWith({
       where: { recordId: "bf-1" },
@@ -140,6 +201,7 @@ describe("PersistenceSink", () => {
     });
 
     sink.mirrorRegressionRun(run);
+    await flushMicrotasks();
 
     expect(upsert).toHaveBeenCalledWith({
       where: { runId: "regression-1" },
@@ -163,6 +225,31 @@ describe("PersistenceSink", () => {
     expect(findMany).toHaveBeenCalledWith({ orderBy: { createdAt: "asc" } });
   });
 });
+
+function createAuditEvent(auditId: string): AuditEvent {
+  return {
+    auditId,
+    action: "login",
+    actorUserId: "admin-1",
+    objectType: "session",
+    objectId: "session-1",
+    result: "success",
+    occurredAt: "2026-07-05T00:00:00.000Z"
+  };
+}
+
+function deferred<T>(): { promise: Promise<T>; resolve: (value: T | PromiseLike<T>) => void } {
+  let resolve!: (value: T | PromiseLike<T>) => void;
+  const promise = new Promise<T>((nextResolve) => {
+    resolve = nextResolve;
+  });
+  return { promise, resolve };
+}
+
+async function flushMicrotasks(): Promise<void> {
+  await Promise.resolve();
+  await Promise.resolve();
+}
 
 function createBlock(): KnowledgeBlock {
   return {

@@ -1,4 +1,5 @@
 import { Logger } from "@nestjs/common";
+import type { OnModuleDestroy, OnModuleInit } from "@nestjs/common";
 import type { PrismaClient } from "@prisma/client";
 import type { AuditEvent } from "../audit/audit.types";
 import type { UserRecord } from "../auth/auth.types";
@@ -16,9 +17,10 @@ import type { ProposalJob } from "../proposal/proposal.types";
 // hydrated from these tables at boot. Mirror failures are logged, never
 // thrown — persistence must not block the business flow. V1 replaces the
 // hot path with full repositories.
-export class PersistenceSink {
+export class PersistenceSink implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(PersistenceSink.name);
   private readonly client?: PrismaClient;
+  private mirrorQueue: Promise<void> = Promise.resolve();
 
   constructor(databaseUrl: string | undefined = process.env.DATABASE_URL) {
     if (databaseUrl?.trim()) {
@@ -36,8 +38,13 @@ export class PersistenceSink {
     return this.client !== undefined;
   }
 
+  async onModuleInit(): Promise<void> {
+    await this.client?.$connect();
+  }
+
   mirrorUser(user: UserRecord): void {
-    if (!this.client) return;
+    const client = this.client;
+    if (!client) return;
     const data = {
       username: user.username,
       displayName: user.displayName,
@@ -46,14 +53,17 @@ export class PersistenceSink {
       active: user.active,
       createdAt: new Date(user.createdAt)
     };
-    this.client.user
-      .upsert({ where: { id: user.userId }, create: { id: user.userId, ...data }, update: data })
-      .catch((error) => this.logMirrorFailure("user", user.userId, error));
+    this.enqueueMirror("user", user.userId, () =>
+      client.user.upsert({ where: { id: user.userId }, create: { id: user.userId, ...data }, update: data })
+    );
   }
 
-  async loadUsers(): Promise<UserRecord[]> {
+  async loadUsers(limit = 1000): Promise<UserRecord[]> {
     if (!this.client) return [];
-    const rows = await this.client.user.findMany();
+    const rows = await this.client.user.findMany({
+      orderBy: { createdAt: "asc" },
+      take: limit
+    });
     return rows.map((row) => ({
       userId: row.id,
       username: row.username,
@@ -66,9 +76,10 @@ export class PersistenceSink {
   }
 
   mirrorAudit(event: AuditEvent): void {
-    if (!this.client) return;
-    this.client.auditEvent
-      .create({
+    const client = this.client;
+    if (!client) return;
+    this.enqueueMirror("audit", event.auditId, () =>
+      client.auditEvent.create({
         data: {
           auditId: event.auditId,
           event: event.action,
@@ -76,7 +87,7 @@ export class PersistenceSink {
           occurredAt: new Date(event.occurredAt)
         }
       })
-      .catch((error) => this.logMirrorFailure("audit", event.auditId, error));
+    );
   }
 
   async loadAuditEvents(limit = 1000): Promise<AuditEvent[]> {
@@ -89,7 +100,8 @@ export class PersistenceSink {
   }
 
   mirrorProposalJob(job: ProposalJob): void {
-    if (!this.client) return;
+    const client = this.client;
+    if (!client) return;
     const data = {
       userId: job.request.userId ?? null,
       customerId: job.request.customerId,
@@ -98,9 +110,9 @@ export class PersistenceSink {
       createdAt: new Date(job.createdAt),
       updatedAt: new Date(job.updatedAt)
     };
-    this.client.proposalJobSnapshot
-      .upsert({ where: { jobId: job.jobId }, create: { jobId: job.jobId, ...data }, update: data })
-      .catch((error) => this.logMirrorFailure("proposal_job", job.jobId, error));
+    this.enqueueMirror("proposal_job", job.jobId, () =>
+      client.proposalJobSnapshot.upsert({ where: { jobId: job.jobId }, create: { jobId: job.jobId, ...data }, update: data })
+    );
   }
 
   async loadProposalJobs(): Promise<ProposalJob[]> {
@@ -110,7 +122,8 @@ export class PersistenceSink {
   }
 
   mirrorExportJob(job: ExportJob, userId?: string): void {
-    if (!this.client) return;
+    const client = this.client;
+    if (!client) return;
     const data = {
       userId: userId ?? null,
       sourcePackageId: job.sourcePackageId,
@@ -120,9 +133,9 @@ export class PersistenceSink {
       createdAt: new Date(job.createdAt),
       updatedAt: new Date(job.updatedAt)
     };
-    this.client.exportJobSnapshot
-      .upsert({ where: { jobId: job.jobId }, create: { jobId: job.jobId, ...data }, update: data })
-      .catch((error) => this.logMirrorFailure("export_job", job.jobId, error));
+    this.enqueueMirror("export_job", job.jobId, () =>
+      client.exportJobSnapshot.upsert({ where: { jobId: job.jobId }, create: { jobId: job.jobId, ...data }, update: data })
+    );
   }
 
   async loadExportJobs(): Promise<ExportJob[]> {
@@ -132,7 +145,8 @@ export class PersistenceSink {
   }
 
   mirrorExportTemplate(template: ExportTemplate): void {
-    if (!this.client) return;
+    const client = this.client;
+    if (!client) return;
     const data = {
       ownerUserId: template.ownerUserId,
       format: template.format,
@@ -141,13 +155,13 @@ export class PersistenceSink {
       createdAt: new Date(template.createdAt),
       updatedAt: new Date(template.updatedAt)
     };
-    this.client.exportTemplateSnapshot
-      .upsert({
+    this.enqueueMirror("export_template", template.templateId, () =>
+      client.exportTemplateSnapshot.upsert({
         where: { templateId: template.templateId },
         create: { templateId: template.templateId, ...data },
         update: data
       })
-      .catch((error) => this.logMirrorFailure("export_template", template.templateId, error));
+    );
   }
 
   async loadExportTemplates(): Promise<ExportTemplate[]> {
@@ -157,7 +171,8 @@ export class PersistenceSink {
   }
 
   mirrorFeedback(record: FeedbackRecord): void {
-    if (!this.client) return;
+    const client = this.client;
+    if (!client) return;
     const data = {
       userId: record.createdBy,
       status: record.status,
@@ -165,13 +180,13 @@ export class PersistenceSink {
       createdAt: new Date(record.createdAt),
       updatedAt: new Date(record.handledAt || record.createdAt)
     };
-    this.client.feedbackSnapshot
-      .upsert({
+    this.enqueueMirror("feedback", record.feedbackId, () =>
+      client.feedbackSnapshot.upsert({
         where: { feedbackId: record.feedbackId },
         create: { feedbackId: record.feedbackId, ...data },
         update: data
       })
-      .catch((error) => this.logMirrorFailure("feedback", record.feedbackId, error));
+    );
   }
 
   async loadFeedback(): Promise<FeedbackRecord[]> {
@@ -181,7 +196,8 @@ export class PersistenceSink {
   }
 
   mirrorRegressionRun(run: RegressionRun): void {
-    if (!this.client) return;
+    const client = this.client;
+    if (!client) return;
     const data = {
       createdBy: run.createdBy,
       gateStatus: run.gateStatus,
@@ -189,13 +205,13 @@ export class PersistenceSink {
       data: run as unknown as object,
       createdAt: new Date(run.createdAt)
     };
-    this.client.regressionRunSnapshot
-      .upsert({
+    this.enqueueMirror("regression_run", run.runId, () =>
+      client.regressionRunSnapshot.upsert({
         where: { runId: run.runId },
         create: { runId: run.runId, ...data },
         update: data
       })
-      .catch((error) => this.logMirrorFailure("regression_run", run.runId, error));
+    );
   }
 
   async loadRegressionRuns(): Promise<RegressionRun[]> {
@@ -205,7 +221,8 @@ export class PersistenceSink {
   }
 
   mirrorKnowledgeBlock(block: KnowledgeBlock): void {
-    if (!this.client) return;
+    const client = this.client;
+    if (!client) return;
     const data = {
       ownerUserId: block.ownerUserId,
       status: block.status,
@@ -213,13 +230,13 @@ export class PersistenceSink {
       createdAt: new Date(block.createdAt),
       updatedAt: new Date(block.updatedAt)
     };
-    this.client.knowledgeBlockSnapshot
-      .upsert({
+    this.enqueueMirror("knowledge_block", block.blockId, () =>
+      client.knowledgeBlockSnapshot.upsert({
         where: { blockId: block.blockId },
         create: { blockId: block.blockId, ...data },
         update: data
       })
-      .catch((error) => this.logMirrorFailure("knowledge_block", block.blockId, error));
+    );
   }
 
   async loadKnowledgeBlocks(): Promise<KnowledgeBlock[]> {
@@ -229,7 +246,8 @@ export class PersistenceSink {
   }
 
   mirrorKnowledgeDocument(document: KnowledgeDocument): void {
-    if (!this.client) return;
+    const client = this.client;
+    if (!client) return;
     const data = {
       ownerUserId: document.ownerUserId,
       parseStatus: document.parseStatus,
@@ -238,13 +256,13 @@ export class PersistenceSink {
       createdAt: new Date(document.createdAt),
       updatedAt: new Date(document.updatedAt)
     };
-    this.client.knowledgeDocumentSnapshot
-      .upsert({
+    this.enqueueMirror("knowledge_document", document.documentId, () =>
+      client.knowledgeDocumentSnapshot.upsert({
         where: { documentId: document.documentId },
         create: { documentId: document.documentId, ...data },
         update: data
       })
-      .catch((error) => this.logMirrorFailure("knowledge_document", document.documentId, error));
+    );
   }
 
   async loadKnowledgeDocuments(): Promise<KnowledgeDocument[]> {
@@ -254,7 +272,8 @@ export class PersistenceSink {
   }
 
   mirrorBusinessFlowRecord(record: BusinessFlowRecord): void {
-    if (!this.client) return;
+    const client = this.client;
+    if (!client) return;
     const data = {
       ownerUserId: record.ownerUserId,
       kind: record.kind,
@@ -264,13 +283,13 @@ export class PersistenceSink {
       createdAt: new Date(record.createdAt),
       updatedAt: new Date(record.updatedAt)
     };
-    this.client.businessFlowRecordSnapshot
-      .upsert({
+    this.enqueueMirror("business_flow_record", record.recordId, () =>
+      client.businessFlowRecordSnapshot.upsert({
         where: { recordId: record.recordId },
         create: { recordId: record.recordId, ...data },
         update: data
       })
-      .catch((error) => this.logMirrorFailure("business_flow_record", record.recordId, error));
+    );
   }
 
   async loadBusinessFlowRecords(): Promise<BusinessFlowRecord[]> {
@@ -280,18 +299,19 @@ export class PersistenceSink {
   }
 
   mirrorPlatformState(state: PlatformState): void {
-    if (!this.client) return;
+    const client = this.client;
+    if (!client) return;
     const data = {
       data: state as unknown as object,
       updatedAt: new Date(state.updatedAt)
     };
-    this.client.platformStateSnapshot
-      .upsert({
+    this.enqueueMirror("platform_state", state.stateId, () =>
+      client.platformStateSnapshot.upsert({
         where: { snapshotId: state.stateId },
         create: { snapshotId: state.stateId, ...data },
         update: data
       })
-      .catch((error) => this.logMirrorFailure("platform_state", state.stateId, error));
+    );
   }
 
   async loadPlatformState(): Promise<PlatformState | undefined> {
@@ -301,18 +321,19 @@ export class PersistenceSink {
   }
 
   mirrorMenuState(state: MenuState): void {
-    if (!this.client) return;
+    const client = this.client;
+    if (!client) return;
     const data = {
       data: state as unknown as object,
       updatedAt: new Date(state.updatedAt)
     };
-    this.client.menuStateSnapshot
-      .upsert({
+    this.enqueueMirror("menu_state", state.stateId, () =>
+      client.menuStateSnapshot.upsert({
         where: { snapshotId: state.stateId },
         create: { snapshotId: state.stateId, ...data },
         update: data
       })
-      .catch((error) => this.logMirrorFailure("menu_state", state.stateId, error));
+    );
   }
 
   async loadMenuState(): Promise<MenuState | undefined> {
@@ -322,7 +343,20 @@ export class PersistenceSink {
   }
 
   async onModuleDestroy(): Promise<void> {
+    await this.mirrorQueue;
     await this.client?.$disconnect();
+  }
+
+  private enqueueMirror(kind: string, id: string, operation: () => Promise<unknown>): void {
+    const run = async (): Promise<void> => {
+      try {
+        await operation();
+      } catch (error) {
+        this.logMirrorFailure(kind, id, error);
+      }
+    };
+
+    this.mirrorQueue = this.mirrorQueue.then(run, run);
   }
 
   private logMirrorFailure(kind: string, id: string, error: unknown): void {
