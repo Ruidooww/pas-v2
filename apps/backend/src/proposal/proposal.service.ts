@@ -75,9 +75,11 @@ export class ProposalService {
   }
 
   listLibrary(actor: AuthenticatedUser): ProposalLibraryItem[] {
-    const generated = this.jobStore
+    const completedJobs = this.jobStore
       .list()
-      .filter((job) => job.status === "completed" && job.draft && canAccessJob(job, actor))
+      .filter((job) => job.status === "completed" && job.draft);
+    const generated = completedJobs
+      .filter((job) => canAccessJob(job, actor))
       .map((job) => ({
         libraryId: job.draft?.draftId ?? job.jobId,
         title: job.draft?.title ?? "Untitled proposal",
@@ -89,7 +91,7 @@ export class ProposalService {
         updatedAt: job.updatedAt
       }));
 
-    return [...generated, ...SAMPLE_PROPOSAL_LIBRARY];
+    return completedJobs.length === 0 ? SAMPLE_PROPOSAL_LIBRARY : generated;
   }
 
   async retry(jobId: string, actor: AuthenticatedUser): Promise<ProposalJob> {

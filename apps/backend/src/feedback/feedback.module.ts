@@ -25,8 +25,12 @@ import { RegressionService } from "./regression.service";
     },
     {
       provide: REGRESSION_SERVICE,
-      useFactory: (auditLog: AuditLogService): RegressionService => new RegressionService(auditLog),
-      inject: [AUDIT_LOG]
+      useFactory: async (auditLog: AuditLogService, sink: PersistenceSink): Promise<RegressionService> => {
+        const service = new RegressionService(auditLog, sink);
+        service.seed(await sink.loadRegressionRuns());
+        return service;
+      },
+      inject: [AUDIT_LOG, PERSISTENCE_SINK]
     }
   ],
   exports: [FEEDBACK_SERVICE, REGRESSION_SERVICE]

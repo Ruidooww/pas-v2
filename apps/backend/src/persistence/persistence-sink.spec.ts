@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { BusinessFlowRecord } from "../business-flow/business-flow.types";
+import type { RegressionRun } from "../feedback/feedback.types";
 import type { KnowledgeBlock, KnowledgeDocument } from "../knowledge/knowledge.types";
 import { PersistenceSink } from "./persistence-sink";
 
@@ -123,6 +124,44 @@ describe("PersistenceSink", () => {
     await expect(sink.loadBusinessFlowRecords()).resolves.toEqual([record]);
     expect(findMany).toHaveBeenCalledWith({ orderBy: { createdAt: "asc" } });
   });
+
+  it("mirrors and loads regression run snapshots", async () => {
+    const run = createRegressionRun();
+    const upsert = vi.fn().mockResolvedValue(undefined);
+    const findMany = vi.fn().mockResolvedValue([{ data: run }]);
+    const sink = new PersistenceSink("");
+    Object.defineProperty(sink, "client", {
+      value: {
+        regressionRunSnapshot: {
+          upsert,
+          findMany
+        }
+      }
+    });
+
+    sink.mirrorRegressionRun(run);
+
+    expect(upsert).toHaveBeenCalledWith({
+      where: { runId: "regression-1" },
+      create: {
+        runId: "regression-1",
+        createdBy: "admin-1",
+        gateStatus: "passed",
+        canGoLive: true,
+        data: run,
+        createdAt: expect.any(Date)
+      },
+      update: {
+        createdBy: "admin-1",
+        gateStatus: "passed",
+        canGoLive: true,
+        data: run,
+        createdAt: expect.any(Date)
+      }
+    });
+    await expect(sink.loadRegressionRuns()).resolves.toEqual([run]);
+    expect(findMany).toHaveBeenCalledWith({ orderBy: { createdAt: "asc" } });
+  });
 });
 
 function createBlock(): KnowledgeBlock {
@@ -207,5 +246,30 @@ function createBusinessFlowRecord(): BusinessFlowRecord {
     ],
     createdAt: "2026-07-05T00:00:00.000Z",
     updatedAt: "2026-07-05T00:00:00.000Z"
+  };
+}
+
+function createRegressionRun(): RegressionRun {
+  return {
+    runId: "regression-1",
+    name: "V0 full regression",
+    owner: "QA owner",
+    approver: "Business approver",
+    requiredCaseCount: 50,
+    cases: [
+      {
+        questionId: "q-1",
+        question: "Question 1",
+        expectedEvidence: "Evidence 1",
+        passed: true
+      }
+    ],
+    totalCases: 1,
+    passedCases: 1,
+    failedCases: 0,
+    canGoLive: true,
+    gateStatus: "passed",
+    createdBy: "admin-1",
+    createdAt: "2026-07-05T00:00:00.000Z"
   };
 }

@@ -1,6 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { AuditLogService } from "../audit/audit-log.service";
 import type { AuthenticatedUser } from "../auth/auth.types";
+import type { PersistenceSink } from "../persistence/persistence-sink";
 import { RegressionService } from "./regression.service";
 
 describe("RegressionService", () => {
@@ -114,6 +115,31 @@ describe("RegressionService", () => {
         runId: run.runId,
         canGoLive: true,
         gateStatus: "passed",
+        evidenceType: "regression_report"
+      })
+    );
+  });
+
+  it("mirrors and hydrates regression runs through the persistence sink", () => {
+    const sink = {
+      mirrorRegressionRun: vi.fn()
+    } as unknown as PersistenceSink;
+    const service = new RegressionService(new AuditLogService(), sink);
+    const run = service.createRun(createUser("admin"), {
+      name: "V0 full regression",
+      owner: "QA owner",
+      approver: "Business approver",
+      cases: createPassingCases(50)
+    });
+
+    expect(sink.mirrorRegressionRun).toHaveBeenCalledWith(run);
+
+    const hydrated = new RegressionService(new AuditLogService());
+    hydrated.seed([run]);
+
+    expect(hydrated.getReport(createUser("presales"), run.runId)).toEqual(
+      expect.objectContaining({
+        runId: run.runId,
         evidenceType: "regression_report"
       })
     );

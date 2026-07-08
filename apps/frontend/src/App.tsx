@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { Button, ConfigProvider, Layout, Menu, Space, Spin, Typography } from "antd";
+import { BellOutlined, DownOutlined, SearchOutlined } from "@ant-design/icons";
+import { Avatar, Button, ConfigProvider, Dropdown, Input, Layout, Menu, Spin, Typography } from "antd";
 import { api, clearToken, getToken } from "./api";
 import { AccountsPage } from "./pages/AccountsPage";
 import { AuditLogsPage } from "./pages/AuditLogsPage";
@@ -42,6 +43,8 @@ export function App() {
   const [menu, setMenu] = useState<EffectivePrimaryMenuItem[]>([]);
   const [activeSecondaryKey, setActiveSecondaryKey] = useState<SecondaryMenuKey | null>(null);
   const [openKeys, setOpenKeys] = useState<string[]>([]);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
 
   useEffect(() => {
     if (!getToken()) {
@@ -71,12 +74,12 @@ export function App() {
   const activePrimary = findPrimaryBySecondary(menu, activeSecondaryKey);
   const activeView = routeToView(activeSecondary?.route ?? "");
   const activeTitle = activeSecondary?.label ?? viewToTitle(activeView);
+  const shellDisplayName = user?.displayName;
   const compactNavigation = useCompactNavigation();
   const menuItems = useMemo(
     () => (compactNavigation ? buildPrimaryMenuItems(menu) : buildAntMenuItems(menu)),
     [compactNavigation, menu]
   );
-
   const handleLogin = async (nextUser: PublicUser) => {
     setUser(nextUser);
     applyMenu(await loadMenuForUser(nextUser));
@@ -95,7 +98,8 @@ export function App() {
     setActiveSecondaryKey(key);
     const nextPrimary = findPrimaryBySecondary(menu, key);
     if (nextPrimary) {
-      setOpenKeys([primaryKeyToMenuKey(nextPrimary.key)]);
+      const nextOpenKey = primaryKeyToMenuKey(nextPrimary.key);
+      setOpenKeys([nextOpenKey]);
     }
   };
 
@@ -103,7 +107,7 @@ export function App() {
     <ConfigProvider
       theme={{
         token: {
-          borderRadius: 10,
+          borderRadius: 8,
           colorBgBase: "#ffffff",
           colorBgContainer: "#ffffff",
           colorBgLayout: "#f5f5f7",
@@ -111,7 +115,8 @@ export function App() {
           colorPrimary: "#007aff",
           colorText: "#1d1d1f",
           colorTextSecondary: "#6e6e73",
-          controlHeight: 36,
+          controlHeight: 32,
+          fontSize: 14,
           fontFamily:
             "-apple-system, BlinkMacSystemFont, \"SF Pro Text\", \"PingFang SC\", \"Segoe UI\", sans-serif"
         }
@@ -125,12 +130,19 @@ export function App() {
         <LoginPage onLogin={handleLogin} />
       ) : (
         <Layout className="pas-shell">
-          <Layout.Sider className="pas-sidebar" theme="light" width={236}>
+          <Layout.Sider
+            className="pas-sidebar"
+            theme="light"
+            width={260}
+            collapsedWidth={72}
+            collapsed={!compactNavigation && sidebarCollapsed}
+            trigger={null}
+          >
             <div className="pas-brand-block">
               <span className="pas-brand-mark">P</span>
-              <span>
+              <span className="pas-brand-copy">
                 <Typography.Title className="pas-brand" level={4}>
-                  PAS
+                  PAS <span className="pas-brand-version">v2</span>
                 </Typography.Title>
                 <Typography.Text className="pas-brand-caption">Pre-Sales Assistant</Typography.Text>
               </span>
@@ -139,8 +151,9 @@ export function App() {
               className="pas-menu"
               mode={compactNavigation ? "horizontal" : "inline"}
               disabledOverflow={compactNavigation}
+              inlineCollapsed={!compactNavigation && sidebarCollapsed}
               items={menuItems}
-              openKeys={compactNavigation ? undefined : openKeys}
+              openKeys={compactNavigation || sidebarCollapsed ? undefined : openKeys}
               selectedKeys={
                 compactNavigation && activePrimary
                   ? [primaryKeyToMenuKey(activePrimary.key)]
@@ -160,36 +173,71 @@ export function App() {
                 compactNavigation
                   ? undefined
                   : (keys) => {
-                      const latestKey = keys.find((key) => !openKeys.includes(String(key))) ?? keys[keys.length - 1];
-                      setOpenKeys(latestKey ? [String(latestKey)] : []);
-                      const primaryKey = latestKey ? menuKeyToPrimaryKey(String(latestKey)) : null;
-                      const defaultKey = primaryKey ? defaultSecondaryForPrimary(menu, primaryKey) : null;
-                      if (defaultKey) {
-                        setActiveSecondaryKey(defaultKey);
+                      if (sidebarCollapsed) {
+                        return;
+                      }
+                      const nextOpenKeys = keys.map(String);
+                      const openedKey = nextOpenKeys.find((key) => !openKeys.includes(key));
+                      if (openedKey) {
+                        setOpenKeys([openedKey]);
+                        const primaryKey = menuKeyToPrimaryKey(openedKey);
+                        const defaultKey = primaryKey ? defaultSecondaryForPrimary(menu, primaryKey) : null;
+                        if (defaultKey) {
+                          setActiveSecondaryKey(defaultKey);
+                        }
+                      } else {
+                        setOpenKeys([]);
                       }
                     }
               }
             />
-            <div className="pas-sidebar-user">
-              <Typography.Text>{user.displayName}</Typography.Text>
-              <Typography.Text type="secondary">({user.role})</Typography.Text>
-            </div>
+            <button
+              className="pas-sidebar-user"
+              type="button"
+              aria-label={sidebarCollapsed ? "展开侧边栏" : "收起侧边栏"}
+              title={sidebarCollapsed ? "展开" : "收起"}
+              onClick={() => setSidebarCollapsed((collapsed) => !collapsed)}
+            >
+              <span className="pas-collapse-mark">{sidebarCollapsed ? "»" : "«"}</span>
+              <Typography.Text>{sidebarCollapsed ? "展开" : "收起"}</Typography.Text>
+            </button>
           </Layout.Sider>
           <Layout className="pas-main">
             <Layout.Header className="pas-topbar">
-              <div>
-                <Typography.Text className="pas-view-kicker">
-                  {activePrimary?.label ?? "PAS"}
-                </Typography.Text>
-                <Typography.Title className="pas-view-title" level={3}>
-                  {activeTitle}
-                </Typography.Title>
+              <Typography.Title className="pas-view-title" level={3}>
+                {activeTitle}
+              </Typography.Title>
+              <div className="pas-topbar-tools">
+                <Input
+                  className="pas-global-search"
+                  prefix={<SearchOutlined />}
+                  placeholder="搜索功能、客户、方案、知识..."
+                  suffix={<span className="pas-search-key">⌘ K</span>}
+                />
+                <Dropdown
+                  open={notificationsOpen}
+                  onOpenChange={setNotificationsOpen}
+                  menu={{ items: [{ key: "empty", label: "暂无通知", disabled: true }] }}
+                  trigger={["click"]}
+                >
+                  <Button className="pas-icon-button" type="text" icon={<BellOutlined />} aria-label="通知" />
+                </Dropdown>
+                <Dropdown
+                  menu={{
+                    items: [{ key: "logout", label: "退出登录" }],
+                    onClick: () => logout()
+                  }}
+                  trigger={["click"]}
+                >
+                  <button className="pas-user-chip" type="button">
+                    <Avatar className="pas-user-avatar" size={32}>
+                      {shellDisplayName?.slice(0, 1)}
+                    </Avatar>
+                    <span>{shellDisplayName}</span>
+                    <DownOutlined />
+                  </button>
+                </Dropdown>
               </div>
-              <Space>
-                <Button size="small" onClick={logout}>
-                  退出登录
-                </Button>
-              </Space>
             </Layout.Header>
             {compactNavigation && activePrimary && (
               <div className="pas-secondary-strip" aria-label={`${activePrimary.label}二级菜单`}>
@@ -235,11 +283,11 @@ async function loadMenuForUser(user: PublicUser): Promise<EffectivePrimaryMenuIt
 function renderActiveContent(view: View, user: PublicUser, activeSecondaryKey: SecondaryMenuKey | null) {
   switch (view) {
     case "workbenchOverview":
-      return <WorkbenchOverviewPage mode="overview" />;
+      return <WorkbenchOverviewPage mode="overview" user={user} />;
     case "workbenchMyTasks":
-      return <WorkbenchOverviewPage mode="myTasks" />;
+      return <WorkbenchOverviewPage mode="myTasks" user={user} />;
     case "workbenchTeamTasks":
-      return <WorkbenchOverviewPage mode="teamTasks" />;
+      return <WorkbenchOverviewPage mode="teamTasks" user={user} />;
     case "customerManagement":
       return <CustomerManagementPage />;
     case "customerInsights":

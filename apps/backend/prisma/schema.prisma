@@ -91,6 +91,20 @@ model FeedbackSnapshot {
   @@map("feedback_snapshots")
 }
 
+model RegressionRunSnapshot {
+  runId      String   @id @map("run_id")
+  createdBy  String   @map("created_by")
+  gateStatus String   @map("gate_status")
+  canGoLive  Boolean  @map("can_go_live")
+  data       Json
+  createdAt  DateTime @map("created_at")
+
+  @@index([createdBy])
+  @@index([gateStatus])
+  @@index([canGoLive])
+  @@map("regression_run_snapshots")
+}
+
 model KnowledgeBlockSnapshot {
   blockId     String   @id @map("block_id")
   ownerUserId String   @map("owner_user_id")

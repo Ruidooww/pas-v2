@@ -1,38 +1,71 @@
-import { useEffect, useState } from "react";
-import { Alert, Card, Col, Row, Space, Statistic, Tag, Typography } from "antd";
+import { useEffect, useMemo, useState } from "react";
+import {
+  CalendarOutlined,
+  CheckCircleFilled,
+  ClockCircleOutlined,
+  FileDoneOutlined,
+  FileTextOutlined,
+  SafetyCertificateOutlined,
+  SyncOutlined
+} from "@ant-design/icons";
+import { Alert, Avatar, Card, Empty, Tag, Typography } from "antd";
 import { api } from "../api";
-import { PlainList as List } from "../components/PlainList";
-import type { WorkbenchOverview, WorkbenchTask, WorkbenchTaskScope } from "../types";
+import type { PublicUser, WorkbenchActivity, WorkbenchMetric, WorkbenchOverview, WorkbenchTask, WorkbenchTaskScope } from "../types";
 
 type WorkbenchMode = "overview" | "myTasks" | "teamTasks";
 
 type WorkbenchOverviewPageProps = {
   mode: WorkbenchMode;
+  user?: PublicUser;
 };
 
-const modeCopy: Record<WorkbenchMode, { eyebrow: string; title: string; description: string }> = {
+type DashboardKpi = {
+  key: string;
+  label: string;
+  value: number | string;
+  hint: string;
+};
+
+type DashboardTask = {
+  id: string;
+  title: string;
+  description: string;
+  dueAt: string;
+  owner: string;
+  status: string;
+  statusTone: "blue" | "orange" | "green" | "gray" | "red";
+  dotTone: "red" | "orange" | "green" | "purple";
+};
+
+type DashboardActivity = {
+  id: string;
+  title: string;
+  description: string;
+  time: string;
+  tone: "blue" | "green" | "orange";
+};
+
+const modeCopy: Record<WorkbenchMode, { title: string; description: string }> = {
   overview: {
-    eyebrow: "WORKBENCH",
     title: "总览看板",
-    description: "查看今天的售前任务、客户动作和关键运营提示。"
+    description: "聚焦关键客户与方案进度，推进每一次成交。"
   },
   myTasks: {
-    eyebrow: "MY TASKS",
     title: "我的待办",
     description: "聚焦当前账号需要推进的售前动作。"
   },
   teamTasks: {
-    eyebrow: "TEAM",
     title: "团队任务",
     description: "查看售前团队共享任务和阻塞项。"
   }
 };
 
-export function WorkbenchOverviewPage({ mode }: WorkbenchOverviewPageProps) {
+export function WorkbenchOverviewPage({ mode, user }: WorkbenchOverviewPageProps) {
   const [overview, setOverview] = useState<WorkbenchOverview | null>(null);
   const [tasks, setTasks] = useState<WorkbenchTask[]>([]);
   const [error, setError] = useState<string | null>(null);
   const copy = modeCopy[mode];
+  const displayName = user?.displayName || "当前用户";
 
   useEffect(() => {
     setError(null);
@@ -55,110 +88,263 @@ export function WorkbenchOverviewPage({ mode }: WorkbenchOverviewPageProps) {
       .catch((err) => setError(err instanceof Error ? err.message : "待办加载失败"));
   }, [mode]);
 
+  const kpis = useMemo(() => mapMetrics(overview?.metrics, tasks), [overview?.metrics, tasks]);
+  const dashboardTasks = useMemo(
+    () => tasks.map(mapTaskToDashboard).slice(0, 4),
+    [tasks]
+  );
+  const activities = useMemo(
+    () => (overview?.activities?.length ? mapActivities(overview.activities) : []),
+    [overview?.activities]
+  );
+  const reviewSummary = useMemo(() => buildReviewSummary(tasks), [tasks]);
+  const riskReviews = useMemo(() => buildRiskReviews(tasks), [tasks]);
+  const displayDate = overview?.generatedAt ? new Date(overview.generatedAt) : new Date();
+
   return (
-    <Space className="pas-page-stack" orientation="vertical" size="middle">
-      <section className="workbench-hero">
-        <div className="workbench-hero-copy">
-          <Typography.Text className="workbench-eyebrow">{copy.eyebrow}</Typography.Text>
-          <Typography.Title level={2}>{copy.title}</Typography.Title>
-          <Typography.Paragraph type="secondary">{copy.description}</Typography.Paragraph>
-        </div>
-        {overview && (
-          <div className="workbench-metric-grid">
-            {overview.metrics.map((metric) => (
-              <div className="workbench-metric" key={metric.key}>
-                <Typography.Text type="secondary">{metric.label}</Typography.Text>
-                <strong>{metric.value}</strong>
-                <Typography.Text type="secondary">{metric.hint}</Typography.Text>
+    <section className="dashboard-page">
+      <main className="dashboard-main">
+        <header className="dashboard-greeting">
+          <div>
+            <Typography.Title level={2}>{mode === "overview" ? `早上好，${displayName}` : copy.title}</Typography.Title>
+            <Typography.Paragraph type="secondary">{copy.description}</Typography.Paragraph>
+          </div>
+          <Typography.Text className="dashboard-date">{formatDashboardDate(displayDate)}</Typography.Text>
+        </header>
+
+        {error && <Alert className="dashboard-alert" type="error" message={error} closable onClose={() => setError(null)} />}
+
+        <Card className="dashboard-focus-card">
+          <div className="dashboard-focus-content">
+            <div>
+              <Typography.Title level={3}>聚焦重点，推动商机高质量落地</Typography.Title>
+              <Typography.Paragraph type="secondary">持续跟进关键客户与项目，加强协作，提升赢单效率</Typography.Paragraph>
+            </div>
+            <div className="dashboard-hero-visual" aria-hidden="true">
+              <span className="dashboard-hero-bar is-small" />
+              <span className="dashboard-hero-bar is-medium" />
+              <span className="dashboard-hero-bar is-large" />
+              <span className="dashboard-hero-line" />
+              <span className="dashboard-hero-dot" />
+            </div>
+          </div>
+          <div className="dashboard-kpi-row">
+            {kpis.map((kpi) => (
+              <div className="dashboard-kpi" key={kpi.key}>
+                <Typography.Text type="secondary">{kpi.label}</Typography.Text>
+                <strong>{kpi.value}</strong>
+                <Typography.Text className="dashboard-kpi-trend">{kpi.hint}</Typography.Text>
               </div>
             ))}
           </div>
-        )}
-      </section>
-
-      {error && <Alert type="error" title={error} closable onClose={() => setError(null)} />}
-
-      {!overview && (
-        <Row gutter={[12, 12]}>
-          <Col xs={24} md={8}>
-            <Card className="pas-panel">
-              <Statistic title="任务数" value={tasks.length} />
-            </Card>
-          </Col>
-          <Col xs={24} md={8}>
-            <Card className="pas-panel">
-              <Statistic title="高优先级" value={tasks.filter((task) => task.priority === "high").length} />
-            </Card>
-          </Col>
-          <Col xs={24} md={8}>
-            <Card className="pas-panel">
-              <Statistic title="阻塞项" value={tasks.filter((task) => task.status === "blocked").length} />
-            </Card>
-          </Col>
-        </Row>
-      )}
-
-      <Card className="pas-panel" title={mode === "overview" ? "近期待办" : copy.title}>
-        <List
-          dataSource={tasks}
-          locale={{ emptyText: "暂无待办" }}
-          renderItem={(task) => (
-            <List.Item>
-              <List.Item.Meta
-                title={
-                  <Space wrap>
-                    <Typography.Text strong>{task.title}</Typography.Text>
-                    <Tag color={priorityColor(task.priority)}>{priorityText(task.priority)}</Tag>
-                    <Tag color={statusColor(task.status)}>{statusText(task.status)}</Tag>
-                  </Space>
-                }
-                description={`${task.customerName} / ${task.owner} / 截止 ${task.dueAt}`}
-              />
-            </List.Item>
-          )}
-        />
-      </Card>
-
-      {overview && (
-        <Card className="pas-panel" title="最近动态">
-          <List
-            dataSource={overview.activities}
-            renderItem={(activity) => (
-              <List.Item>
-                <List.Item.Meta
-                  title={activity.title}
-                  description={`${activity.description} / ${activity.happenedAt}`}
-                />
-              </List.Item>
-            )}
-          />
         </Card>
-      )}
-    </Space>
+
+        <div className="dashboard-lower-grid">
+          <Card className="dashboard-panel" title="重点待办">
+            <div className="dashboard-task-list">
+              {dashboardTasks.length ? (
+                dashboardTasks.map((task) => (
+                  <div className="dashboard-task-row" key={task.id}>
+                    <span className={`dashboard-task-dot is-${task.dotTone}`} />
+                    <div className="dashboard-task-copy">
+                      <Typography.Text strong>{task.title}</Typography.Text>
+                      <Typography.Text type="secondary">{task.description}</Typography.Text>
+                    </div>
+                    <Typography.Text className="dashboard-task-date">
+                      <CalendarOutlined />
+                      {task.dueAt}
+                    </Typography.Text>
+                    <Avatar className="dashboard-task-avatar" size={24}>
+                      {task.owner.slice(0, 1)}
+                    </Avatar>
+                    <Tag className={`dashboard-status is-${task.statusTone}`}>{task.status}</Tag>
+                  </div>
+                ))
+              ) : (
+                <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无待办" />
+              )}
+            </div>
+          </Card>
+
+          <Card className="dashboard-panel" title="风险与评审">
+            <div className="dashboard-risk-list">
+              {riskReviews.length ? (
+                riskReviews.map((item) => (
+                  <div className="dashboard-risk-row" key={item.id}>
+                    <span className={`dashboard-risk-icon is-${item.tone}`}>
+                      {item.tone === "red" ? <SafetyCertificateOutlined /> : <FileTextOutlined />}
+                    </span>
+                    <div>
+                      <Typography.Text strong>{item.title}</Typography.Text>
+                      <Typography.Text type="secondary">{item.description}</Typography.Text>
+                    </div>
+                    <Typography.Text className={`dashboard-risk-label is-${item.tone}`}>{item.risk}</Typography.Text>
+                  </div>
+                ))
+              ) : (
+                <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无风险项" />
+              )}
+            </div>
+          </Card>
+        </div>
+
+        <Typography.Text className="dashboard-updated">
+          最近更新：{formatUpdatedAt(overview?.generatedAt)}
+          <SyncOutlined />
+        </Typography.Text>
+      </main>
+
+      <aside className="dashboard-side">
+        <Card className="dashboard-side-card" title="评审与交付">
+          {reviewSummary.map((item) => (
+            <div className="dashboard-review-row" key={item.key}>
+              <span className={`dashboard-review-icon is-${item.tone}`}>{item.icon}</span>
+              <span>{item.label}</span>
+              <strong>{item.count}</strong>
+            </div>
+          ))}
+        </Card>
+
+        <Card className="dashboard-side-card dashboard-activity-card" title="近期动态">
+          {activities.length ? (
+            activities.map((activity) => (
+              <div className="dashboard-activity-row" key={activity.id}>
+                <span className={`dashboard-activity-dot is-${activity.tone}`} />
+                <div>
+                  <Typography.Text strong>{activity.title}</Typography.Text>
+                  <Typography.Text type="secondary">{activity.description}</Typography.Text>
+                </div>
+                <Typography.Text type="secondary">{activity.time}</Typography.Text>
+              </div>
+            ))
+          ) : (
+            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无动态" />
+          )}
+        </Card>
+      </aside>
+    </section>
   );
 }
 
-function priorityText(priority: WorkbenchTask["priority"]): string {
-  return priority === "high" ? "高" : priority === "medium" ? "中" : "低";
+function mapMetrics(metrics: WorkbenchMetric[] | undefined, tasks: WorkbenchTask[]): DashboardKpi[] {
+  if (metrics?.length) {
+    return metrics.slice(0, 4).map((metric) => ({
+      key: metric.key,
+      label: metric.label,
+      value: metric.value,
+      hint: metric.hint
+    }));
+  }
+
+  return [
+    { key: "active_tasks", label: "待处理任务", value: tasks.filter((task) => task.status !== "done").length, hint: "来自工作台队列" },
+    { key: "high_priority", label: "高优先级", value: tasks.filter((task) => task.priority === "high").length, hint: "今日优先推进" },
+    { key: "blocked", label: "阻塞项", value: tasks.filter((task) => task.status === "blocked").length, hint: "需要业务输入" },
+    { key: "completed", label: "已完成", value: tasks.filter((task) => task.status === "done").length, hint: "当前视图统计" }
+  ];
 }
 
-function priorityColor(priority: WorkbenchTask["priority"]): string {
-  return priority === "high" ? "red" : priority === "medium" ? "orange" : "default";
+function mapTaskToDashboard(task: WorkbenchTask): DashboardTask {
+  const status = statusView(task.status);
+  return {
+    id: task.taskId,
+    title: task.title,
+    description: `${task.customerName} · ${sourceText(task.source)}`,
+    dueAt: task.dueAt,
+    owner: task.owner,
+    status: status.label,
+    statusTone: status.tone,
+    dotTone: priorityTone(task.priority)
+  };
 }
 
-function statusText(status: WorkbenchTask["status"]): string {
+function mapActivities(activities: WorkbenchActivity[]): DashboardActivity[] {
+  const tones: DashboardActivity["tone"][] = ["blue", "green", "orange"];
+  return activities.slice(0, 3).map((activity, index) => ({
+    id: activity.activityId,
+    title: activity.title,
+    description: activity.description,
+    time: activity.happenedAt,
+    tone: tones[index % tones.length] ?? "blue"
+  }));
+}
+
+function statusView(status: WorkbenchTask["status"]): { label: string; tone: DashboardTask["statusTone"] } {
   switch (status) {
     case "in_progress":
-      return "进行中";
+      return { label: "进行中", tone: "blue" };
     case "blocked":
-      return "阻塞";
+      return { label: "阻塞", tone: "red" };
     case "done":
-      return "完成";
+      return { label: "已完成", tone: "green" };
     default:
-      return "待处理";
+      return { label: "待处理", tone: "gray" };
   }
 }
 
-function statusColor(status: WorkbenchTask["status"]): string {
-  return status === "blocked" ? "red" : status === "in_progress" ? "blue" : status === "done" ? "green" : "default";
+function buildReviewSummary(tasks: WorkbenchTask[]) {
+  return [
+    { key: "proposal", icon: <FileDoneOutlined />, label: "方案相关", count: tasks.filter((task) => task.source === "proposal").length, tone: "blue" },
+    { key: "blocked", icon: <ClockCircleOutlined />, label: "阻塞中", count: tasks.filter((task) => task.status === "blocked").length, tone: "orange" },
+    { key: "done", icon: <CheckCircleFilled />, label: "已完成", count: tasks.filter((task) => task.status === "done").length, tone: "green" }
+  ];
+}
+
+function buildRiskReviews(tasks: WorkbenchTask[]) {
+  return tasks
+    .filter((task) => task.status === "blocked" || task.priority === "high")
+    .slice(0, 3)
+    .map((task) => {
+      const tone = task.status === "blocked" ? "red" : "orange";
+      return {
+        id: task.taskId,
+        title: task.title,
+        description: `${task.customerName} · ${sourceText(task.source)}`,
+        risk: task.status === "blocked" ? "阻塞" : "高优先级",
+        tone
+      };
+    });
+}
+
+function priorityTone(priority: WorkbenchTask["priority"]): DashboardTask["dotTone"] {
+  if (priority === "high") return "red";
+  if (priority === "medium") return "orange";
+  return "green";
+}
+
+function sourceText(source: WorkbenchTask["source"]): string {
+  switch (source) {
+    case "crm":
+      return "客户跟进";
+    case "proposal":
+      return "方案评审";
+    case "qa":
+      return "知识运营";
+    default:
+      return "手动任务";
+  }
+}
+
+function formatDashboardDate(date: Date): string {
+  const weekdays = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `今天是 ${date.getFullYear()}年${month}月${day}日 ${weekdays[date.getDay()]}`;
+}
+
+function formatUpdatedAt(generatedAt?: string): string {
+  if (!generatedAt) {
+    return "等待更新";
+  }
+
+  const date = new Date(generatedAt);
+  if (Number.isNaN(date.getTime())) {
+    return generatedAt;
+  }
+
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  return `${date.getFullYear()}-${month}-${day} ${hours}:${minutes}`;
 }

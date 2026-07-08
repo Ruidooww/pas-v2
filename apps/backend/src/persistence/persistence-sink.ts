@@ -5,7 +5,7 @@ import type { UserRecord } from "../auth/auth.types";
 import type { BusinessFlowRecord } from "../business-flow/business-flow.types";
 import type { ExportJob } from "../export/export.types";
 import type { ExportTemplate } from "../export/export-template.types";
-import type { FeedbackRecord } from "../feedback/feedback.types";
+import type { FeedbackRecord, RegressionRun } from "../feedback/feedback.types";
 import type { KnowledgeBlock, KnowledgeDocument } from "../knowledge/knowledge.types";
 import type { MenuState } from "../menu/menu.types";
 import type { PlatformState } from "../platform/platform.types";
@@ -178,6 +178,30 @@ export class PersistenceSink {
     if (!this.client) return [];
     const rows = await this.client.feedbackSnapshot.findMany({ orderBy: { createdAt: "asc" } });
     return rows.map((row) => row.data as unknown as FeedbackRecord);
+  }
+
+  mirrorRegressionRun(run: RegressionRun): void {
+    if (!this.client) return;
+    const data = {
+      createdBy: run.createdBy,
+      gateStatus: run.gateStatus,
+      canGoLive: run.canGoLive,
+      data: run as unknown as object,
+      createdAt: new Date(run.createdAt)
+    };
+    this.client.regressionRunSnapshot
+      .upsert({
+        where: { runId: run.runId },
+        create: { runId: run.runId, ...data },
+        update: data
+      })
+      .catch((error) => this.logMirrorFailure("regression_run", run.runId, error));
+  }
+
+  async loadRegressionRuns(): Promise<RegressionRun[]> {
+    if (!this.client) return [];
+    const rows = await this.client.regressionRunSnapshot.findMany({ orderBy: { createdAt: "asc" } });
+    return rows.map((row) => row.data as unknown as RegressionRun);
   }
 
   mirrorKnowledgeBlock(block: KnowledgeBlock): void {

@@ -249,7 +249,7 @@ describe("ProposalService", () => {
     expect(adminJobIds).toEqual(expect.arrayContaining([ownerJob.jobId, otherJob.jobId]));
   });
 
-  it("lists generated proposal drafts plus mock samples for the proposal library", async () => {
+  it("lists only accessible generated proposal drafts once real library items exist", async () => {
     const customerAnalysisService = {
       analyze: vi.fn().mockResolvedValue(completedAnalysis)
     } as unknown as CustomerAnalysisService;
@@ -269,15 +269,28 @@ describe("ProposalService", () => {
           libraryId: job.draft?.draftId,
           source: "generated",
           status: "export_ready"
-        }),
+        })
+      ])
+    );
+    expect(ownerLibrary.some((item) => item.source === "mock")).toBe(false);
+    expect(otherLibrary.some((item) => item.libraryId === job.draft?.draftId)).toBe(false);
+    expect(otherLibrary.some((item) => item.source === "mock")).toBe(false);
+  });
+
+  it("uses sample proposals only as an empty-library fallback", () => {
+    const customerAnalysisService = {
+      analyze: vi.fn().mockResolvedValue(completedAnalysis)
+    } as unknown as CustomerAnalysisService;
+    const { service } = createService(customerAnalysisService);
+
+    expect(service.listLibrary(createUser("owner-1", "presales"))).toEqual(
+      expect.arrayContaining([
         expect.objectContaining({
           libraryId: "sample-huaxin-dlp",
           source: "mock"
         })
       ])
     );
-    expect(otherLibrary.some((item) => item.libraryId === job.draft?.draftId)).toBe(false);
-    expect(otherLibrary.some((item) => item.source === "mock")).toBe(true);
   });
 
   it("stores failed jobs without an export package when draft provider fails", async () => {

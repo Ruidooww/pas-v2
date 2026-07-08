@@ -161,7 +161,8 @@ function extractChunks(payload: unknown): Record<string, unknown>[] {
   const root = asRecord(payload);
   const code = numberValue(root.code);
   if (code !== undefined && code !== 0) {
-    return [];
+    const message = stringValue(root.message) || "RAGFlow business error";
+    throw new Error(`RAGFlow retrieval rejected with code ${code}: ${message}`);
   }
 
   const data = asRecord(root.data);

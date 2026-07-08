@@ -42,7 +42,8 @@ describe("App", () => {
 
     render(<App />);
 
-    expect(await screen.findByText(/mock activity/)).toBeTruthy();
+    expect((await screen.findAllByText("方案初稿")).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/星云科技解决方案/)).toBeNull();
     const messages = consoleError.mock.calls.map((call) => call.join(" ")).join("\n");
     expect(messages).not.toContain("[antd: List]");
   });
@@ -53,15 +54,52 @@ describe("App", () => {
 
     render(<App />);
 
+    expect((await screen.findAllByText("方案初稿")).length).toBeGreaterThan(0);
+    expect(screen.getByText("待处理任务")).toBeTruthy();
+    expect(screen.getAllByText("阻塞").length).toBeGreaterThan(0);
+    expect((await screen.findAllByText("Admin")).length).toBeGreaterThan(0);
     expect((await screen.findAllByText("工作台")).length).toBeGreaterThan(0);
     expect(screen.getByText("客户作战")).toBeTruthy();
     expect(screen.getByText("方案生产")).toBeTruthy();
     expect(screen.getByText("运营分析")).toBeTruthy();
     expect(document.querySelector(".pas-secondary-strip")).toBeNull();
+    expect(screen.getByText("我的待办")).toBeTruthy();
+    expect(screen.queryByText("账号权限")).toBeNull();
     fireEvent.click(screen.getByText("系统设置"));
-    expect((await screen.findAllByText("账号权限")).length).toBeGreaterThan(0);
+    const accountMenuItems = await screen.findAllByText("账号权限");
+    expect(accountMenuItems.length).toBeGreaterThan(0);
     expect(await screen.findByText("菜单配置")).toBeTruthy();
+    expect(document.querySelector('[data-menu-id$="primary:workbench"]')?.getAttribute("aria-expanded")).toBe("false");
+    expect(document.querySelector('[data-menu-id$="primary:system"]')?.getAttribute("aria-expanded")).toBe("true");
+    fireEvent.click(accountMenuItems[0] as HTMLElement);
     expect(await screen.findByText("账号列表")).toBeTruthy();
+  });
+
+  it("collapses and expands the sidebar from the bottom control", async () => {
+    localStorage.setItem("pas.access-token", "token");
+    vi.stubGlobal("fetch", vi.fn(mockAdminFetch));
+
+    render(<App />);
+
+    const collapseButton = await screen.findByRole("button", { name: "收起侧边栏" });
+    fireEvent.click(collapseButton);
+
+    expect(document.querySelector(".pas-sidebar")?.className).toContain("ant-layout-sider-collapsed");
+    fireEvent.click(await screen.findByRole("button", { name: "展开侧边栏" }));
+    expect(document.querySelector(".pas-sidebar")?.className).not.toContain("ant-layout-sider-collapsed");
+  });
+
+  it("routes notification items from the topbar bell", async () => {
+    localStorage.setItem("pas.access-token", "token");
+    vi.stubGlobal("fetch", vi.fn(mockAdminFetch));
+
+    render(<App />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "通知" }));
+
+    fireEvent.click(await screen.findByText("待我评审：2 条方案需要处理"));
+
+    expect((await screen.findAllByRole("heading", { name: "我的待办" })).length).toBeGreaterThan(0);
   });
 
   it("shows the business flow console from the business first-level menu", async () => {
@@ -71,7 +109,11 @@ describe("App", () => {
     render(<App />);
 
     fireEvent.click(await screen.findByText("客户作战"));
-    fireEvent.click(await screen.findByText("商机推进"));
+    const opportunityMenuItem = (await screen.findAllByText("商机推进")).find((element) =>
+      element.closest('[role="menuitem"]')
+    );
+    expect(opportunityMenuItem).toBeTruthy();
+    fireEvent.click(opportunityMenuItem as HTMLElement);
 
     expect(await screen.findByRole("heading", { name: "商机推进" })).toBeTruthy();
     expect(screen.getByText("业务记录")).toBeTruthy();
@@ -86,6 +128,11 @@ describe("App", () => {
     render(<App />);
 
     fireEvent.click(await screen.findByText("运营分析"));
+    const analyticsMenuItem = (await screen.findAllByText("运营总览")).find((element) =>
+      element.closest('[role="menuitem"]')
+    );
+    expect(analyticsMenuItem).toBeTruthy();
+    fireEvent.click(analyticsMenuItem as HTMLElement);
 
     expect(await screen.findByRole("heading", { name: "运营分析" })).toBeTruthy();
     expect(await screen.findByText("运营指标")).toBeTruthy();
@@ -104,7 +151,7 @@ describe("App", () => {
 
     expect((await screen.findAllByRole("heading", { name: "导出中心" })).length).toBeGreaterThan(0);
     expect(screen.getByText("导出任务")).toBeTruthy();
-    expect(screen.queryByText("模板运营")).toBeNull();
+    expect(screen.queryByRole("heading", { name: "模板运营" })).toBeNull();
   });
 
   it("shows existing proposal jobs from the proposal generation page", async () => {
@@ -114,6 +161,11 @@ describe("App", () => {
     render(<App />);
 
     fireEvent.click(await screen.findByText("方案生产"));
+    const proposalMenuItem = (await screen.findAllByText("方案生成")).find((element) =>
+      element.closest('[role="menuitem"]')
+    );
+    expect(proposalMenuItem).toBeTruthy();
+    fireEvent.click(proposalMenuItem as HTMLElement);
 
     expect((await screen.findAllByRole("heading", { name: "方案生成" })).length).toBeGreaterThan(0);
     expect(await screen.findByText("最近方案任务")).toBeTruthy();
@@ -330,6 +382,16 @@ function createWorkbenchOverview(): WorkbenchOverview {
         priority: "high",
         dueAt: "2026-07-08",
         source: "proposal"
+      },
+      {
+        taskId: "task-2",
+        title: "模板复核阻塞项",
+        customerName: "岚云软件",
+        owner: "Admin",
+        status: "blocked",
+        priority: "medium",
+        dueAt: "2026-07-10",
+        source: "manual"
       }
     ],
     activities: [

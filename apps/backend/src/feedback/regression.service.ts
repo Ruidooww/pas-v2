@@ -1,6 +1,7 @@
 import { ForbiddenException, NotFoundException } from "@nestjs/common";
 import type { AuditLogService } from "../audit/audit-log.service";
 import type { AuthenticatedUser } from "../auth/auth.types";
+import type { PersistenceSink } from "../persistence/persistence-sink";
 import type {
   CreateRegressionRunRequest,
   RegressionCaseInput,
@@ -13,7 +14,18 @@ import type {
 export class RegressionService {
   private readonly runs = new Map<string, RegressionRun>();
 
-  constructor(private readonly auditLog: AuditLogService) {}
+  constructor(
+    private readonly auditLog: AuditLogService,
+    private readonly sink?: PersistenceSink
+  ) {}
+
+  seed(runs: RegressionRun[]): void {
+    for (const run of runs) {
+      if (!this.runs.has(run.runId)) {
+        this.runs.set(run.runId, cloneRun(run));
+      }
+    }
+  }
 
   createRun(user: AuthenticatedUser, request: CreateRegressionRunRequest): RegressionRun {
     assertRegressionManager(user);
@@ -36,6 +48,7 @@ export class RegressionService {
       createdAt: new Date().toISOString()
     };
     this.runs.set(run.runId, run);
+    this.sink?.mirrorRegressionRun(run);
     this.auditLog.record({
       action: "feedback",
       actorUserId: user.userId,
