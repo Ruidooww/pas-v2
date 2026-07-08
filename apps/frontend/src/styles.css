@@ -42,13 +42,60 @@ select,
   display: flex;
   min-height: 100vh;
   align-items: center;
-  justify-content: center;
-  padding: 24px;
+  justify-content: space-between;
+  gap: 42px;
+  padding: 48px clamp(24px, 8vw, 112px);
   background: #eef0f5;
+}
+
+.login-brand-panel {
+  display: grid;
+  max-width: 520px;
+  min-width: 0;
+  gap: 16px;
+}
+
+.login-brand-logo {
+  display: inline-flex;
+  width: 78px;
+  height: 78px;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 18px;
+  background: #1769ff;
+  color: #ffffff;
+  box-shadow: 0 18px 42px rgba(23, 105, 255, 0.18);
+  font-size: 42px;
+  font-weight: 800;
+}
+
+.login-brand-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.login-brand-title.ant-typography {
+  margin: 12px 0 0;
+  color: #111827;
+  font-size: 42px;
+  font-weight: 650;
+  line-height: 1.16;
+  letter-spacing: 0;
+}
+
+.login-brand-subtitle.ant-typography {
+  max-width: 420px;
+  margin: 0;
+  color: #697386;
+  font-size: 16px;
+  line-height: 1.7;
 }
 
 .login-card.ant-card {
   width: min(420px, 100%);
+  flex: 0 0 min(420px, 100%);
   border: 1px solid #e5e5ea;
   border-radius: 18px;
   box-shadow: 0 18px 50px rgba(29, 29, 31, 0.08);
@@ -923,6 +970,51 @@ select,
   gap: 12px;
 }
 
+.system-branding-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 260px;
+  gap: 18px;
+  align-items: start;
+}
+
+.system-branding-form {
+  min-width: 0;
+}
+
+.system-branding-preview {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid #ededf1;
+  border-radius: 14px;
+  background: rgba(246, 248, 251, 0.78);
+}
+
+.system-branding-logo {
+  display: inline-flex;
+  width: 56px;
+  height: 56px;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 13px;
+  background: #1769ff;
+  color: #ffffff;
+  font-size: 30px;
+  font-weight: 800;
+}
+
+.system-branding-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.system-branding-preview .ant-typography {
+  margin: 0;
+}
+
 .system-subpanel.ant-card {
   overflow: hidden;
   border: 1px solid #ededf1;
@@ -959,6 +1051,33 @@ select,
 }
 
 @media (max-width: 760px) {
+  .login-screen {
+    display: grid;
+    gap: 24px;
+    align-content: center;
+    padding: 28px 18px;
+  }
+
+  .login-brand-panel {
+    justify-items: center;
+    text-align: center;
+  }
+
+  .login-brand-logo {
+    width: 58px;
+    height: 58px;
+    border-radius: 14px;
+    font-size: 32px;
+  }
+
+  .login-brand-title.ant-typography {
+    font-size: 28px;
+  }
+
+  .login-card.ant-card {
+    justify-self: center;
+  }
+
   .pas-shell.ant-layout {
     display: grid;
     gap: 10px;
@@ -1120,6 +1239,7 @@ select,
   .system-row-actions,
   .system-path-grid,
   .system-settings-grid,
+  .system-branding-layout,
   .system-stat-grid {
     grid-template-columns: 1fr;
   }

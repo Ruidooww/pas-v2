@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { Alert, Card, Descriptions, Spin, Tag, Typography } from "antd";
+import { Alert, Button, Card, Descriptions, Form, Input, Spin, Tag, Typography } from "antd";
 import { api } from "../api";
-import type { SystemOverview, SystemSettingItem } from "../types";
+import type { LoginBranding, SystemOverview, SystemSettingItem, UpdateLoginBrandingRequest } from "../types";
 
 const GROUP_TITLES: Record<SystemSettingItem["group"], string> = {
+  branding: "品牌",
   ragflow: "RAGFlow",
   llm: "LLM",
   storage: "存储",
@@ -14,11 +15,19 @@ const GROUP_TITLES: Record<SystemSettingItem["group"], string> = {
 export function SystemSettingsPage() {
   const [overview, setOverview] = useState<SystemOverview | null>(null);
   const [loading, setLoading] = useState(true);
+  const [savingBranding, setSavingBranding] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [form] = Form.useForm<UpdateLoginBrandingRequest>();
 
   useEffect(() => {
     void refreshOverview();
   }, []);
+
+  useEffect(() => {
+    if (overview?.branding) {
+      form.setFieldsValue(brandingFormValues(overview.branding));
+    }
+  }, [form, overview?.branding]);
 
   const groupedSettings = useMemo(() => {
     const groups = new Map<SystemSettingItem["group"], SystemSettingItem[]>();
@@ -83,6 +92,44 @@ export function SystemSettingsPage() {
           </div>
         )}
       </Card>
+
+      <Card className="pas-panel" title="登录页品牌">
+        <div className="system-branding-layout">
+          <Form
+            className="system-branding-form"
+            form={form}
+            layout="vertical"
+            onFinish={(values) => void saveBranding(values)}
+          >
+            <Form.Item name="title" label="登录页标题" rules={[{ required: true, message: "请输入登录页标题" }]}>
+              <Input maxLength={80} />
+            </Form.Item>
+            <Form.Item name="subtitle" label="登录页说明" rules={[{ required: true, message: "请输入登录页说明" }]}>
+              <Input maxLength={120} />
+            </Form.Item>
+            <Form.Item
+              name="logoUrl"
+              label="Logo URL"
+              rules={[{ pattern: /^(\/|https?:\/\/|$)/i, message: "请输入 / 开头路径或 http(s) URL" }]}
+            >
+              <Input placeholder="/assets/logo.png 或 https://example.com/logo.png" maxLength={500} />
+            </Form.Item>
+            <Button type="primary" htmlType="submit" loading={savingBranding}>
+              保存登录页品牌
+            </Button>
+          </Form>
+          <div className="system-branding-preview">
+            <Typography.Text type="secondary">预览</Typography.Text>
+            <div className="system-branding-logo">
+              {overview?.branding.logoUrl ? <img src={overview.branding.logoUrl} alt="登录页 logo 预览" /> : <span>P</span>}
+            </div>
+            <Typography.Title level={4}>{overview?.branding.title ?? "PAS 售前辅助系统"}</Typography.Title>
+            <Typography.Paragraph type="secondary">
+              {overview?.branding.subtitle ?? "账号由管理员分配，如无账号请联系管理员"}
+            </Typography.Paragraph>
+          </div>
+        </div>
+      </Card>
     </div>
   );
 
@@ -97,6 +144,43 @@ export function SystemSettingsPage() {
       setLoading(false);
     }
   }
+
+  async function saveBranding(values: UpdateLoginBrandingRequest): Promise<void> {
+    setSavingBranding(true);
+    setError(null);
+    try {
+      const branding = await api<LoginBranding>("/api/internal/system/branding", {
+        method: "PATCH",
+        body: values
+      });
+      setOverview((current) => current ? { ...current, branding, settings: updateBrandingSetting(current.settings, branding) } : current);
+      form.setFieldsValue(brandingFormValues(branding));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "登录页品牌保存失败");
+    } finally {
+      setSavingBranding(false);
+    }
+  }
+}
+
+function brandingFormValues(branding: LoginBranding): UpdateLoginBrandingRequest {
+  return {
+    title: branding.title,
+    subtitle: branding.subtitle,
+    logoUrl: branding.logoUrl ?? ""
+  };
+}
+
+function updateBrandingSetting(settings: SystemSettingItem[], branding: LoginBranding): SystemSettingItem[] {
+  return settings.map((item) =>
+    item.key === "LOGIN_BRANDING"
+      ? {
+          ...item,
+          value: branding.logoUrl ? "custom logo" : "default logo",
+          status: branding.logoUrl ? "configured" : "default"
+        }
+      : item
+  );
 }
 
 function statusColor(status: SystemSettingItem["status"]): string {

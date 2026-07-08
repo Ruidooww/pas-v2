@@ -23,12 +23,19 @@ describe("SystemService", () => {
 
     expect(overview.settings).toEqual(
       expect.arrayContaining([
+        expect.objectContaining({ key: "LOGIN_BRANDING", value: "default logo", secret: false }),
         expect.objectContaining({ key: "RAGFLOW_API_KEY", value: "configured", secret: true }),
         expect.objectContaining({ key: "LLM_API_KEY", value: "configured", secret: true }),
         expect.objectContaining({ key: "DATABASE_URL", value: "configured", secret: true }),
         expect.objectContaining({ key: "QA_KB_ID", value: "qa-kb", secret: false }),
         expect.objectContaining({ key: "LLM_MODEL", value: "qwen-max", secret: false })
       ])
+    );
+    expect(overview.branding).toEqual(
+      expect.objectContaining({
+        title: "PAS 售前辅助系统",
+        subtitle: "账号由管理员分配，如无账号请联系管理员"
+      })
     );
     expect(JSON.stringify(overview)).not.toContain("ragflow-secret");
     expect(JSON.stringify(overview)).not.toContain("llm-secret");
@@ -43,6 +50,42 @@ describe("SystemService", () => {
           totalBytes: 6
         })
       ])
+    );
+  });
+
+  it("persists custom login branding under the file storage root", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "pas-system-"));
+    const service = new SystemService({ driver: "local", root }, {});
+
+    await expect(
+      service.updateLoginBranding("admin-1", {
+        title: "HYYN 售前工作台",
+        subtitle: "统一售前入口",
+        logoUrl: "https://example.com/logo.png"
+      })
+    ).resolves.toEqual(
+      expect.objectContaining({
+        title: "HYYN 售前工作台",
+        subtitle: "统一售前入口",
+        logoUrl: "https://example.com/logo.png",
+        updatedBy: "admin-1"
+      })
+    );
+
+    await expect(service.getLoginBranding()).resolves.toEqual(
+      expect.objectContaining({
+        title: "HYYN 售前工作台",
+        logoUrl: "https://example.com/logo.png"
+      })
+    );
+  });
+
+  it("rejects non-http and non-absolute-path login logo urls", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "pas-system-"));
+    const service = new SystemService({ driver: "local", root }, {});
+
+    await expect(service.updateLoginBranding("admin-1", { logoUrl: "javascript:alert(1)" })).rejects.toThrow(
+      "logoUrl must be an absolute path or http(s) URL"
     );
   });
 });

@@ -31,8 +31,21 @@ describe("App", () => {
     localStorage.clear();
     render(<App />);
 
-    expect(await screen.findByRole("heading", { name: /PAS/ })).toBeTruthy();
+    expect((await screen.findAllByRole("heading", { name: /PAS/ })).length).toBeGreaterThan(0);
     expect(screen.getByRole("button", { name: /登\s*录/ })).toBeTruthy();
+  });
+
+  it("loads configured login branding before authentication", async () => {
+    localStorage.clear();
+    vi.stubGlobal("fetch", vi.fn(mockBrandingFetch));
+
+    render(<App />);
+
+    expect(await screen.findByAltText("HYYN 售前工作台 logo")).toHaveAttribute(
+      "src",
+      "https://example.com/hyyn-logo.png"
+    );
+    expect(screen.getAllByText("HYYN 售前工作台").length).toBeGreaterThan(0);
   });
 
   it("does not emit deprecated Ant Design List warnings on initial dashboard render", async () => {
@@ -89,7 +102,7 @@ describe("App", () => {
     expect(document.querySelector(".pas-sidebar")?.className).not.toContain("ant-layout-sider-collapsed");
   });
 
-  it("routes notification items from the topbar bell", async () => {
+  it("does not show fixed notification items from the topbar bell", async () => {
     localStorage.setItem("pas.access-token", "token");
     vi.stubGlobal("fetch", vi.fn(mockAdminFetch));
 
@@ -97,9 +110,7 @@ describe("App", () => {
 
     fireEvent.click(await screen.findByRole("button", { name: "通知" }));
 
-    fireEvent.click(await screen.findByText("待我评审：2 条方案需要处理"));
-
-    expect((await screen.findAllByRole("heading", { name: "我的待办" })).length).toBeGreaterThan(0);
+    expect(screen.queryByText("待我评审：2 条方案需要处理")).toBeNull();
   });
 
   it("shows the business flow console from the business first-level menu", async () => {
@@ -242,10 +253,27 @@ function mockAdminFetchWithMenuFailure(input: RequestInfo | URL, init?: RequestI
   return mockAdminFetch(input, init);
 }
 
+function mockBrandingFetch(input: RequestInfo | URL): Promise<Response> {
+  const path = String(input);
+  if (path === "/api/branding/login") {
+    return Promise.resolve(
+      jsonResponse({
+        title: "HYYN 售前工作台",
+        subtitle: "统一售前入口",
+        logoUrl: "https://example.com/hyyn-logo.png"
+      })
+    );
+  }
+  return Promise.resolve(jsonResponse({}));
+}
+
 function mockFetchForUser(user: PublicUser, input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
   const path = String(input);
   if (path === "/api/me") {
     return Promise.resolve(jsonResponse(user));
+  }
+  if (path === "/api/branding/login") {
+    return Promise.resolve(jsonResponse(createLoginBranding()));
   }
   if (path === "/api/internal/menu/effective") {
     return Promise.resolve(jsonResponse(fallbackMenuFor(user)));
@@ -361,7 +389,15 @@ function createSystemOverview() {
   return {
     generatedAt: "2026-07-06T00:00:00.000Z",
     settings: [],
-    paths: []
+    paths: [],
+    branding: createLoginBranding()
+  };
+}
+
+function createLoginBranding() {
+  return {
+    title: "PAS 售前辅助系统",
+    subtitle: "账号由管理员分配，如无账号请联系管理员"
   };
 }
 

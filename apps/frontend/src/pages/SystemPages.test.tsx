@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { AccountsPage } from "./AccountsPage";
 import { AuditLogsPage } from "./AuditLogsPage";
@@ -61,8 +61,36 @@ describe("system pages", () => {
 
     expect(await screen.findByText("RAGFlow")).toBeTruthy();
     expect(screen.getByText("http://localhost:19380")).toBeTruthy();
+    expect(screen.getByText("登录页品牌")).toBeTruthy();
     expect(screen.getAllByText("configured").length).toBeGreaterThan(0);
     expect(screen.queryByText("ragflow-secret")).toBeNull();
+  });
+
+  it("saves login branding settings", async () => {
+    const fetchMock = vi.fn(mockSystemFetch);
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<SystemSettingsPage />);
+
+    const titleInput = await screen.findByLabelText("登录页标题");
+    await waitFor(() => expect(titleInput).toHaveValue("PAS 售前辅助系统"));
+    fireEvent.change(titleInput, { target: { value: "HYYN 售前工作台" } });
+    expect(titleInput).toHaveValue("HYYN 售前工作台");
+    fireEvent.change(screen.getByLabelText("登录页说明"), { target: { value: "统一售前入口" } });
+    fireEvent.change(screen.getByLabelText("Logo URL"), { target: { value: "/assets/logo.png" } });
+    fireEvent.click(screen.getByRole("button", { name: "保存登录页品牌" }));
+
+    await waitFor(() => {
+      expect(fetchMock.mock.calls.some(([path]) => path === "/api/internal/system/branding")).toBe(true);
+    });
+    const brandingCall = fetchMock.mock.calls.find(([path]) => path === "/api/internal/system/branding");
+    expect(brandingCall?.[1]).toEqual(expect.objectContaining({ method: "PATCH" }));
+    expect(JSON.parse(String(brandingCall?.[1]?.body))).toEqual(
+      expect.objectContaining({
+        title: "HYYN 售前工作台"
+      })
+    );
+    expect(await screen.findByText("HYYN 售前工作台")).toBeTruthy();
   });
 });
 
@@ -79,6 +107,10 @@ function mockSystemFetch(input: RequestInfo | URL, init?: RequestInit): Promise<
   }
   if (path === "/api/internal/system/overview") {
     return Promise.resolve(jsonResponse(createSystemOverview()));
+  }
+  if (path === "/api/internal/system/branding" && init?.method === "PATCH") {
+    const body = JSON.parse(String(init.body));
+    return Promise.resolve(jsonResponse({ ...createSystemOverview().branding, ...body, updatedBy: "admin-1" }));
   }
   return Promise.resolve(jsonResponse({}));
 }
@@ -136,6 +168,11 @@ function createSystemOverview(): SystemOverview {
         totalBytes: 10,
         truncated: false
       }
-    ]
+    ],
+    branding: {
+      title: "PAS 售前辅助系统",
+      subtitle: "账号由管理员分配，如无账号请联系管理员",
+      logoUrl: "https://example.com/logo.png"
+    }
   };
 }
