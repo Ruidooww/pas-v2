@@ -110,7 +110,11 @@ describe("App", () => {
 
     fireEvent.click(await screen.findByRole("button", { name: "通知" }));
 
-    fireEvent.click(await screen.findByText("待我评审：2 条方案需要处理"));
+    expect(screen.queryByText("待我评审：2 条方案需要处理")).toBeNull();
+    expect(screen.queryByText("方案交付：1 个任务今日到期")).toBeNull();
+    expect(screen.queryByText("知识库：1 条内容更新待确认")).toBeNull();
+
+    fireEvent.click(await screen.findByText("待我评审"));
 
     expect((await screen.findAllByRole("heading", { name: "我的待办" })).length).toBeGreaterThan(0);
   });

@@ -89,9 +89,9 @@ export function App() {
     [compactNavigation, menu]
   );
   const notificationItems = [
-    { key: "review", label: "待我评审：2 条方案需要处理" },
-    { key: "delivery", label: "方案交付：1 个任务今日到期" },
-    { key: "knowledge", label: "知识库：1 条内容更新待确认" }
+    { key: "review", label: "待我评审" },
+    { key: "delivery", label: "方案交付" },
+    { key: "knowledge", label: "知识库更新" }
   ];
   const handleLogin = async (nextUser: PublicUser) => {
     setUser(nextUser);
