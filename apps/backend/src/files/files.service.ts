@@ -16,14 +16,15 @@ export class FilesService {
   constructor(private readonly config: FilesConfig) {}
 
   async saveFile(request: SaveFileRequest): Promise<StoredFileRecord> {
-    const key = createFileKey(request.fileName);
+    const fileName = sanitizeFileName(request.fileName);
+    const key = createFileKey(fileName);
     const targetPath = this.resolveKey(key);
     await fs.mkdir(path.dirname(targetPath), { recursive: true });
     await fs.writeFile(targetPath, request.content);
 
     const record: StoredFileRecord = {
       key,
-      fileName: request.fileName,
+      fileName,
       contentType: request.contentType,
       size: request.content.length,
       createdAt: new Date().toISOString()
@@ -56,6 +57,23 @@ export class FilesService {
 }
 
 function createFileKey(fileName: string): string {
-  const safeName = fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
-  return `${new Date().toISOString().slice(0, 10)}/${crypto.randomUUID()}-${safeName}`;
+  return `${new Date().toISOString().slice(0, 10)}/${crypto.randomUUID()}-${fileName}`;
+}
+
+function sanitizeFileName(fileName: string): string {
+  const baseName = fileName.replace(/\\/g, "/").split("/").pop()?.trim() ?? "";
+  let safeName = baseName
+    .replace(/[^a-zA-Z0-9._-]/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^\.+/, "")
+    .replace(/[. ]+$/, "");
+
+  if (!safeName) {
+    return "file";
+  }
+  if (/^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\..*)?$/i.test(safeName)) {
+    safeName = `file-${safeName}`;
+  }
+
+  return safeName.slice(0, 120).replace(/[. ]+$/, "") || "file";
 }
