@@ -46,7 +46,8 @@ export class ProposalService {
 
   async generate(request: ProposalGenerationRequest): Promise<ProposalJob> {
     const job = this.jobStore.create(normalizeRequest(request));
-    return this.runJob(job.jobId, request.user);
+    this.scheduleJob(job.jobId, request.user);
+    return job;
   }
 
   getJob(jobId: string): ProposalJob | undefined {
@@ -101,8 +102,15 @@ export class ProposalService {
       throw new ProposalJobRetryRejectedError(jobId);
     }
 
-    this.jobStore.resetForRetry(jobId);
-    return this.runJob(jobId, actor);
+    const retried = this.jobStore.resetForRetry(jobId);
+    this.scheduleJob(jobId, actor);
+    return retried ?? this.getJobOrThrow(jobId);
+  }
+
+  private scheduleJob(jobId: string, actor?: AuthenticatedUser): void {
+    setTimeout(() => {
+      void this.runJob(jobId, actor).catch(() => this.failUnexpectedJob(jobId));
+    }, 0);
   }
 
   private async runJob(jobId: string, actor?: AuthenticatedUser): Promise<ProposalJob> {
@@ -167,6 +175,15 @@ export class ProposalService {
       failureReason
     });
     return failed ?? this.getJobOrThrow(jobId);
+  }
+
+  private failUnexpectedJob(jobId: string): void {
+    const job = this.getJob(jobId);
+    if (!job || job.status !== "running") {
+      return;
+    }
+    const userId = job.request.userId?.trim() || "anonymous-v0";
+    this.failJob(jobId, job, userId, "PROPOSAL_DRAFT_FAILED");
   }
 
   private appendProgress(

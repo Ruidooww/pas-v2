@@ -62,7 +62,7 @@ describe("ProposalService", () => {
     } as unknown as CustomerAnalysisService;
     const { service, auditLog } = createService(customerAnalysisService);
 
-    const job = await service.generate({
+    const acceptedJob = await service.generate({
       customerId: "demo-huaxin-manufacturing",
       userId: "user-1",
       user: createUser("user-1", "presales"),
@@ -74,6 +74,15 @@ describe("ProposalService", () => {
         }
       ]
     });
+
+    expect(acceptedJob).toEqual(
+      expect.objectContaining({
+        jobId: expect.stringMatching(/^proposal-job-/),
+        status: "running"
+      })
+    );
+    expect(customerAnalysisService.analyze).not.toHaveBeenCalled();
+    const job = await waitForJob(service, acceptedJob.jobId, "completed");
 
     expect(customerAnalysisService.analyze).toHaveBeenCalledWith({
       customerId: "demo-huaxin-manufacturing",
@@ -149,10 +158,11 @@ describe("ProposalService", () => {
     } as unknown as CustomerAnalysisService;
     const { service } = createService(customerAnalysisService);
 
-    const job = await service.generate({
+    const acceptedJob = await service.generate({
       customerId: "missing-customer",
       userId: "user-1"
     });
+    const job = await waitForJob(service, acceptedJob.jobId, "failed");
 
     expect(job.status).toBe("failed");
     expect(job.failureReason).toBe("CUSTOMER_ANALYSIS_FAILED");
@@ -167,13 +177,15 @@ describe("ProposalService", () => {
     } as unknown as CustomerAnalysisService;
     const { service } = createService(customerAnalysisService);
 
-    const failedJob = await service.generate({
+    const acceptedJob = await service.generate({
       customerId: "demo-huaxin-manufacturing",
       userId: "user-1",
       user: createUser("user-1", "presales")
     });
+    const failedJob = await waitForJob(service, acceptedJob.jobId, "failed");
     const retryActor = createUser("user-1", "sales");
-    const retriedJob = await service.retry(failedJob.jobId, retryActor);
+    const acceptedRetry = await service.retry(failedJob.jobId, retryActor);
+    const retriedJob = await waitForJob(service, acceptedRetry.jobId, "completed");
 
     expect(retriedJob.jobId).toBe(failedJob.jobId);
     expect(retriedJob.status).toBe("completed");
@@ -209,10 +221,11 @@ describe("ProposalService", () => {
     } as unknown as CustomerAnalysisService;
     const { service } = createService(customerAnalysisService);
 
-    const failedJob = await service.generate({
+    const acceptedJob = await service.generate({
       customerId: "demo-huaxin-manufacturing",
       userId: "owner-1"
     });
+    const failedJob = await waitForJob(service, acceptedJob.jobId, "failed");
 
     expect(service.getJobForUser(failedJob.jobId, createUser("owner-1", "presales"))).toEqual(failedJob);
     expect(service.getJobForUser(failedJob.jobId, createUser("admin-1", "admin"))).toEqual(failedJob);
@@ -255,11 +268,12 @@ describe("ProposalService", () => {
     } as unknown as CustomerAnalysisService;
     const { service } = createService(customerAnalysisService);
 
-    const job = await service.generate({
+    const acceptedJob = await service.generate({
       customerId: "demo-huaxin-manufacturing",
       userId: "owner-1",
       user: createUser("owner-1", "presales")
     });
+    const job = await waitForJob(service, acceptedJob.jobId, "completed");
     const ownerLibrary = service.listLibrary(createUser("owner-1", "presales"));
     const otherLibrary = service.listLibrary(createUser("other-1", "presales"));
 
@@ -302,11 +316,12 @@ describe("ProposalService", () => {
     } as unknown as ProposalDraftProvider;
     const { service } = createService(customerAnalysisService, draftProvider);
 
-    const job = await service.generate({
+    const acceptedJob = await service.generate({
       customerId: "demo-huaxin-manufacturing",
       userId: "user-1",
       user: createUser("user-1", "presales")
     });
+    const job = await waitForJob(service, acceptedJob.jobId, "failed");
 
     expect(job.status).toBe("failed");
     expect(job.failureReason).toBe("PROPOSAL_DRAFT_FAILED");
@@ -336,4 +351,19 @@ function createUser(userId: string, role: "sales" | "presales" | "admin") {
     displayName: userId,
     role
   };
+}
+
+async function waitForJob(
+  service: ProposalService,
+  jobId: string,
+  expectedStatus: "completed" | "failed"
+) {
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    const job = service.getJob(jobId);
+    if (job?.status === expectedStatus) {
+      return job;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+  throw new Error(`proposal job ${jobId} did not reach ${expectedStatus}`);
 }
