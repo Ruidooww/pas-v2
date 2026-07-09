@@ -9,6 +9,7 @@
     "compose:config": "node scripts/verify-compose.mjs",
     "lint": "pnpm -r lint",
     "smoke:local": "node scripts/smoke-local-menu.mjs",
+    "test:smoke": "node --test scripts/smoke-local-menu.test.mjs",
     "test": "pnpm -r test",
     "typecheck": "pnpm -r typecheck"
   },

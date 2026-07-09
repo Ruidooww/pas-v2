@@ -26,6 +26,7 @@ const EXPECTED_SECONDARY_KEYS = [
   "system_settings",
   "platform_governance"
 ];
+const FRONTEND_ROUTE_SMOKE_KEYS = ["customer_management", "proposal_tasks", "export_jobs"];
 
 const args = parseArgs(process.argv.slice(2));
 const baseUrl = trimTrailingSlash(args.baseUrl ?? process.env.PAS_SMOKE_BASE_URL ?? "http://127.0.0.1:5174");
@@ -139,7 +140,7 @@ const menuChecks = {
 await main();
 
 async function main() {
-  await checkFrontendShell();
+  await checkFrontendShell("/");
   const health = await getJson("/api/health");
   assert(health.status === "ok", `health status is ${health.status}`);
 
@@ -159,6 +160,7 @@ async function main() {
   assert(!allSecondaries.includes("product_registry"), "product_registry should not be visible");
   assert(!allSecondaries.includes("integration_health"), "integration_health should not be visible");
   assertEveryMenuHasSmokeCheck();
+  await checkFrontendRoutes(menu);
 
   for (const key of EXPECTED_SECONDARY_KEYS) {
     await menuChecks[key]();
@@ -172,7 +174,8 @@ async function main() {
         baseUrl,
         user: `${me.username}/${me.role}`,
         primaryMenus: menu.length,
-        secondaryMenus: allSecondaries.length
+        secondaryMenus: allSecondaries.length,
+        frontendRoutes: FRONTEND_ROUTE_SMOKE_KEYS.length
       },
       null,
       2
@@ -180,11 +183,23 @@ async function main() {
   );
 }
 
-async function checkFrontendShell() {
-  const response = await fetch(baseUrl);
-  assert(response.ok, `frontend shell returned HTTP ${response.status}`);
+async function checkFrontendRoutes(menu) {
+  const routesByKey = new Map(
+    menu.flatMap((primary) => primary.children.map((child) => [child.key, child.route]))
+  );
+  for (const key of FRONTEND_ROUTE_SMOKE_KEYS) {
+    const route = routesByKey.get(key);
+    assert(typeof route === "string" && route.startsWith("/"), `missing frontend route for ${key}`);
+    await checkFrontendShell(route);
+    console.log(`ok frontend:${route}`);
+  }
+}
+
+async function checkFrontendShell(path) {
+  const response = await fetch(`${baseUrl}${path}`);
+  assert(response.ok, `frontend shell ${path} returned HTTP ${response.status}`);
   const html = await response.text();
-  assert(html.includes("id=\"root\"") || html.includes("id='root'"), "frontend shell does not contain root mount");
+  assert(html.includes("id=\"root\"") || html.includes("id='root'"), `frontend shell ${path} does not contain root mount`);
 }
 
 async function checkSystemOverview() {
