@@ -42,6 +42,25 @@ describe("BusinessFlowService", () => {
     expect(record.events.map((event) => event.type)).toEqual(["record_created", "opportunity_extracted"]);
   });
 
+  it.each([
+    ["1.2亿元", 120000000],
+    ["380k", 380000],
+    ["38w", 380000],
+    ["380000", 380000]
+  ])("parses opportunity budget %s", async (budget, expectedAmount) => {
+    const service = createService();
+
+    const record = await service.extractOpportunity(
+      {
+        text: `客户：华信精工；需求：终端数据防泄漏；预算：${budget}；时间：2026-09`,
+        sourceRef: "note-1"
+      },
+      salesActor
+    );
+
+    expect(record.outputs.opportunity?.budgetAmount).toBe(expectedAmount);
+  });
+
   it("requires human confirmation before creating a CRM sync request", async () => {
     const service = createService();
     const extracted = await service.extractOpportunity(

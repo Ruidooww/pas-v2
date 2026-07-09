@@ -458,12 +458,15 @@ function parseOpportunity(text: string): StructuredOpportunity {
 
 function parseBudget(value: string | undefined): number | undefined {
   if (!value) return undefined;
-  const normalized = value.replace(/\s/g, "");
+  const normalized = value.replace(/\s/g, "").toLowerCase();
   const match = normalized.match(/(\d+(?:\.\d+)?)/);
   if (!match) return undefined;
   const number = Number(match[1]);
   if (Number.isNaN(number)) return undefined;
-  return normalized.includes("万") ? number * 10000 : number;
+  if (normalized.includes("亿")) return number * 100000000;
+  if (normalized.includes("万") || normalized.includes("w")) return number * 10000;
+  if (normalized.includes("k")) return number * 1000;
+  return number;
 }
 
 function mapStage(value: string | undefined): OpportunityStage {
