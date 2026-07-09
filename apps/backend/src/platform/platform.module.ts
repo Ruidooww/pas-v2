@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 import { BusinessFlowModule } from "../business-flow/business-flow.module";
 import type { BusinessFlowService } from "../business-flow/business-flow.service";
 import { BUSINESS_FLOW_SERVICE } from "../business-flow/business-flow.tokens";
+import { PersistenceModule } from "../persistence/persistence.module";
 import type { PersistenceSink } from "../persistence/persistence-sink";
 import { PERSISTENCE_SINK } from "../persistence/persistence.tokens";
 import { PlatformController } from "./platform.controller";
@@ -11,7 +12,7 @@ import { PLATFORM_SERVICE, PLATFORM_STORE } from "./platform.tokens";
 
 @Module({
   controllers: [PlatformController],
-  imports: [BusinessFlowModule],
+  imports: [BusinessFlowModule, PersistenceModule],
   providers: [
     {
       provide: PLATFORM_STORE,

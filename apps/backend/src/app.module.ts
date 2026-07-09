@@ -3,7 +3,6 @@ import { APP_GUARD } from "@nestjs/core";
 import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
 import { AuditModule } from "./audit/audit.module";
 import { BusinessFlowModule } from "./business-flow/business-flow.module";
-import { PersistenceModule } from "./persistence/persistence.module";
 import { PlatformModule } from "./platform/platform.module";
 import { AuthModule } from "./auth/auth.module";
 import { CustomerAnalysisModule } from "./customer-analysis/customer-analysis.module";
@@ -23,7 +22,6 @@ import { WorkbenchModule } from "./workbench/workbench.module";
 @Module({
   controllers: [HealthController],
   imports: [
-    PersistenceModule,
     ThrottlerModule.forRoot([
       {
         ttl: 60_000,

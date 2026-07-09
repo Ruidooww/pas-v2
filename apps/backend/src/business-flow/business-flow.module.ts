@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 import { CRM_CLIENT } from "../crm/crm.tokens";
 import type { CrmClient } from "../crm/crm.types";
 import { CrmModule } from "../crm/crm.module";
+import { PersistenceModule } from "../persistence/persistence.module";
 import type { PersistenceSink } from "../persistence/persistence-sink";
 import { PERSISTENCE_SINK } from "../persistence/persistence.tokens";
 import { ProposalModule } from "../proposal/proposal.module";
@@ -14,7 +15,7 @@ import { BUSINESS_FLOW_SERVICE, BUSINESS_FLOW_STORE } from "./business-flow.toke
 
 @Module({
   controllers: [BusinessFlowController],
-  imports: [CrmModule, ProposalModule],
+  imports: [CrmModule, PersistenceModule, ProposalModule],
   providers: [
     {
       provide: BUSINESS_FLOW_STORE,

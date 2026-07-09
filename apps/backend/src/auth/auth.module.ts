@@ -20,12 +20,13 @@ import { InternalApiAuthGuard } from "./internal-api-auth.guard";
 import { JwtTokenService } from "./jwt-token.service";
 import { PasswordHasher } from "./password-hasher";
 import { InMemoryUserStore } from "./user-store.service";
+import { PersistenceModule } from "../persistence/persistence.module";
 import type { PersistenceSink } from "../persistence/persistence-sink";
 import { PERSISTENCE_SINK } from "../persistence/persistence.tokens";
 
 @Module({
   controllers: [AuthController],
-  imports: [AuditModule],
+  imports: [AuditModule, PersistenceModule],
   providers: [
     {
       provide: JWT_CONFIG,

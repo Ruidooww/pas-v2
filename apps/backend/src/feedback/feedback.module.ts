@@ -1,4 +1,5 @@
 import { Module } from "@nestjs/common";
+import { PersistenceModule } from "../persistence/persistence.module";
 import type { PersistenceSink } from "../persistence/persistence-sink";
 import { PERSISTENCE_SINK } from "../persistence/persistence.tokens";
 import { AuditModule } from "../audit/audit.module";
@@ -12,7 +13,7 @@ import { RegressionService } from "./regression.service";
 
 @Module({
   controllers: [FeedbackController, RegressionController],
-  imports: [AuditModule],
+  imports: [AuditModule, PersistenceModule],
   providers: [
     {
       provide: FEEDBACK_SERVICE,

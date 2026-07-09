@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 import type { AuditLogService } from "../audit/audit-log.service";
 import { AuditModule } from "../audit/audit.module";
 import { AUDIT_LOG } from "../audit/audit.tokens";
+import { PersistenceModule } from "../persistence/persistence.module";
 import type { PersistenceSink } from "../persistence/persistence-sink";
 import { PERSISTENCE_SINK } from "../persistence/persistence.tokens";
 import { FilesModule } from "../files/files.module";
@@ -27,7 +28,7 @@ import { TemplateExportRenderer, type TemplateExportRendererConfig } from "./tem
 
 @Module({
   controllers: [ExportController, ExportTemplateController],
-  imports: [AuditModule, FilesModule],
+  imports: [AuditModule, FilesModule, PersistenceModule],
   providers: [
     {
       provide: EXPORT_RENDERER_CONFIG,

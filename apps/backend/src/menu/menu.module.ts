@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 import type { AuditLogService } from "../audit/audit-log.service";
 import { AuditModule } from "../audit/audit.module";
 import { AUDIT_LOG } from "../audit/audit.tokens";
+import { PersistenceModule } from "../persistence/persistence.module";
 import type { PersistenceSink } from "../persistence/persistence-sink";
 import { PERSISTENCE_SINK } from "../persistence/persistence.tokens";
 import { MenuController } from "./menu.controller";
@@ -11,7 +12,7 @@ import { MENU_SERVICE, MENU_STORE } from "./menu.tokens";
 
 @Module({
   controllers: [MenuController],
-  imports: [AuditModule],
+  imports: [AuditModule, PersistenceModule],
   providers: [
     {
       provide: MENU_STORE,

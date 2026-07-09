@@ -1,4 +1,5 @@
 import { Module } from "@nestjs/common";
+import { PersistenceModule } from "../persistence/persistence.module";
 import type { PersistenceSink } from "../persistence/persistence-sink";
 import { PERSISTENCE_SINK } from "../persistence/persistence.tokens";
 import { AuditController } from "./audit.controller";
@@ -7,6 +8,7 @@ import { AUDIT_LOG } from "./audit.tokens";
 
 @Module({
   controllers: [AuditController],
+  imports: [PersistenceModule],
   providers: [
     {
       provide: AUDIT_LOG,

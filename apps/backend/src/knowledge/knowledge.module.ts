@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 import type { AuditLogService } from "../audit/audit-log.service";
 import { AuditModule } from "../audit/audit.module";
 import { AUDIT_LOG } from "../audit/audit.tokens";
+import { PersistenceModule } from "../persistence/persistence.module";
 import type { PersistenceSink } from "../persistence/persistence-sink";
 import { PERSISTENCE_SINK } from "../persistence/persistence.tokens";
 import { KnowledgeDocumentController } from "./knowledge-document.controller";
@@ -12,7 +13,7 @@ import { KNOWLEDGE_BLOCK_SERVICE, KNOWLEDGE_DOCUMENT_SERVICE } from "./knowledge
 
 @Module({
   controllers: [KnowledgeBlockController, KnowledgeDocumentController],
-  imports: [AuditModule],
+  imports: [AuditModule, PersistenceModule],
   providers: [
     {
       provide: KNOWLEDGE_BLOCK_SERVICE,

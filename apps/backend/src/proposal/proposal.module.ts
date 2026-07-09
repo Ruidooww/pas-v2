@@ -1,4 +1,5 @@
 import { Module } from "@nestjs/common";
+import { PersistenceModule } from "../persistence/persistence.module";
 import type { PersistenceSink } from "../persistence/persistence-sink";
 import { PERSISTENCE_SINK } from "../persistence/persistence.tokens";
 import { CustomerAnalysisModule } from "../customer-analysis/customer-analysis.module";
@@ -19,7 +20,7 @@ import type { ProposalDraftProvider } from "./proposal.types";
 
 @Module({
   controllers: [ProposalController],
-  imports: [CustomerAnalysisModule],
+  imports: [CustomerAnalysisModule, PersistenceModule],
   providers: [
     {
       provide: PROPOSAL_AUDIT_LOG,
