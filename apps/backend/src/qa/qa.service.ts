@@ -1,6 +1,7 @@
 import type { KnowledgeDocumentService } from "../knowledge/knowledge-document.service";
 import type { RagflowClient } from "../ragflow/ragflow.client";
 import type { KnowledgeChunk } from "../ragflow/knowledge-chunk";
+import { createPrefixedId } from "../ids";
 import { QaAuditLogService } from "./qa-audit-log.service";
 import type { QaAskRequest, QaAskResponse, QaCitation, QaConfig, QaDraftProvider } from "./qa.types";
 
@@ -131,5 +132,5 @@ function toCitation(chunk: KnowledgeChunk): QaCitation {
 }
 
 function createQuestionId(): string {
-  return `qa-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+  return createPrefixedId("qa");
 }

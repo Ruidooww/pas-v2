@@ -1,4 +1,5 @@
 import type { PersistenceSink } from "../persistence/persistence-sink";
+import { createPrefixedId } from "../ids";
 import type { AuditEvent, AuditRecordInput } from "./audit.types";
 
 export class AuditLogService {
@@ -27,5 +28,5 @@ export class AuditLogService {
 }
 
 function createAuditId(): string {
-  return `audit-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+  return createPrefixedId("audit");
 }

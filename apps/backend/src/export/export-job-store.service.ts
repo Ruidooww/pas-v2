@@ -1,4 +1,5 @@
 import type { PersistenceSink } from "../persistence/persistence-sink";
+import { createPrefixedId } from "../ids";
 import type { ExportFormatRecord, ExportJob, ExportJobStatus } from "./export.types";
 
 export class ExportJobStoreService {
@@ -91,5 +92,5 @@ function cloneJob(job: ExportJob): ExportJob {
 }
 
 function createJobId(): string {
-  return `export-job-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+  return createPrefixedId("export-job");
 }

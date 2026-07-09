@@ -2,6 +2,7 @@ import { ForbiddenException } from "@nestjs/common";
 import type { AuthenticatedUser } from "../auth/auth.types";
 import type { BusinessFlowService } from "../business-flow/business-flow.service";
 import type { BusinessFlowRecord } from "../business-flow/business-flow.types";
+import { createPrefixedId } from "../ids";
 import { PlatformStoreService } from "./platform-store.service";
 import type {
   CipSignal,
@@ -697,7 +698,7 @@ function createAuditEvent(
 }
 
 function createId(prefix: string): string {
-  return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+  return createPrefixedId(prefix);
 }
 
 function nowIso(): string {

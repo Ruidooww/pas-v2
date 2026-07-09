@@ -3,6 +3,7 @@ import type {
   CustomerAnalysisItem,
   CustomerAnalysisResult
 } from "../customer-analysis/customer-analysis.types";
+import { createPrefixedId } from "../ids";
 import type {
   ProposalBuildContext,
   ProposalDraft,
@@ -140,5 +141,5 @@ function mergeTraces(groups: ProposalTrace[][]): ProposalTrace[] {
 }
 
 function createDraftId(): string {
-  return `proposal-draft-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+  return createPrefixedId("proposal-draft");
 }

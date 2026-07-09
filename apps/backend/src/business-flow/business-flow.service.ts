@@ -1,5 +1,6 @@
 import type { AuthenticatedUser } from "../auth/auth.types";
 import type { CrmClient, CrmCustomerContext } from "../crm/crm.types";
+import { createPrefixedId } from "../ids";
 import type { ProposalService } from "../proposal/proposal.service";
 import type { ProposalGenerationRequest, ProposalJob } from "../proposal/proposal.types";
 import { BusinessFlowStoreService, canReadRecord } from "./business-flow-store.service";
@@ -613,7 +614,7 @@ function countMetric(records: BusinessFlowRecord[], module: BusinessFlowKind, na
 }
 
 function createId(prefix: string): string {
-  return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+  return createPrefixedId(prefix);
 }
 
 function nowIso(): string {

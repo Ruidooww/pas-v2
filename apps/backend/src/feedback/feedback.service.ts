@@ -1,6 +1,7 @@
 import { ForbiddenException, NotFoundException } from "@nestjs/common";
 import type { AuditLogService } from "../audit/audit-log.service";
 import type { AuthenticatedUser } from "../auth/auth.types";
+import { createPrefixedId } from "../ids";
 import type { PersistenceSink } from "../persistence/persistence-sink";
 import type { FeedbackRecord, SubmitFeedbackRequest, UpdateFeedbackStatusRequest } from "./feedback.types";
 
@@ -85,5 +86,5 @@ function cloneFeedback(record: FeedbackRecord): FeedbackRecord {
 }
 
 function createFeedbackId(): string {
-  return `feedback-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+  return createPrefixedId("feedback");
 }

@@ -1,6 +1,7 @@
 import type { AuthenticatedUser } from "../auth/auth.types";
 import type { CustomerAnalysisResult } from "../customer-analysis/customer-analysis.types";
 import type { CustomerAnalysisService } from "../customer-analysis/customer-analysis.service";
+import { createPrefixedId } from "../ids";
 import { ProposalAuditLogService } from "./proposal-audit-log.service";
 import { ProposalJobStoreService } from "./proposal-job-store.service";
 import type {
@@ -221,7 +222,7 @@ function buildExportPackage(analysis: CustomerAnalysisResult, draft: ProposalDra
 }
 
 function createExportPackageId(): string {
-  return `export-package-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+  return createPrefixedId("export-package");
 }
 
 const SAMPLE_PROPOSAL_LIBRARY: ProposalLibraryItem[] = [

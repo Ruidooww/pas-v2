@@ -1,5 +1,6 @@
 import type { KnowledgeDocumentService } from "../knowledge/knowledge-document.service";
 import type { CrmClient, CrmCustomerContext } from "../crm/crm.types";
+import { createPrefixedId } from "../ids";
 import type { LlmClientPort } from "../llm/llm.types";
 import type { QaCitation } from "../qa/qa.types";
 import type { KnowledgeChunk } from "../ragflow/knowledge-chunk";
@@ -200,5 +201,5 @@ function toCitation(chunk: KnowledgeChunk): QaCitation {
 }
 
 function createAnalysisId(): string {
-  return `ca-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+  return createPrefixedId("ca");
 }

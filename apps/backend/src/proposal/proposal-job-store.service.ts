@@ -1,4 +1,5 @@
 import type { PersistenceSink } from "../persistence/persistence-sink";
+import { createPrefixedId } from "../ids";
 import type {
   ExportPackage,
   ProposalDraft,
@@ -195,7 +196,7 @@ function cloneJob(job: ProposalJob): ProposalJob {
 }
 
 function createJobId(): string {
-  return `proposal-job-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+  return createPrefixedId("proposal-job");
 }
 
 function nowIso(): string {
