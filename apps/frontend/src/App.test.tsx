@@ -36,6 +36,15 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: /登\s*录/ })).toBeTruthy();
   });
 
+  it("loads an existing cookie session without a stored bearer token", async () => {
+    localStorage.clear();
+    vi.stubGlobal("fetch", vi.fn(mockAdminFetch));
+
+    render(<App />);
+
+    expect((await screen.findAllByText("Admin")).length).toBeGreaterThan(0);
+  });
+
   it("loads configured login branding before authentication", async () => {
     localStorage.clear();
     vi.stubGlobal("fetch", vi.fn(mockBrandingFetch));
@@ -273,6 +282,9 @@ function mockAdminFetchWithMenuFailure(input: RequestInfo | URL, init?: RequestI
 
 function mockBrandingFetch(input: RequestInfo | URL): Promise<Response> {
   const path = String(input);
+  if (path === "/api/me") {
+    return Promise.resolve(errorResponse(401, { message: "bearer token is required" }));
+  }
   if (path === "/api/branding/login") {
     return Promise.resolve(
       jsonResponse({
@@ -351,6 +363,14 @@ function jsonResponse(payload: unknown): Response {
   return {
     ok: true,
     status: 200,
+    json: async () => payload
+  } as Response;
+}
+
+function errorResponse(status: number, payload: unknown): Response {
+  return {
+    ok: false,
+    status,
     json: async () => payload
   } as Response;
 }

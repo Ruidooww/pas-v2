@@ -71,6 +71,91 @@ describe("InternalApiAuthGuard", () => {
       })
     );
   });
+
+  it("attaches the authenticated user from a session cookie", async () => {
+    const { service, guard } = createGuard();
+    const admin = await service.bootstrapAdmin({
+      username: "admin@example.com",
+      password: "admin-secret",
+      displayName: "V0 Admin"
+    });
+    const login = await service.login({
+      username: "admin@example.com",
+      password: "admin-secret"
+    });
+    const request = {
+      url: "/api/internal/auth/users",
+      method: "GET",
+      headers: {
+        cookie: `pas.session=${login.accessToken}`
+      }
+    };
+
+    await expect(guard.canActivate(createContext(request))).resolves.toBe(true);
+    expect(request).toEqual(
+      expect.objectContaining({
+        user: expect.objectContaining({
+          userId: admin.userId,
+          role: "admin"
+        })
+      })
+    );
+  });
+
+  it("requires a matching csrf token for unsafe session-cookie requests", async () => {
+    const { service, guard } = createGuard();
+    await service.bootstrapAdmin({
+      username: "admin@example.com",
+      password: "admin-secret",
+      displayName: "V0 Admin"
+    });
+    const login = await service.login({
+      username: "admin@example.com",
+      password: "admin-secret"
+    });
+    const request = {
+      url: "/api/internal/auth/users",
+      method: "POST",
+      headers: {
+        cookie: `pas.session=${login.accessToken}; pas.csrf=csrf-token`
+      }
+    };
+
+    await expect(guard.canActivate(createContext(request))).rejects.toMatchObject({
+      message: "CSRF token is required"
+    });
+  });
+
+  it("allows unsafe session-cookie requests with a matching csrf token", async () => {
+    const { service, guard } = createGuard();
+    const admin = await service.bootstrapAdmin({
+      username: "admin@example.com",
+      password: "admin-secret",
+      displayName: "V0 Admin"
+    });
+    const login = await service.login({
+      username: "admin@example.com",
+      password: "admin-secret"
+    });
+    const request = {
+      url: "/api/internal/auth/users",
+      method: "POST",
+      headers: {
+        cookie: `pas.session=${login.accessToken}; pas.csrf=csrf-token`,
+        "x-csrf-token": "csrf-token"
+      }
+    };
+
+    await expect(guard.canActivate(createContext(request))).resolves.toBe(true);
+    expect(request).toEqual(
+      expect.objectContaining({
+        user: expect.objectContaining({
+          userId: admin.userId,
+          role: "admin"
+        })
+      })
+    );
+  });
 });
 
 function createGuard(): { service: AuthService; guard: InternalApiAuthGuard } {

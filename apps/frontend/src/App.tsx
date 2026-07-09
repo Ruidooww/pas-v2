@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { BellOutlined, DownOutlined, SearchOutlined } from "@ant-design/icons";
 import { Avatar, Button, ConfigProvider, Dropdown, Input, Layout, Menu, Spin, Typography } from "antd";
-import { api, clearToken, getToken } from "./api";
+import { api, clearToken } from "./api";
+import { clearCustomerCache } from "./customer-api";
 import { AccountsPage } from "./pages/AccountsPage";
 import { AuditLogsPage } from "./pages/AuditLogsPage";
 import { BusinessFlowsPage, type BusinessFlowPageMode } from "./pages/BusinessFlowsPage";
@@ -55,10 +56,6 @@ export function App() {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
 
   useEffect(() => {
-    if (!getToken()) {
-      setBooting(false);
-      return;
-    }
     api<PublicUser>("/api/me")
       .then(async (nextUser) => {
         const nextMenu = await loadMenuForUser(nextUser);
@@ -67,6 +64,7 @@ export function App() {
       })
       .catch(() => {
         clearToken();
+        clearCustomerCache();
         setUser(null);
         setMenu([]);
         setActiveSecondaryKey(null);
@@ -94,12 +92,16 @@ export function App() {
     { key: "knowledge", label: "知识库更新" }
   ];
   const handleLogin = async (nextUser: PublicUser) => {
+    clearToken();
+    clearCustomerCache();
     setUser(nextUser);
     applyMenu(await loadMenuForUser(nextUser));
   };
 
   const logout = () => {
+    void api<{ ok: true }>("/api/auth/logout", { method: "POST" }).catch(() => undefined);
     clearToken();
+    clearCustomerCache();
     setUser(null);
     setMenu([]);
     setActiveSecondaryKey(null);

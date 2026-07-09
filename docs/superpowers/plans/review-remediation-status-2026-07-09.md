@@ -51,8 +51,8 @@ already-fixed items are not re-opened.
 | 6 | Budget parsing misses common units | Fixed by `3da8a55` | No further action in this pass. |
 | 7 | Login/server error details exposed to frontend | Fixed by `cbb75ed` | No further action in this pass. |
 | 8 | QA `pre-wrap` XSS concern | Downgraded | Current React rendering escapes text and does not use `dangerouslySetInnerHTML`; do not change now. |
-| 9 | Internal APIs only use bearer token, no extra protection | Partially fixed | Rate limiting is enabled in `AppModule` with `ThrottlerModule`; `httpOnly` cookie + CSRF is a separate auth-protocol task. |
-| 10 | Token stored in `localStorage` | Open large task | Do not patch incrementally; requires backend cookie issuance, CSRF strategy, logout semantics, and frontend auth flow migration. |
+| 9 | Internal APIs only use bearer token, no extra protection | Fixed by auth hardening pass | Internal routes now accept `httpOnly` session cookie auth with CSRF on unsafe cookie requests while retaining Bearer compatibility for scripts. |
+| 10 | Token stored in `localStorage` | Fixed by auth hardening pass | Backend issues session/CSRF cookies; frontend boots from `/api/me`, sends credentials/CSRF, and no longer stores login tokens. |
 | 11 | Frontend HTTP without TLS | Open deployment task | Keep in deployment/SOP or reverse-proxy work; not an app-code patch. |
 | 12 | `helmet()` without CSP | Fixed for backend by `54d1261` | Frontend Nginx security headers can be handled with deployment hardening. |
 | 13 | File name filtering and path safety | Fixed by `7475ced` | No further action in this pass. |
@@ -64,26 +64,18 @@ already-fixed items are not re-opened.
 | 19 | `mirrorAudit()` writes one DB row per event | Fixed by `7264e91` | No further action in this pass. |
 | 20 | Mock CRM uses linear `Array.find()` | Downgraded | Current data is tiny mock data; do not optimize until real or large mock datasets arrive. |
 | 21 | Hard-coded defaults spread across code/config | Partially fixed | Security/runtime defaults addressed; moving all mock/default values to a config layer would be broad cleanup, not urgent. |
-| 22 | Test coverage gaps / no E2E | Open next small task | Add one minimal smoke/E2E lane before bigger auth work. |
+| 22 | Test coverage gaps / no E2E | Fixed by `ac97316` | `test:smoke` now verifies the visible menu contract and key frontend routes against a local fake server. |
 | 23 | Proposal `humanInputs` runtime type risk | Fixed by `0324e24` | No further action in this pass. |
 | 24 | Frontend API lacks timeout/cancel/dedupe | Partially fixed | Timeout/network handling fixed by `ae63974`; blind retry/cancel remains intentionally deferred to avoid duplicate POSTs. |
 | 25 | CSS and inline style maintenance debt | Open refactor task | Defer; no user-facing bug and refactor risk is broad. |
 
 ## Remaining Dispatch Queue
 
-1. Minimal E2E/smoke coverage.
-   Add a small automated path that proves login, menu load, customer page,
-   proposal tasks, and export center are reachable against the local stack.
-
-2. Auth protocol hardening.
-   Design and implement `httpOnly` cookie auth, CSRF protection, logout, and
-   frontend token-flow migration as one explicit task.
-
-3. Deployment hardening.
+1. Deployment hardening.
    Document or implement TLS termination and frontend Nginx security headers
    in the deployment lane, not in normal backend/frontend feature commits.
 
-4. Broad UI/style cleanup.
+2. Broad UI/style cleanup.
    Defer CSS Modules/Tailwind-style restructuring until there is a concrete UI
    maintenance problem or redesign pass.
 

@@ -6,6 +6,39 @@ describe("api", () => {
     vi.useRealTimers();
     vi.unstubAllGlobals();
     localStorage.clear();
+    document.cookie = "pas.csrf=; Max-Age=0; path=/";
+  });
+
+  it("includes browser credentials on API requests", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(200, { ok: true }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await api("/api/me");
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/me",
+      expect.objectContaining({
+        credentials: "include"
+      })
+    );
+  });
+
+  it("sends the csrf cookie value on unsafe API requests", async () => {
+    document.cookie = "pas.csrf=csrf-token; path=/";
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(200, { ok: true }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await api("/api/internal/auth/users", { method: "POST", body: { username: "admin@example.com" } });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/internal/auth/users",
+      expect.objectContaining({
+        credentials: "include",
+        headers: expect.objectContaining({
+          "x-csrf-token": "csrf-token"
+        })
+      })
+    );
   });
 
   it("uses a credential-safe message for login 401 responses", async () => {

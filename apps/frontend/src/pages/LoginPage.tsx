@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Alert, Button, Card, Form, Input, Typography } from "antd";
-import { api, setToken } from "../api";
+import { api } from "../api";
 import type { LoginBranding, LoginResponse, PublicUser } from "../types";
 
 type LoginPageProps = {
@@ -31,7 +31,6 @@ export function LoginPage({ onLogin }: LoginPageProps) {
         method: "POST",
         body: values
       });
-      setToken(response.accessToken);
       onLogin(response.user);
     } catch (err) {
       setError(err instanceof Error ? err.message : "登录失败");

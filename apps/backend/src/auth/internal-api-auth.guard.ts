@@ -1,11 +1,15 @@
 import { CanActivate, ExecutionContext, UnauthorizedException } from "@nestjs/common";
+import { resolveAccessToken } from "./auth-session";
 import { AuthService } from "./auth.service";
 
 type RequestWithAuth = {
+  method?: string;
   url?: string;
   originalUrl?: string;
   headers?: {
     authorization?: string;
+    cookie?: string;
+    "x-csrf-token"?: string;
   };
   user?: unknown;
 };
@@ -21,7 +25,7 @@ export class InternalApiAuthGuard implements CanActivate {
     }
 
     try {
-      request.user = await this.authService.authenticateAuthorizationHeader(request.headers?.authorization);
+      request.user = await this.authService.getMe(resolveAccessToken(request));
       return true;
     } catch (error) {
       if (error instanceof UnauthorizedException) {

@@ -1,4 +1,5 @@
-import { BadRequestException, Body, Controller, Get, Headers, Inject, Param, Patch, Post, Req } from "@nestjs/common";
+import { BadRequestException, Body, Controller, Get, Inject, Param, Patch, Post, Req, Res } from "@nestjs/common";
+import { clearAuthCookies, resolveAccessToken, writeAuthCookies } from "./auth-session";
 import { AUTH_SERVICE } from "./auth.tokens";
 import { AuthService } from "./auth.service";
 import type {
@@ -11,25 +12,41 @@ import type {
 } from "./auth.types";
 
 type RequestWithUser = {
+  method?: string;
+  headers?: {
+    authorization?: string;
+    cookie?: string;
+    "x-csrf-token"?: string;
+  };
   user?: AuthenticatedUser;
 };
+
+type CookieResponse = NonNullable<Parameters<typeof writeAuthCookies>[0]>;
 
 @Controller()
 export class AuthController {
   constructor(@Inject(AUTH_SERVICE) private readonly authService: AuthService) {}
 
   @Post("api/auth/login")
-  async login(@Body() body: LoginRequest): Promise<LoginResponse> {
+  async login(@Body() body: LoginRequest, @Res({ passthrough: true }) response?: CookieResponse): Promise<LoginResponse> {
     if (!body.username?.trim() || !body.password) {
       throw new BadRequestException("username and password are required");
     }
 
-    return this.authService.login(body);
+    const login = await this.authService.login(body);
+    writeAuthCookies(response, login.accessToken, login.expiresInSeconds);
+    return login;
+  }
+
+  @Post("api/auth/logout")
+  logout(@Res({ passthrough: true }) response: CookieResponse): { ok: true } {
+    clearAuthCookies(response);
+    return { ok: true };
   }
 
   @Get("api/me")
-  async me(@Headers("authorization") authorization?: string): Promise<PublicUser> {
-    return this.authService.authenticateAuthorizationHeader(authorization);
+  async me(@Req() request: RequestWithUser): Promise<PublicUser> {
+    return this.authService.getMe(resolveAccessToken(request));
   }
 
   @Post("api/internal/auth/users")

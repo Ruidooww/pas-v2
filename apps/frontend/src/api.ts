@@ -1,5 +1,7 @@
 const TOKEN_KEY = "pas.access-token";
 const LOGIN_PATH = "/api/auth/login";
+const CSRF_COOKIE_NAME = "pas.csrf";
+const CSRF_HEADER_NAME = "x-csrf-token";
 const NETWORK_ERROR_MESSAGE = "网络连接异常，请稍后再试";
 const REQUEST_TIMEOUT_MESSAGE = "请求超时，请稍后再试";
 const REQUEST_TIMEOUT_MS = 30000;
@@ -36,6 +38,7 @@ type ApiOptions = {
 
 export async function api<T>(path: string, options: ApiOptions = {}): Promise<T> {
   const headers: Record<string, string> = {};
+  const method = options.method ?? "GET";
   const token = getToken();
   if (token) {
     headers.Authorization = `Bearer ${token}`;
@@ -43,10 +46,15 @@ export async function api<T>(path: string, options: ApiOptions = {}): Promise<T>
   if (options.body !== undefined) {
     headers["Content-Type"] = "application/json";
   }
+  const csrfToken = method === "GET" ? null : getCookie(CSRF_COOKIE_NAME);
+  if (csrfToken) {
+    headers[CSRF_HEADER_NAME] = csrfToken;
+  }
 
   const response = await fetchWithTimeout(path, {
-    method: options.method ?? "GET",
+    method,
     headers,
+    credentials: "include",
     body: options.body === undefined ? undefined : JSON.stringify(options.body)
   });
 
@@ -96,4 +104,15 @@ async function readErrorMessage(response: Response): Promise<string> {
 
 function isAbortError(error: unknown): boolean {
   return error instanceof Error && error.name === "AbortError";
+}
+
+function getCookie(name: string): string | null {
+  const prefix = `${name}=`;
+  for (const part of document.cookie.split(";")) {
+    const cookie = part.trim();
+    if (cookie.startsWith(prefix)) {
+      return decodeURIComponent(cookie.slice(prefix.length));
+    }
+  }
+  return null;
 }
