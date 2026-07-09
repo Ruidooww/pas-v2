@@ -14,6 +14,7 @@ import {
 } from "antd";
 import { api } from "../api";
 import { PlainList as List } from "../components/PlainList";
+import { loadCustomers } from "../customer-api";
 import type {
   CrmCustomerSummary,
   CustomerAnalysisResult,
@@ -45,8 +46,8 @@ export function WorkbenchPage({ mode = "customerInsights" }: { mode?: WorkbenchP
   const isProposalTasks = mode === "proposalTasks";
 
   useEffect(() => {
-    api<{ customers: CrmCustomerSummary[] }>("/api/crm/customers")
-      .then((response) => setCustomers(response.customers))
+    loadCustomers()
+      .then(setCustomers)
       .catch((err) => setError(err instanceof Error ? err.message : "客户列表加载失败"));
   }, []);
 

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Alert, Card, Space, Table, Tag, Typography } from "antd";
-import { api } from "../api";
 import { EmptyState } from "../components/EmptyState";
+import { loadCustomers } from "../customer-api";
 import type { CrmCustomerSummary } from "../types";
 
 export function CustomerManagementPage() {
@@ -9,8 +9,8 @@ export function CustomerManagementPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    api<{ customers: CrmCustomerSummary[] }>("/api/crm/customers")
-      .then((response) => setCustomers(response.customers))
+    loadCustomers()
+      .then(setCustomers)
       .catch((err) => setError(err instanceof Error ? err.message : "客户列表加载失败"));
   }, []);
 
