@@ -21,6 +21,8 @@ export class PersistenceSink implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(PersistenceSink.name);
   private readonly client?: PrismaClient;
   private mirrorQueue: Promise<void> = Promise.resolve();
+  private auditBatch: AuditEvent[] = [];
+  private auditFlushScheduled = false;
 
   constructor(databaseUrl: string | undefined = process.env.DATABASE_URL) {
     if (databaseUrl?.trim()) {
@@ -76,18 +78,9 @@ export class PersistenceSink implements OnModuleInit, OnModuleDestroy {
   }
 
   mirrorAudit(event: AuditEvent): void {
-    const client = this.client;
-    if (!client) return;
-    this.enqueueMirror("audit", event.auditId, () =>
-      client.auditEvent.create({
-        data: {
-          auditId: event.auditId,
-          event: event.action,
-          payload: event as unknown as object,
-          occurredAt: new Date(event.occurredAt)
-        }
-      })
-    );
+    if (!this.client) return;
+    this.auditBatch.push(event);
+    this.scheduleAuditFlush();
   }
 
   async loadAuditEvents(limit = 1000): Promise<AuditEvent[]> {
@@ -343,8 +336,39 @@ export class PersistenceSink implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleDestroy(): Promise<void> {
+    this.flushAuditBatch();
     await this.mirrorQueue;
     await this.client?.$disconnect();
+  }
+
+  private scheduleAuditFlush(): void {
+    if (this.auditFlushScheduled) {
+      return;
+    }
+
+    this.auditFlushScheduled = true;
+    void Promise.resolve().then(() => this.flushAuditBatch());
+  }
+
+  private flushAuditBatch(): void {
+    const client = this.client;
+    const batch = this.auditBatch.splice(0);
+    this.auditFlushScheduled = false;
+    if (!client || batch.length === 0) {
+      return;
+    }
+
+    const firstEvent = batch[0];
+    if (!firstEvent) {
+      return;
+    }
+    const batchId = batch.length === 1 ? firstEvent.auditId : `${firstEvent.auditId}+${batch.length - 1}`;
+    this.enqueueMirror("audit", batchId, () =>
+      client.auditEvent.createMany({
+        data: batch.map(toAuditRow),
+        skipDuplicates: true
+      })
+    );
   }
 
   private enqueueMirror(kind: string, id: string, operation: () => Promise<unknown>): void {
@@ -363,4 +387,13 @@ export class PersistenceSink implements OnModuleInit, OnModuleDestroy {
     const message = error instanceof Error ? error.message : String(error);
     this.logger.error(`persistence mirror failed: ${kind}/${id}: ${message}`);
   }
+}
+
+function toAuditRow(event: AuditEvent) {
+  return {
+    auditId: event.auditId,
+    event: event.action,
+    payload: event as unknown as object,
+    occurredAt: new Date(event.occurredAt)
+  };
 }

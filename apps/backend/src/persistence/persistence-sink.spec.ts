@@ -41,26 +41,66 @@ describe("PersistenceSink", () => {
 
   it("queues mirror writes instead of running them concurrently", async () => {
     const first = deferred<void>();
-    const create = vi.fn().mockReturnValueOnce(first.promise).mockResolvedValueOnce(undefined);
+    const upsert = vi.fn().mockReturnValueOnce(first.promise).mockResolvedValueOnce(undefined);
     const sink = new PersistenceSink("");
     Object.defineProperty(sink, "client", {
       value: {
-        auditEvent: {
-          create
+        knowledgeBlockSnapshot: {
+          upsert
         }
       }
     });
 
-    sink.mirrorAudit(createAuditEvent("audit-1"));
-    sink.mirrorAudit(createAuditEvent("audit-2"));
+    sink.mirrorKnowledgeBlock(createBlock());
+    sink.mirrorKnowledgeBlock({ ...createBlock(), blockId: "kb-2" });
     await flushMicrotasks();
 
-    expect(create).toHaveBeenCalledTimes(1);
+    expect(upsert).toHaveBeenCalledTimes(1);
 
     first.resolve();
     await flushMicrotasks();
 
-    expect(create).toHaveBeenCalledTimes(2);
+    expect(upsert).toHaveBeenCalledTimes(2);
+  });
+
+  it("batches synchronous audit mirror writes", async () => {
+    const first = createAuditEvent("audit-1");
+    const second = createAuditEvent("audit-2");
+    const create = vi.fn().mockResolvedValue(undefined);
+    const createMany = vi.fn().mockResolvedValue({ count: 2 });
+    const sink = new PersistenceSink("");
+    Object.defineProperty(sink, "client", {
+      value: {
+        auditEvent: {
+          create,
+          createMany
+        }
+      }
+    });
+
+    sink.mirrorAudit(first);
+    sink.mirrorAudit(second);
+    await flushMicrotasks();
+
+    expect(create).not.toHaveBeenCalled();
+    expect(createMany).toHaveBeenCalledTimes(1);
+    expect(createMany).toHaveBeenCalledWith({
+      data: [
+        {
+          auditId: first.auditId,
+          event: first.action,
+          payload: first,
+          occurredAt: new Date(first.occurredAt)
+        },
+        {
+          auditId: second.auditId,
+          event: second.action,
+          payload: second,
+          occurredAt: new Date(second.occurredAt)
+        }
+      ],
+      skipDuplicates: true
+    });
   });
 
   it("mirrors and loads knowledge block snapshots", async () => {
