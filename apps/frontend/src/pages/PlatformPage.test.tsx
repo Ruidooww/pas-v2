@@ -30,6 +30,7 @@ describe("PlatformPage", () => {
 
     render(<PlatformPage user={adminUser} mode="governance" />);
 
-    expect(await screen.findByText("platform overview unavailable")).toBeTruthy();
+    expect(await screen.findByText("服务暂时不可用，请稍后再试")).toBeTruthy();
+    expect(screen.queryByText("platform overview unavailable")).toBeNull();
   });
 });
