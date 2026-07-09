@@ -3,6 +3,7 @@ import { api, ApiError, getToken, setToken } from "./api";
 
 describe("api", () => {
   afterEach(() => {
+    vi.useRealTimers();
     vi.unstubAllGlobals();
     localStorage.clear();
   });
@@ -45,6 +46,37 @@ describe("api", () => {
       status: 500
     } satisfies Partial<ApiError>);
   });
+
+  it("uses a safe message for network failures", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Failed to fetch http://internal/api")));
+
+    await expect(api("/api/internal/auth/users")).rejects.toMatchObject({
+      name: "ApiError",
+      message: "网络连接异常，请稍后再试",
+      status: 0
+    } satisfies Partial<ApiError>);
+  });
+
+  it("aborts requests that exceed the timeout", async () => {
+    vi.useFakeTimers();
+    const fetchMock = vi.fn((_path: string, init?: RequestInit) => {
+      return new Promise<Response>((_, reject) => {
+        init?.signal?.addEventListener("abort", () => reject(abortError()));
+      });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const request = api("/api/internal/auth/users");
+    const assertion = expect(request).rejects.toMatchObject({
+      name: "ApiError",
+      message: "请求超时，请稍后再试",
+      status: 0
+    } satisfies Partial<ApiError>);
+
+    await vi.advanceTimersByTimeAsync(30000);
+    await assertion;
+    expect((fetchMock.mock.calls[0]?.[1] as RequestInit | undefined)?.signal?.aborted).toBe(true);
+  });
 });
 
 function jsonResponse(status: number, body: unknown): Response {
@@ -53,4 +85,10 @@ function jsonResponse(status: number, body: unknown): Response {
     status,
     json: async () => body
   } as Response;
+}
+
+function abortError(): Error {
+  const error = new Error("The operation was aborted");
+  error.name = "AbortError";
+  return error;
 }
