@@ -30,6 +30,7 @@ services:
     environment:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: ${PAS_BACKEND_PORT_INTERNAL:-3000}
+      THROTTLE_LIMIT_PER_MINUTE: ${THROTTLE_LIMIT_PER_MINUTE:-120}
       DATABASE_URL: postgresql://${POSTGRES_USER:-pas}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD before starting PAS}@pas-postgres:5432/${POSTGRES_DB:-pas}?schema=public
       REDIS_URL: redis://:${REDIS_PASSWORD:?Set REDIS_PASSWORD before starting PAS}@pas-redis:6379
       FILE_STORAGE_DRIVER: ${FILE_STORAGE_DRIVER:-local}
@@ -38,6 +39,7 @@ services:
       LLM_API_KEY: ${LLM_API_KEY:-}
       LLM_BASE_URL: ${LLM_BASE_URL:-https://dashscope.aliyuncs.com/compatible-mode/v1}
       LLM_MODEL: ${LLM_MODEL:-qwen-max}
+      LLM_TIMEOUT_MS: ${LLM_TIMEOUT_MS:-30000}
       EXPORT_TEMPLATE_ROOT: ${EXPORT_TEMPLATE_ROOT:-}
       EXPORT_TEMPLATE_VERSION: ${EXPORT_TEMPLATE_VERSION:-v0-temp-1}
       JWT_SECRET: ${JWT_SECRET:-}

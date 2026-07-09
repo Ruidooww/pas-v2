@@ -71,6 +71,13 @@ if (!/REDIS_URL:\s+redis:\/\/:[^@\s]+@pas-redis:6379/i.test(configOutput)) {
   process.exit(1);
 }
 
+for (const envName of ["LLM_TIMEOUT_MS", "THROTTLE_LIMIT_PER_MINUTE"]) {
+  if (!new RegExp(`${envName}:\\s+\\S+`).test(configOutput)) {
+    console.error(`Expected backend ${envName} to be present in compose config.`);
+    process.exit(1);
+  }
+}
+
 console.log(
   `Validated PAS compose services: ${services.join(", ")}; containers: ${containers.join(", ")}`
 );
