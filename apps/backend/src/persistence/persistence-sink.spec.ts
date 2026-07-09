@@ -39,6 +39,25 @@ describe("PersistenceSink", () => {
     });
   });
 
+  it("limits hydrated proposal job snapshots by default", async () => {
+    const findMany = vi.fn().mockResolvedValue([]);
+    const sink = new PersistenceSink("");
+    Object.defineProperty(sink, "client", {
+      value: {
+        proposalJobSnapshot: {
+          findMany
+        }
+      }
+    });
+
+    await expect(sink.loadProposalJobs()).resolves.toEqual([]);
+
+    expect(findMany).toHaveBeenCalledWith({
+      orderBy: { createdAt: "asc" },
+      take: 1000
+    });
+  });
+
   it("queues mirror writes instead of running them concurrently", async () => {
     const first = deferred<void>();
     const upsert = vi.fn().mockReturnValueOnce(first.promise).mockResolvedValueOnce(undefined);
@@ -139,7 +158,7 @@ describe("PersistenceSink", () => {
       }
     });
     await expect(sink.loadKnowledgeBlocks()).resolves.toEqual([block]);
-    expect(findMany).toHaveBeenCalledWith({ orderBy: { createdAt: "asc" } });
+    expect(findMany).toHaveBeenCalledWith({ orderBy: { createdAt: "asc" }, take: 1000 });
   });
 
   it("mirrors and loads knowledge document snapshots", async () => {
@@ -180,7 +199,7 @@ describe("PersistenceSink", () => {
       }
     });
     await expect(sink.loadKnowledgeDocuments()).resolves.toEqual([document]);
-    expect(findMany).toHaveBeenCalledWith({ orderBy: { createdAt: "asc" } });
+    expect(findMany).toHaveBeenCalledWith({ orderBy: { createdAt: "asc" }, take: 1000 });
   });
 
   it("mirrors and loads V2 business flow record snapshots", async () => {
@@ -223,7 +242,7 @@ describe("PersistenceSink", () => {
       }
     });
     await expect(sink.loadBusinessFlowRecords()).resolves.toEqual([record]);
-    expect(findMany).toHaveBeenCalledWith({ orderBy: { createdAt: "asc" } });
+    expect(findMany).toHaveBeenCalledWith({ orderBy: { createdAt: "asc" }, take: 1000 });
   });
 
   it("mirrors and loads regression run snapshots", async () => {
@@ -262,7 +281,7 @@ describe("PersistenceSink", () => {
       }
     });
     await expect(sink.loadRegressionRuns()).resolves.toEqual([run]);
-    expect(findMany).toHaveBeenCalledWith({ orderBy: { createdAt: "asc" } });
+    expect(findMany).toHaveBeenCalledWith({ orderBy: { createdAt: "asc" }, take: 1000 });
   });
 });
 

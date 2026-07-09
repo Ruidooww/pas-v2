@@ -12,6 +12,8 @@ import type { MenuState } from "../menu/menu.types";
 import type { PlatformState } from "../platform/platform.types";
 import type { ProposalJob } from "../proposal/proposal.types";
 
+const DEFAULT_LOAD_LIMIT = 1000;
+
 // V0 persistence strategy: the synchronous in-memory stores stay the hot
 // path; every mutation is mirrored here asynchronously and the stores are
 // hydrated from these tables at boot. Mirror failures are logged, never
@@ -60,7 +62,7 @@ export class PersistenceSink implements OnModuleInit, OnModuleDestroy {
     );
   }
 
-  async loadUsers(limit = 1000): Promise<UserRecord[]> {
+  async loadUsers(limit = DEFAULT_LOAD_LIMIT): Promise<UserRecord[]> {
     if (!this.client) return [];
     const rows = await this.client.user.findMany({
       orderBy: { createdAt: "asc" },
@@ -83,7 +85,7 @@ export class PersistenceSink implements OnModuleInit, OnModuleDestroy {
     this.scheduleAuditFlush();
   }
 
-  async loadAuditEvents(limit = 1000): Promise<AuditEvent[]> {
+  async loadAuditEvents(limit = DEFAULT_LOAD_LIMIT): Promise<AuditEvent[]> {
     if (!this.client) return [];
     const rows = await this.client.auditEvent.findMany({
       orderBy: { occurredAt: "asc" },
@@ -108,9 +110,9 @@ export class PersistenceSink implements OnModuleInit, OnModuleDestroy {
     );
   }
 
-  async loadProposalJobs(): Promise<ProposalJob[]> {
+  async loadProposalJobs(limit = DEFAULT_LOAD_LIMIT): Promise<ProposalJob[]> {
     if (!this.client) return [];
-    const rows = await this.client.proposalJobSnapshot.findMany({ orderBy: { createdAt: "asc" } });
+    const rows = await this.client.proposalJobSnapshot.findMany({ orderBy: { createdAt: "asc" }, take: limit });
     return rows.map((row) => row.data as unknown as ProposalJob);
   }
 
@@ -131,9 +133,9 @@ export class PersistenceSink implements OnModuleInit, OnModuleDestroy {
     );
   }
 
-  async loadExportJobs(): Promise<ExportJob[]> {
+  async loadExportJobs(limit = DEFAULT_LOAD_LIMIT): Promise<ExportJob[]> {
     if (!this.client) return [];
-    const rows = await this.client.exportJobSnapshot.findMany({ orderBy: { createdAt: "asc" } });
+    const rows = await this.client.exportJobSnapshot.findMany({ orderBy: { createdAt: "asc" }, take: limit });
     return rows.map((row) => row.data as unknown as ExportJob);
   }
 
@@ -157,9 +159,9 @@ export class PersistenceSink implements OnModuleInit, OnModuleDestroy {
     );
   }
 
-  async loadExportTemplates(): Promise<ExportTemplate[]> {
+  async loadExportTemplates(limit = DEFAULT_LOAD_LIMIT): Promise<ExportTemplate[]> {
     if (!this.client) return [];
-    const rows = await this.client.exportTemplateSnapshot.findMany({ orderBy: { createdAt: "asc" } });
+    const rows = await this.client.exportTemplateSnapshot.findMany({ orderBy: { createdAt: "asc" }, take: limit });
     return rows.map((row) => row.data as unknown as ExportTemplate);
   }
 
@@ -182,9 +184,9 @@ export class PersistenceSink implements OnModuleInit, OnModuleDestroy {
     );
   }
 
-  async loadFeedback(): Promise<FeedbackRecord[]> {
+  async loadFeedback(limit = DEFAULT_LOAD_LIMIT): Promise<FeedbackRecord[]> {
     if (!this.client) return [];
-    const rows = await this.client.feedbackSnapshot.findMany({ orderBy: { createdAt: "asc" } });
+    const rows = await this.client.feedbackSnapshot.findMany({ orderBy: { createdAt: "asc" }, take: limit });
     return rows.map((row) => row.data as unknown as FeedbackRecord);
   }
 
@@ -207,9 +209,9 @@ export class PersistenceSink implements OnModuleInit, OnModuleDestroy {
     );
   }
 
-  async loadRegressionRuns(): Promise<RegressionRun[]> {
+  async loadRegressionRuns(limit = DEFAULT_LOAD_LIMIT): Promise<RegressionRun[]> {
     if (!this.client) return [];
-    const rows = await this.client.regressionRunSnapshot.findMany({ orderBy: { createdAt: "asc" } });
+    const rows = await this.client.regressionRunSnapshot.findMany({ orderBy: { createdAt: "asc" }, take: limit });
     return rows.map((row) => row.data as unknown as RegressionRun);
   }
 
@@ -232,9 +234,9 @@ export class PersistenceSink implements OnModuleInit, OnModuleDestroy {
     );
   }
 
-  async loadKnowledgeBlocks(): Promise<KnowledgeBlock[]> {
+  async loadKnowledgeBlocks(limit = DEFAULT_LOAD_LIMIT): Promise<KnowledgeBlock[]> {
     if (!this.client) return [];
-    const rows = await this.client.knowledgeBlockSnapshot.findMany({ orderBy: { createdAt: "asc" } });
+    const rows = await this.client.knowledgeBlockSnapshot.findMany({ orderBy: { createdAt: "asc" }, take: limit });
     return rows.map((row) => row.data as unknown as KnowledgeBlock);
   }
 
@@ -258,9 +260,9 @@ export class PersistenceSink implements OnModuleInit, OnModuleDestroy {
     );
   }
 
-  async loadKnowledgeDocuments(): Promise<KnowledgeDocument[]> {
+  async loadKnowledgeDocuments(limit = DEFAULT_LOAD_LIMIT): Promise<KnowledgeDocument[]> {
     if (!this.client) return [];
-    const rows = await this.client.knowledgeDocumentSnapshot.findMany({ orderBy: { createdAt: "asc" } });
+    const rows = await this.client.knowledgeDocumentSnapshot.findMany({ orderBy: { createdAt: "asc" }, take: limit });
     return rows.map((row) => row.data as unknown as KnowledgeDocument);
   }
 
@@ -285,9 +287,9 @@ export class PersistenceSink implements OnModuleInit, OnModuleDestroy {
     );
   }
 
-  async loadBusinessFlowRecords(): Promise<BusinessFlowRecord[]> {
+  async loadBusinessFlowRecords(limit = DEFAULT_LOAD_LIMIT): Promise<BusinessFlowRecord[]> {
     if (!this.client) return [];
-    const rows = await this.client.businessFlowRecordSnapshot.findMany({ orderBy: { createdAt: "asc" } });
+    const rows = await this.client.businessFlowRecordSnapshot.findMany({ orderBy: { createdAt: "asc" }, take: limit });
     return rows.map((row) => row.data as unknown as BusinessFlowRecord);
   }
 
