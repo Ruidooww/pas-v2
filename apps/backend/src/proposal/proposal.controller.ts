@@ -18,7 +18,7 @@ import {
   ProposalJobRetryRejectedError,
   ProposalService
 } from "./proposal.service";
-import type { ProposalGenerationRequest, ProposalJob, ProposalLibraryItem } from "./proposal.types";
+import type { ProposalGenerationRequest, ProposalHumanInput, ProposalJob, ProposalLibraryItem } from "./proposal.types";
 
 type RequestWithUser = {
   user: AuthenticatedUser;
@@ -39,12 +39,13 @@ export class ProposalController {
     if (!customerId) {
       throw new BadRequestException("customerId is required");
     }
+    const humanInputs = parseHumanInputs(body.humanInputs);
 
     return this.proposalService.generate({
       customerId,
       userId: request.user.userId,
       user: request.user,
-      humanInputs: body.humanInputs
+      humanInputs
     });
   }
 
@@ -86,4 +87,28 @@ function mapProposalError(error: unknown): Error {
   }
 
   return error instanceof Error ? error : new Error("Proposal request failed");
+}
+
+function parseHumanInputs(value: unknown): ProposalHumanInput[] | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+  if (!Array.isArray(value)) {
+    throw new BadRequestException("humanInputs must be an array");
+  }
+
+  return value.map((input) => {
+    if (!isProposalHumanInput(input)) {
+      throw new BadRequestException("humanInputs must contain string inputId, label, and value");
+    }
+    return input;
+  });
+}
+
+function isProposalHumanInput(value: unknown): value is ProposalHumanInput {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+  const input = value as Record<string, unknown>;
+  return typeof input.inputId === "string" && typeof input.label === "string" && typeof input.value === "string";
 }

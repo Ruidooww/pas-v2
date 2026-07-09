@@ -2,6 +2,7 @@ import { BadRequestException, ForbiddenException } from "@nestjs/common";
 import { describe, expect, it, vi } from "vitest";
 import { ProposalController } from "./proposal.controller";
 import { ProposalJobAccessDeniedError, type ProposalService } from "./proposal.service";
+import type { ProposalGenerationRequest } from "./proposal.types";
 
 describe("ProposalController", () => {
   const request = {
@@ -20,6 +21,21 @@ describe("ProposalController", () => {
     const controller = new ProposalController(service);
 
     await expect(controller.generate(request, { customerId: " " })).rejects.toBeInstanceOf(BadRequestException);
+    expect(service.generate).not.toHaveBeenCalled();
+  });
+
+  it("rejects malformed human inputs before starting generation", async () => {
+    const service = {
+      generate: vi.fn()
+    } as unknown as ProposalService;
+    const controller = new ProposalController(service);
+
+    await expect(
+      controller.generate(request, {
+        customerId: "demo-huaxin-manufacturing",
+        humanInputs: [{ inputId: "budget", label: "Budget", value: 380000 }]
+      } as unknown as ProposalGenerationRequest)
+    ).rejects.toBeInstanceOf(BadRequestException);
     expect(service.generate).not.toHaveBeenCalled();
   });
 
