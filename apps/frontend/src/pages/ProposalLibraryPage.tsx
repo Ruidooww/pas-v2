@@ -21,23 +21,18 @@ export function ProposalLibraryPage() {
         <div className="workbench-hero-copy">
           <Typography.Text className="workbench-eyebrow">PROPOSALS</Typography.Text>
           <Typography.Title level={2}>方案库</Typography.Title>
-          <Typography.Paragraph type="secondary">汇总已生成方案与内置样例，正式模板到位后承接导出与复用。</Typography.Paragraph>
+          <Typography.Paragraph type="secondary">汇总已生成方案，正式模板到位后承接导出与复用。</Typography.Paragraph>
         </div>
         <div className="workbench-metric-grid">
           <div className="workbench-metric">
             <Typography.Text type="secondary">方案数</Typography.Text>
             <strong>{items.length}</strong>
-            <Typography.Text type="secondary">生成 + 样例</Typography.Text>
+            <Typography.Text type="secondary">当前账号可见</Typography.Text>
           </div>
           <div className="workbench-metric">
             <Typography.Text type="secondary">生成方案</Typography.Text>
             <strong>{items.filter((item) => item.source === "generated").length}</strong>
             <Typography.Text type="secondary">当前账号可见</Typography.Text>
-          </div>
-          <div className="workbench-metric">
-            <Typography.Text type="secondary">样例</Typography.Text>
-            <strong>{items.filter((item) => item.source === "mock").length}</strong>
-            <Typography.Text type="secondary">内置样例</Typography.Text>
           </div>
         </div>
       </section>

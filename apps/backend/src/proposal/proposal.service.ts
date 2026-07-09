@@ -93,7 +93,7 @@ export class ProposalService {
         updatedAt: job.updatedAt
       }));
 
-    return completedJobs.length === 0 ? SAMPLE_PROPOSAL_LIBRARY : generated;
+    return generated;
   }
 
   async retry(jobId: string, actor: AuthenticatedUser): Promise<ProposalJob> {
@@ -241,26 +241,3 @@ function buildExportPackage(analysis: CustomerAnalysisResult, draft: ProposalDra
 function createExportPackageId(): string {
   return createPrefixedId("export-package");
 }
-
-const SAMPLE_PROPOSAL_LIBRARY: ProposalLibraryItem[] = [
-  {
-    libraryId: "sample-huaxin-dlp",
-    title: "华信精工终端数据防泄漏建设方案",
-    customerName: "华信精工",
-    status: "sample",
-    source: "mock",
-    formats: ["docx", "pptx", "xlsx"],
-    tags: ["制造业", "IP-Guard", "透明加密"],
-    updatedAt: "2026-07-07T09:00:00.000Z"
-  },
-  {
-    libraryId: "sample-finance-audit",
-    title: "金融行业外发审计与终端管控方案",
-    customerName: "融盛金服",
-    status: "sample",
-    source: "mock",
-    formats: ["docx", "pptx"],
-    tags: ["金融", "审计", "合规"],
-    updatedAt: "2026-07-06T16:30:00.000Z"
-  }
-];

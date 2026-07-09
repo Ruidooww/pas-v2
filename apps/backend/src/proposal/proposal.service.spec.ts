@@ -291,20 +291,13 @@ describe("ProposalService", () => {
     expect(otherLibrary.some((item) => item.source === "mock")).toBe(false);
   });
 
-  it("uses sample proposals only as an empty-library fallback", () => {
+  it("returns an empty proposal library when no generated proposals exist", () => {
     const customerAnalysisService = {
       analyze: vi.fn().mockResolvedValue(completedAnalysis)
     } as unknown as CustomerAnalysisService;
     const { service } = createService(customerAnalysisService);
 
-    expect(service.listLibrary(createUser("owner-1", "presales"))).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          libraryId: "sample-huaxin-dlp",
-          source: "mock"
-        })
-      ])
-    );
+    expect(service.listLibrary(createUser("owner-1", "presales"))).toEqual([]);
   });
 
   it("stores failed jobs without an export package when draft provider fails", async () => {
