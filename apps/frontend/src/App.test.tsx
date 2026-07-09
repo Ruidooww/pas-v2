@@ -25,6 +25,7 @@ describe("App", () => {
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
     localStorage.clear();
+    window.history.pushState({}, "", "/");
   });
 
   it("shows the login page when no token is stored", async () => {
@@ -188,6 +189,17 @@ describe("App", () => {
     expect(await screen.findByText("最近方案任务")).toBeTruthy();
     expect(await screen.findByText("demo-huaxin-manufacturing")).toBeTruthy();
     expect(await screen.findByText("proposal-job-1")).toBeTruthy();
+  });
+
+  it("opens the secondary page that matches the current browser path", async () => {
+    localStorage.setItem("pas.access-token", "token");
+    window.history.pushState({}, "", "/proposals/tasks");
+    vi.stubGlobal("fetch", vi.fn(mockAdminFetch));
+
+    render(<App />);
+
+    expect((await screen.findAllByRole("heading", { name: "方案生成" })).length).toBeGreaterThan(0);
+    expect(await screen.findByText("最近方案任务")).toBeTruthy();
   });
 
   it("keeps platform governance tools under system settings", async () => {

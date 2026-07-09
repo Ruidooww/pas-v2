@@ -106,13 +106,17 @@ export function App() {
     setOpenKeys([]);
   };
 
-  const navigateToSecondary = (key: SecondaryMenuKey | null) => {
-    if (!key || !findSecondary(menu, key)) return;
+  const navigateToSecondary = (key: SecondaryMenuKey | null, options: { updateUrl?: boolean } = {}) => {
+    const nextSecondary = findSecondary(menu, key);
+    if (!key || !nextSecondary) return;
     setActiveSecondaryKey(key);
     const nextPrimary = findPrimaryBySecondary(menu, key);
     if (nextPrimary) {
       const nextOpenKey = primaryKeyToMenuKey(nextPrimary.key);
       setOpenKeys([nextOpenKey]);
+    }
+    if (options.updateUrl !== false && nextSecondary.route && window.location.pathname !== nextSecondary.route) {
+      window.history.pushState({}, "", nextSecondary.route);
     }
   };
 
@@ -122,6 +126,15 @@ export function App() {
     setNotificationsOpen(false);
     navigateToSecondary(target);
   };
+
+  useEffect(() => {
+    if (!user) return;
+    const handlePopState = () => {
+      navigateToSecondary(secondaryKeyForPath(menu, window.location.pathname), { updateUrl: false });
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [menu, user]);
 
   return (
     <ConfigProvider
@@ -203,7 +216,7 @@ export function App() {
                         const primaryKey = menuKeyToPrimaryKey(openedKey);
                         const defaultKey = primaryKey ? defaultSecondaryForPrimary(menu, primaryKey) : null;
                         if (defaultKey) {
-                          setActiveSecondaryKey(defaultKey);
+                          navigateToSecondary(defaultKey);
                         }
                       } else {
                         setOpenKeys([]);
@@ -287,11 +300,15 @@ export function App() {
 
   function applyMenu(nextMenu: EffectivePrimaryMenuItem[]): void {
     setMenu(nextMenu);
-    const nextActiveKey = firstSecondaryKey(nextMenu);
+    const nextActiveKey = secondaryKeyForPath(nextMenu, window.location.pathname) ?? firstSecondaryKey(nextMenu);
     setActiveSecondaryKey(nextActiveKey);
     const nextPrimary = findPrimaryBySecondary(nextMenu, nextActiveKey);
     setOpenKeys(nextPrimary ? [primaryKeyToMenuKey(nextPrimary.key)] : []);
   }
+}
+
+function secondaryKeyForPath(menu: EffectivePrimaryMenuItem[], pathname: string): SecondaryMenuKey | null {
+  return menu.flatMap((primary) => primary.children).find((child) => child.route === pathname)?.key ?? null;
 }
 
 async function loadMenuForUser(user: PublicUser): Promise<EffectivePrimaryMenuItem[]> {
