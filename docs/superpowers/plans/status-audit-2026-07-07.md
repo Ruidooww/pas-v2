@@ -8,11 +8,11 @@ Do not use historical checkbox state alone to decide what still needs coding.
 ## Evidence Checked
 
 - The implementation head before this audit update is
-  `c866e6f fix: poll asynchronous proposal smoke` on `main`.
-- `main` through `2e345ab` was pushed to `origin/main` before the status and
-  live-smoke follow-up commits in this refresh.
+  `f6e9b2f fix: restore RAGFlow regression retrieval` on `main`.
+- `main` through `f4e2db5` was pushed to `origin/main` before this retrieval
+  and regression follow-up.
 - GitHub returned no open issues and no open pull requests on `2026-07-10`.
-- `pnpm test` passed: backend `55` files / `232` tests and frontend `12`
+- `pnpm test` passed: backend `55` files / `236` tests and frontend `12`
   files / `43` tests.
 - `pnpm typecheck`, `pnpm build`, `pnpm compose:config`, and
   `pnpm test:smoke` passed.
@@ -37,6 +37,14 @@ Do not use historical checkbox state alone to decide what still needs coding.
   `http://127.0.0.1:18000`, real PostgreSQL, and the configured external
   RAGFlow. CRM remained in mock mode, and missing approved export templates
   were allowed only through the explicit `-AllowMissingExportTemplates` flag.
+- The live 50-question technical precheck completed with `answered=50`,
+  `no_hit=0`, and `error=0`. The runner respected the production QA throttle by
+  waiting on `429`, and retrieval recovered from a deterministic RAGFlow
+  keyword-parser error through the existing prefixed fallback query.
+- This is not the formal go-live approval. The candidate JSON has 50 unique
+  question IDs but no reviewer, review timestamp, expected evidence, captured
+  citations, or human pass/fail record; the regression template still defines
+  it as a candidate source rather than an approval artifact.
 
 ## Scope Interpretation
 
@@ -52,13 +60,13 @@ long-range business capabilities.
 | Area | Status | Current boundary |
 | --- | --- | --- |
 | V0 foundation | Code-ready | Monorepo scripts, four PAS-owned containers, HYYN container names, auth bootstrap, cookie/CSRF sessions, endpoint throttling, health, CI/build/test lanes are present. |
-| V0 RAGFlow adapter | Code-ready | RAGFlow remains external. PAS reads it through backend APIs. Dataset quality gates are still deferred. |
+| V0 RAGFlow adapter | Code-ready; technical precheck passed | RAGFlow remains external. Empty PAS document metadata no longer suppresses all external retrieval, while configured metadata still applies fail-closed ACL filtering. Human answer-quality approval remains deferred. |
 | V0 CRM mock context | Code-ready | Uses fake/mock customer profiles. Real CRM API integration is blocked until external API docs, auth, test account, and sample data are provided. |
-| V0 QA citations | Code-ready | `/api/internal/qa/ask` is wired and smoke-covered. Real answer quality remains gated by the final regression set. |
+| V0 QA citations | Code-ready; 50/50 retrieval precheck passed | `/api/internal/qa/ask` returned answers and citations for all 50 candidate questions. Real answer correctness remains gated by human review. |
 | V0 customer analysis | Code-ready | Uses deterministic customer context and evidence shape over fake/mock data. |
 | V0 proposal generation | Code-ready | Proposal generation, job detail, retry, and job list APIs are implemented and UI-backed. |
 | V0 export | Code-ready | Export jobs and template registry are implemented. Real customer templates are expected to be uploaded later. |
-| V0 feedback/regression | Code-ready with gate deferred | Feedback APIs exist. The 50-question gate remains a final go-live gate, not a blocker for current code-layer work. |
+| V0 feedback/regression | Code-ready; formal gate deferred | Feedback APIs exist and the 50-question technical run passed. Reviewer-signed evidence and pass/fail decisions remain the final go-live gate. |
 | Feishu reservation | Code-ready as disabled integration | Backend route exists as a reserved channel; real bot rollout is still disabled by config. |
 | V1 knowledge operations | Code-ready | Knowledge blocks, lifecycle review/publish, knowledge documents, document permissions, and template operations exist. |
 | V2 business flow | Code-ready | Opportunity, meeting, contract/after-sales, feedback, and metrics paths are implemented on fake/internal data. File/data ingestion is explicitly deferred. |
@@ -88,7 +96,9 @@ and GitHub PR history instead of flipping old checkboxes in place.
 
 ## Remaining Non-Code Or Deferred Inputs
 
-- Final V0 50-question regression gate.
+- Formal human-reviewed V0 50-question regression gate. Technical retrieval is
+  `50/50`, but the candidate set still needs reviewer identity, review time,
+  expected evidence, captured citations, and pass/fail decisions.
 - Final V1 100-question regression gate.
 - Real CRM API documentation, auth method, test account, and sample customer
   records.
@@ -109,8 +119,9 @@ and GitHub PR history instead of flipping old checkboxes in place.
 
 ## Next Dispatch Guidance
 
-1. Persist the deployment secrets, install approved export templates, and run
-   the V0 50-question gate before treating the project as release-ready.
+1. Persist the deployment secrets, install approved export templates, and turn
+   the successful V0 50-question technical run into a reviewer-signed gate
+   artifact before treating the project as release-ready.
 2. Keep code work on the current fake-data boundary unless the user provides
    real CRM, template, or source-data inputs.
 3. For UI changes, update both the frontend shell and

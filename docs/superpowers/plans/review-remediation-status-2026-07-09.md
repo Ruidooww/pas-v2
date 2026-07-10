@@ -9,9 +9,8 @@ already-fixed items are not re-opened.
 
 - Current branch: `main`.
 - Current remediation head before this status refresh:
-  `c866e6f fix: poll asynchronous proposal smoke`.
+  `f6e9b2f fix: restore RAGFlow regression retrieval`.
 - Unrelated worktree content before this pass: only untracked `design-qa.md`.
-  The deployment files changed alongside this document belong to this pass.
 - Review source checked:
   `C:\Users\Ruidoww\Desktop\【新】pas-v2-纯代码质量审查.md`.
 - Existing project status anchor checked:
@@ -45,6 +44,7 @@ already-fixed items are not re-opened.
 | `e2eaed3` | Fixed | Compose and deployment docs expose the endpoint limits and trusted proxy topology. |
 | `2e345ab` | Fixed | Throttle metadata coverage is stable in the complete backend test suite. |
 | `c866e6f` | Fixed | V0 smoke polls asynchronous proposal jobs before export verification. |
+| `f6e9b2f` | Fixed | Empty knowledge metadata no longer blocks RAGFlow, retrieval errors use the existing fallback query, and the 50-question runner respects QA throttling. |
 
 ## Review Item Status
 
@@ -71,7 +71,7 @@ already-fixed items are not re-opened.
 | 19 | `mirrorAudit()` writes one DB row per event | Fixed by `7264e91` | No further action in this pass. |
 | 20 | Mock CRM uses linear `Array.find()` | Downgraded | Current data is tiny mock data; do not optimize until real or large mock datasets arrive. |
 | 21 | Hard-coded defaults spread across code/config | Partially fixed | Security/runtime defaults addressed; moving all mock/default values to a config layer would be broad cleanup, not urgent. |
-| 22 | Test coverage gaps / no E2E | Fixed by `ac97316` and `c866e6f` | Fake-server route smoke remains fast, and the live V0 smoke passed against rebuilt PAS containers, PostgreSQL, and external RAGFlow on `2026-07-10`. |
+| 22 | Test coverage gaps / no E2E | Fixed by `ac97316`, `c866e6f`, and `f6e9b2f` | Fake-server route smoke remains fast; live V0 smoke passed against rebuilt PAS containers, PostgreSQL, and external RAGFlow; the 50-question technical precheck completed with `answered=50`, `no_hit=0`, and `error=0`. Human answer-quality approval remains separate. |
 | 23 | Proposal `humanInputs` runtime type risk | Fixed by `0324e24` | No further action in this pass. |
 | 24 | Frontend API lacks timeout/cancel/dedupe | Partially fixed | Timeout/network handling fixed by `ae63974`; blind retry/cancel remains intentionally deferred to avoid duplicate POSTs. |
 | 25 | CSS and inline style maintenance debt | Open refactor task | Defer; no user-facing bug and refactor risk is broad. |
