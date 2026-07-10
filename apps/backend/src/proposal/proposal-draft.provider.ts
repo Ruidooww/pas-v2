@@ -37,7 +37,7 @@ export class LocalProposalDraftProvider {
       sections,
       citations: analysis.evidence,
       assumptions: [
-        "V0 proposal output is a reviewable draft and must be checked by presales before customer delivery.",
+        "V0 proposal output is a reviewable draft and must be checked by the technical team before customer delivery.",
         "Items without RAGFlow citations are traced to CRM, customer analysis, or explicit human input."
       ]
     };

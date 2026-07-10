@@ -23,10 +23,13 @@ import { InMemoryUserStore } from "./user-store.service";
 import { PersistenceModule } from "../persistence/persistence.module";
 import type { PersistenceSink } from "../persistence/persistence-sink";
 import { PERSISTENCE_SINK } from "../persistence/persistence.tokens";
+import { OrganizationModule } from "../organization/organization.module";
+import type { OrganizationService } from "../organization/organization.service";
+import { ORGANIZATION_SERVICE } from "../organization/organization.tokens";
 
 @Module({
   controllers: [AuthController],
-  imports: [AuditModule, PersistenceModule],
+  imports: [AuditModule, PersistenceModule, OrganizationModule],
   providers: [
     {
       provide: JWT_CONFIG,
@@ -56,9 +59,10 @@ import { PERSISTENCE_SINK } from "../persistence/persistence.tokens";
         userStore: InMemoryUserStore,
         passwordHasher: PasswordHasher,
         jwtTokenService: JwtTokenService,
-        auditLog: AuditLogService
-      ): AuthService => new AuthService(userStore, passwordHasher, jwtTokenService, auditLog),
-      inject: [USER_STORE, PASSWORD_HASHER, JWT_TOKEN_SERVICE, AUDIT_LOG]
+        auditLog: AuditLogService,
+        organizationService: OrganizationService
+      ): AuthService => new AuthService(userStore, passwordHasher, jwtTokenService, auditLog, organizationService),
+      inject: [USER_STORE, PASSWORD_HASHER, JWT_TOKEN_SERVICE, AUDIT_LOG, ORGANIZATION_SERVICE]
     },
     {
       provide: AUTH_BOOTSTRAP,

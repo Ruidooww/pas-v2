@@ -41,10 +41,10 @@ describe("FeedbackService", () => {
     );
   });
 
-  it("allows admin and presales users to list and update feedback status", () => {
+  it("allows admin and technical users to list and update feedback status", () => {
     const service = new FeedbackService(new AuditLogService());
     const submitter = createUser("sales");
-    const presales = createUser("presales");
+    const technical = createUser("technical");
     const feedback = service.submitFeedback(submitter, {
       objectType: "proposal_draft",
       objectId: "proposal-draft-1",
@@ -53,16 +53,16 @@ describe("FeedbackService", () => {
       comment: "Needs clearer implementation plan."
     });
 
-    const updated = service.updateStatus(presales, feedback.feedbackId, {
+    const updated = service.updateStatus(technical, feedback.feedbackId, {
       status: "triaged",
       resolutionNote: "Assigned to proposal owner."
     });
 
-    expect(service.listFeedback(presales)).toEqual([updated]);
+    expect(service.listFeedback(technical)).toEqual([updated]);
     expect(updated).toEqual(
       expect.objectContaining({
         status: "triaged",
-        handledBy: presales.userId,
+        handledBy: technical.userId,
         resolutionNote: "Assigned to proposal owner."
       })
     );
@@ -80,6 +80,8 @@ function createUser(role: AuthenticatedUser["role"]): AuthenticatedUser {
     userId: `${role}-1`,
     username: `${role}@example.com`,
     displayName: role,
-    role
+    role,
+    organizationUnitId: role === "sales" ? "org-sales" : role === "technical" ? "org-technical-presales" : "org-company",
+    projectGroupIds: []
   };
 }

@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { AuditLogService } from "../audit/audit-log.service";
+import { OrganizationService } from "../organization/organization.service";
+import { OrganizationStoreService } from "../organization/organization-store.service";
+import { createDefaultOrganizationState } from "../organization/organization.types";
 import { AuthController } from "./auth.controller";
 import { AuthService } from "./auth.service";
 import type { LoginRequest, LoginResponse } from "./auth.types";
@@ -110,6 +113,9 @@ describe("AuthController", () => {
 });
 
 function createController(): { controller: AuthController; service: AuthService } {
+  const auditLog = new AuditLogService();
+  const organizationStore = new OrganizationStoreService();
+  organizationStore.seed(createDefaultOrganizationState("2026-07-10T00:00:00.000Z"));
   const service = new AuthService(
     new InMemoryUserStore(),
     new PasswordHasher(),
@@ -117,7 +123,8 @@ function createController(): { controller: AuthController; service: AuthService 
       secret: "test-secret",
       expiresInSeconds: 3600
     }),
-    new AuditLogService()
+    auditLog,
+    new OrganizationService(organizationStore, auditLog)
   );
   return {
     service,

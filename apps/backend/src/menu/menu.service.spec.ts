@@ -8,14 +8,18 @@ const adminUser: AuthenticatedUser = {
   userId: "admin-1",
   username: "admin@example.com",
   displayName: "Admin",
-  role: "admin"
+  role: "admin",
+  organizationUnitId: "org-company",
+  projectGroupIds: []
 };
 
 const salesUser: AuthenticatedUser = {
   userId: "sales-1",
   username: "sales@example.com",
   displayName: "Sales",
-  role: "sales"
+  role: "sales",
+  organizationUnitId: "org-sales",
+  projectGroupIds: []
 };
 
 describe("MenuService", () => {
@@ -42,7 +46,7 @@ describe("MenuService", () => {
         secondaryKey: "customer_insights",
         visible: false,
         alias: "客户分析",
-        roles: ["presales", "admin"],
+        roles: ["technical", "admin"],
         order: 20
       },
       adminUser
@@ -95,6 +99,28 @@ describe("MenuService", () => {
 
     const customerChildren = service.getEffectiveMenu(adminUser).find((item) => item.key === "customers")?.children ?? [];
     expect(customerChildren.some((item) => item.key === "customer_insights")).toBe(true);
+  });
+
+  it("normalizes hydrated presales role overrides to technical", () => {
+    const store = new MenuStoreService();
+    store.seed({
+      stateId: "pas-menu-state",
+      overrides: [
+        {
+          primaryKey: "customers",
+          secondaryKey: "customer_insights",
+          visible: true,
+          order: 20,
+          roles: ["presales" as never],
+          updatedAt: "2026-07-01T00:00:00.000Z",
+          updatedBy: "admin-1"
+        }
+      ],
+      updatedAt: "2026-07-01T00:00:00.000Z"
+    });
+    const service = new MenuService(store, { record: vi.fn() });
+
+    expect(service.getConfiguration(adminUser).overrides[0]?.roles).toEqual(["technical"]);
   });
 });
 

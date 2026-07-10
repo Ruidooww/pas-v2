@@ -9,7 +9,9 @@ describe("BusinessFlowController", () => {
       userId: "authenticated-user",
       username: "user@example.com",
       displayName: "Authenticated User",
-      role: "sales" as const
+      role: "sales" as const,
+      organizationUnitId: "org-sales",
+      projectGroupIds: []
     }
   };
 

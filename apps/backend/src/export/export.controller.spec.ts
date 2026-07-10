@@ -10,7 +10,9 @@ describe("ExportController", () => {
       userId: "authenticated-user",
       username: "user@example.com",
       displayName: "Authenticated User",
-      role: "presales" as const
+      role: "technical" as const,
+      organizationUnitId: "org-technical-presales",
+      projectGroupIds: []
     }
   };
 

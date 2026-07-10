@@ -10,7 +10,9 @@ describe("RagflowController", () => {
       userId: "user-1",
       username: "user-1@example.com",
       displayName: "User 1",
-      role: "sales" as const
+      role: "sales" as const,
+      organizationUnitId: "org-sales",
+      projectGroupIds: []
     }
   };
 

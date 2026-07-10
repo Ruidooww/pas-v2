@@ -1,10 +1,14 @@
-export type UserRole = "sales" | "presales" | "admin";
+import type { OrganizationRole } from "../organization/organization.types";
+
+export type UserRole = OrganizationRole;
 
 export type AuthenticatedUser = {
   userId: string;
   username: string;
   displayName: string;
   role: UserRole;
+  organizationUnitId: string;
+  projectGroupIds: string[];
 };
 
 export type UserRecord = AuthenticatedUser & {
@@ -22,12 +26,16 @@ export type CreateUserRequest = {
   password: string;
   displayName: string;
   role: UserRole;
+  organizationUnitId?: string;
+  projectGroupIds?: string[];
 };
 
 export type UpdateUserRequest = {
   displayName?: string;
   role?: UserRole;
   active?: boolean;
+  organizationUnitId?: string;
+  projectGroupIds?: string[];
 };
 
 export type LoginRequest = {

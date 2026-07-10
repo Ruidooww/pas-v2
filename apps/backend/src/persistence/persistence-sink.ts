@@ -9,6 +9,7 @@ import type { ExportTemplate } from "../export/export-template.types";
 import type { FeedbackRecord, RegressionRun } from "../feedback/feedback.types";
 import type { KnowledgeBlock, KnowledgeDocument } from "../knowledge/knowledge.types";
 import type { MenuState } from "../menu/menu.types";
+import { DEFAULT_ORGANIZATION_UNIT_IDS } from "../organization/organization.types";
 import type { OrganizationState } from "../organization/organization.types";
 import type { PlatformState } from "../platform/platform.types";
 import type { ProposalJob } from "../proposal/proposal.types";
@@ -54,6 +55,8 @@ export class PersistenceSink implements OnModuleInit, OnModuleDestroy {
       username: user.username,
       displayName: user.displayName,
       role: user.role,
+      organizationUnitId: user.organizationUnitId,
+      projectGroupIds: user.projectGroupIds,
       passwordHash: user.passwordHash,
       active: user.active,
       createdAt: new Date(user.createdAt)
@@ -69,15 +72,20 @@ export class PersistenceSink implements OnModuleInit, OnModuleDestroy {
       orderBy: { createdAt: "asc" },
       take: limit
     });
-    return rows.map((row) => ({
-      userId: row.id,
-      username: row.username,
-      displayName: row.displayName,
-      role: row.role as UserRecord["role"],
-      passwordHash: row.passwordHash,
-      active: row.active,
-      createdAt: row.createdAt.toISOString()
-    }));
+    return rows.map((row) => {
+      const role = normalizePersistedUserRole(row.role);
+      return {
+        userId: row.id,
+        username: row.username,
+        displayName: row.displayName,
+        role,
+        organizationUnitId: row.organizationUnitId ?? defaultOrganizationUnitId(role),
+        projectGroupIds: row.projectGroupIds,
+        passwordHash: row.passwordHash,
+        active: row.active,
+        createdAt: row.createdAt.toISOString()
+      };
+    });
   }
 
   mirrorAudit(event: AuditEvent): void {
@@ -412,6 +420,18 @@ export class PersistenceSink implements OnModuleInit, OnModuleDestroy {
     const message = error instanceof Error ? error.message : String(error);
     this.logger.error(`persistence mirror failed: ${kind}/${id}: ${message}`);
   }
+}
+
+function normalizePersistedUserRole(role: string): UserRecord["role"] {
+  if (role === "presales") return "technical";
+  if (role === "sales" || role === "technical" || role === "admin") return role;
+  throw new Error(`Unsupported persisted user role: ${role}`);
+}
+
+function defaultOrganizationUnitId(role: UserRecord["role"]): string {
+  if (role === "sales") return DEFAULT_ORGANIZATION_UNIT_IDS.sales;
+  if (role === "technical") return DEFAULT_ORGANIZATION_UNIT_IDS.technicalPresales;
+  return DEFAULT_ORGANIZATION_UNIT_IDS.company;
 }
 
 function toAuditRow(event: AuditEvent) {

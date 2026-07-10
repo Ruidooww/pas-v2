@@ -65,7 +65,9 @@ function adminUser(): AuthenticatedUser {
     userId: "admin-1",
     username: "admin",
     displayName: "Admin",
-    role: "admin"
+    role: "admin",
+    organizationUnitId: "org-company",
+    projectGroupIds: []
   };
 }
 
@@ -74,6 +76,8 @@ function salesUser(): AuthenticatedUser {
     userId: "sales-1",
     username: "sales",
     displayName: "Sales",
-    role: "sales"
+    role: "sales",
+    organizationUnitId: "org-sales",
+    projectGroupIds: []
   };
 }

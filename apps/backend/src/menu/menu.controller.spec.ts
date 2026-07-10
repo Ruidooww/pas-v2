@@ -8,7 +8,9 @@ describe("MenuController", () => {
       userId: "admin-1",
       username: "admin@example.com",
       displayName: "Admin",
-      role: "admin" as const
+      role: "admin" as const,
+      organizationUnitId: "org-company",
+      projectGroupIds: []
     }
   };
 

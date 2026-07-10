@@ -6,10 +6,10 @@ import { KnowledgeBlockService } from "./knowledge.service";
 import type { CreateKnowledgeBlockRequest, KnowledgeBlock } from "./knowledge.types";
 
 describe("KnowledgeBlockService", () => {
-  it("creates a draft block for presales users", () => {
+  it("creates a draft block for technical users", () => {
     const service = new KnowledgeBlockService(new AuditLogService());
 
-    const block = service.createDraft(createUser("presales"), createRequest());
+    const block = service.createDraft(createUser("technical"), createRequest());
 
     expect(block).toEqual(
       expect.objectContaining({
@@ -19,7 +19,7 @@ describe("KnowledgeBlockService", () => {
         scenario: "outbound",
         status: "draft",
         version: 1,
-        ownerUserId: "presales-1",
+        ownerUserId: "technical-1",
         citations: [
           expect.objectContaining({
             documentId: "doc-1",
@@ -33,7 +33,7 @@ describe("KnowledgeBlockService", () => {
 
   it("moves a draft through review approval into published status", () => {
     const service = new KnowledgeBlockService(new AuditLogService());
-    const owner = createUser("presales");
+    const owner = createUser("technical");
     const admin = createUser("admin");
     const draft = service.createDraft(owner, createRequest());
 
@@ -57,8 +57,8 @@ describe("KnowledgeBlockService", () => {
 
   it("rejects a pending block without publishing it", () => {
     const service = new KnowledgeBlockService(new AuditLogService());
-    const draft = service.createDraft(createUser("presales"), createRequest());
-    service.submitForReview(createUser("presales"), draft.blockId);
+    const draft = service.createDraft(createUser("technical"), createRequest());
+    service.submitForReview(createUser("technical"), draft.blockId);
 
     const rejected = service.reviewBlock(createUser("admin"), draft.blockId, {
       decision: "reject",
@@ -85,12 +85,12 @@ describe("KnowledgeBlockService", () => {
 
   it("enforces role and ownership boundaries", () => {
     const service = new KnowledgeBlockService(new AuditLogService());
-    const owner = createUser("presales");
-    const otherPresales = createUser("presales", "presales-2");
+    const owner = createUser("technical");
+    const otherTechnical = createUser("technical", "technical-2");
     const draft = service.createDraft(owner, createRequest());
 
     expect(() => service.createDraft(createUser("sales"), createRequest())).toThrow(ForbiddenException);
-    expect(() => service.submitForReview(otherPresales, draft.blockId)).toThrow(ForbiddenException);
+    expect(() => service.submitForReview(otherTechnical, draft.blockId)).toThrow(ForbiddenException);
     expect(() => service.reviewBlock(owner, draft.blockId, { decision: "approve" })).toThrow(ForbiddenException);
     expect(() => service.disableBlock(owner, draft.blockId)).toThrow(ForbiddenException);
   });
@@ -166,6 +166,8 @@ function createUser(role: AuthenticatedUser["role"], userId = `${role}-1`): Auth
     userId,
     username: `${userId}@example.com`,
     displayName: userId,
-    role
+    role,
+    organizationUnitId: role === "sales" ? "org-sales" : role === "technical" ? "org-technical-presales" : "org-company",
+    projectGroupIds: []
   };
 }

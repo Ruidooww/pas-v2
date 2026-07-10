@@ -5,7 +5,7 @@ import type { KnowledgeBlockService } from "./knowledge.service";
 import type { CreateKnowledgeBlockRequest } from "./knowledge.types";
 
 const request = {
-  user: createUser("presales")
+  user: createUser("technical")
 };
 
 describe("KnowledgeBlockController", () => {
@@ -79,6 +79,8 @@ function createUser(role: AuthenticatedUser["role"]): AuthenticatedUser {
     userId: `${role}-1`,
     username: `${role}@example.com`,
     displayName: role,
-    role
+    role,
+    organizationUnitId: role === "sales" ? "org-sales" : role === "technical" ? "org-technical-presales" : "org-company",
+    projectGroupIds: []
   };
 }

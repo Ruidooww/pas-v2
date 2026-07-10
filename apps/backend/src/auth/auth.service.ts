@@ -6,6 +6,8 @@ import {
   UnauthorizedException
 } from "@nestjs/common";
 import type { AuditLogService } from "../audit/audit-log.service";
+import type { OrganizationService } from "../organization/organization.service";
+import { DEFAULT_ORGANIZATION_UNIT_IDS } from "../organization/organization.types";
 import type {
   AuthenticatedUser,
   CreateUserRequest,
@@ -24,7 +26,8 @@ export class AuthService {
     private readonly userStore: InMemoryUserStore,
     private readonly passwordHasher: PasswordHasher,
     private readonly jwtTokenService: JwtTokenService,
-    private readonly auditLog: AuditLogService
+    private readonly auditLog: AuditLogService,
+    private readonly organizationService: OrganizationService
   ) {}
 
   async bootstrapAdmin(request: Omit<CreateUserRequest, "role">): Promise<PublicUser> {
@@ -36,10 +39,16 @@ export class AuthService {
     }
 
     const passwordHash = await this.passwordHasher.hash(request.password);
+    const membership = this.resolveMembership(
+      "admin",
+      request.organizationUnitId,
+      request.projectGroupIds
+    );
     const user = this.userStore.createUser(
       {
         ...request,
-        role: "admin"
+        role: "admin",
+        ...membership
       },
       passwordHash
     );
@@ -51,7 +60,12 @@ export class AuthService {
 
     try {
       const passwordHash = await this.passwordHasher.hash(request.password);
-      const user = this.userStore.createUser(request, passwordHash);
+      const membership = this.resolveMembership(
+        request.role,
+        request.organizationUnitId,
+        request.projectGroupIds
+      );
+      const user = this.userStore.createUser({ ...request, ...membership }, passwordHash);
       this.auditLog.record({
         action: "user_created",
         actorUserId: actor.userId,
@@ -83,12 +97,25 @@ export class AuthService {
       throw new NotFoundException("user not found");
     }
 
-    if (request.role === undefined && request.active === undefined && request.displayName === undefined) {
+    if (
+      request.role === undefined &&
+      request.active === undefined &&
+      request.displayName === undefined &&
+      request.organizationUnitId === undefined &&
+      request.projectGroupIds === undefined
+    ) {
       throw new BadRequestException("at least one user field is required");
     }
 
     this.assertActiveAdminRemains(current, request);
-    const updated = this.userStore.updateUser(userId, request);
+    const nextRole = request.role ?? current.role;
+    const roleChanged = request.role !== undefined && request.role !== current.role;
+    const membership = this.resolveMembership(
+      nextRole,
+      request.organizationUnitId ?? (roleChanged ? defaultOrganizationUnitId(nextRole) : current.organizationUnitId),
+      request.projectGroupIds ?? current.projectGroupIds
+    );
+    const updated = this.userStore.updateUser(userId, { ...request, ...membership });
     if (!updated) {
       throw new NotFoundException("user not found");
     }
@@ -192,6 +219,19 @@ export class AuthService {
       throw new BadRequestException("at least one active admin is required");
     }
   }
+
+  private resolveMembership(
+    role: UserRecord["role"],
+    organizationUnitId: string | undefined,
+    projectGroupIds: string[] | undefined
+  ): Pick<UserRecord, "organizationUnitId" | "projectGroupIds"> {
+    const resolved = {
+      organizationUnitId: organizationUnitId === undefined ? defaultOrganizationUnitId(role) : organizationUnitId.trim(),
+      projectGroupIds: [...new Set((projectGroupIds ?? []).map((item) => item.trim()).filter(Boolean))]
+    };
+    this.organizationService.validateUserMembership(role, resolved.organizationUnitId, resolved.projectGroupIds);
+    return resolved;
+  }
 }
 
 function parseBearerToken(header: string | undefined): string {
@@ -208,6 +248,14 @@ function toPublicUser(user: UserRecord): PublicUser {
     username: user.username,
     displayName: user.displayName,
     role: user.role,
+    organizationUnitId: user.organizationUnitId,
+    projectGroupIds: [...user.projectGroupIds],
     active: user.active
   };
+}
+
+function defaultOrganizationUnitId(role: UserRecord["role"]): string {
+  if (role === "sales") return DEFAULT_ORGANIZATION_UNIT_IDS.sales;
+  if (role === "technical") return DEFAULT_ORGANIZATION_UNIT_IDS.technicalPresales;
+  return DEFAULT_ORGANIZATION_UNIT_IDS.company;
 }

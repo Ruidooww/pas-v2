@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { AuditLogService } from "../audit/audit-log.service";
+import { OrganizationService } from "../organization/organization.service";
+import { OrganizationStoreService } from "../organization/organization-store.service";
+import { DEFAULT_ORGANIZATION_UNIT_IDS, createDefaultOrganizationState } from "../organization/organization.types";
 import { ProposalJobStoreService } from "../proposal/proposal-job-store.service";
 import type { ProposalJob } from "../proposal/proposal.types";
 import { AuthService } from "./auth.service";
@@ -8,11 +11,15 @@ import { PasswordHasher } from "./password-hasher";
 import { InMemoryUserStore } from "./user-store.service";
 
 function buildAuthService(userStore: InMemoryUserStore): AuthService {
+  const auditLog = new AuditLogService();
+  const organizationStore = new OrganizationStoreService();
+  organizationStore.seed(createDefaultOrganizationState("2026-07-10T00:00:00.000Z"));
   return new AuthService(
     userStore,
     new PasswordHasher(),
     new JwtTokenService({ secret: "test-secret", expiresInSeconds: 3600 }),
-    new AuditLogService()
+    auditLog,
+    new OrganizationService(organizationStore, auditLog)
   );
 }
 
@@ -34,6 +41,29 @@ describe("restart hydration safety", () => {
     });
 
     expect(second.userId).toBe(first.userId);
+  });
+
+  it("normalizes hydrated presales users into the technical presales team", () => {
+    const userStore = new InMemoryUserStore();
+    userStore.seed([
+      {
+        userId: "legacy-presales-1",
+        username: "legacy@example.com",
+        displayName: "Legacy Presales",
+        role: "presales",
+        passwordHash: "hash",
+        active: true,
+        createdAt: "2026-07-01T00:00:00.000Z"
+      } as never
+    ]);
+
+    expect(userStore.findById("legacy-presales-1")).toEqual(
+      expect.objectContaining({
+        role: "technical",
+        organizationUnitId: DEFAULT_ORGANIZATION_UNIT_IDS.technicalPresales,
+        projectGroupIds: []
+      })
+    );
   });
 
   it("seed marks hydrated running proposal jobs as failed and retryable", () => {

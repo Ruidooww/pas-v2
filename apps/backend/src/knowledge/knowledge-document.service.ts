@@ -173,8 +173,8 @@ function normalizeTags(tags: string[]): string[] {
 }
 
 function assertOperator(user: AuthenticatedUser): void {
-  if (user.role !== "admin" && user.role !== "presales") {
-    throw new ForbiddenException("admin or presales role is required");
+  if (user.role !== "admin" && user.role !== "technical") {
+    throw new ForbiddenException("admin or technical role is required");
   }
 }
 

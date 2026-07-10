@@ -262,9 +262,9 @@ describe("ExportService", () => {
     const service = createService(createRenderer(), filesService, new ExportAuditLogService());
     const job = await service.createExport({ exportPackage, formats: ["docx"], userId: "owner-1" });
 
-    expect(service.getJobForUser(job.jobId, createUser("owner-1", "presales"))).toEqual(job);
+    expect(service.getJobForUser(job.jobId, createUser("owner-1", "technical"))).toEqual(job);
     expect(service.getJobForUser(job.jobId, createUser("admin-1", "admin"))).toEqual(job);
-    expect(() => service.getJobForUser(job.jobId, createUser("other-1", "presales"))).toThrow(
+    expect(() => service.getJobForUser(job.jobId, createUser("other-1", "technical"))).toThrow(
       ExportJobAccessDeniedError
     );
     await expect(service.download(job.jobId, "docx", createUser("admin-1", "admin"))).resolves.toEqual(
@@ -281,7 +281,7 @@ describe("ExportService", () => {
     const ownerJob = await service.createExport({ exportPackage, formats: ["docx"], userId: "owner-1" });
     const otherJob = await service.createExport({ exportPackage, formats: ["pptx"], userId: "other-1" });
 
-    expect(service.listJobsForUser(createUser("owner-1", "presales")).map((job) => job.jobId)).toEqual([
+    expect(service.listJobsForUser(createUser("owner-1", "technical")).map((job) => job.jobId)).toEqual([
       ownerJob.jobId
     ]);
     expect(service.listJobsForUser(createUser("admin-1", "admin")).map((job) => job.jobId).sort()).toEqual(
@@ -299,12 +299,14 @@ function createService(
   return new ExportService(renderer, filesService, new ExportJobStoreService(), auditLog, templateCatalog);
 }
 
-function createUser(userId: string, role: "sales" | "presales" | "admin") {
+function createUser(userId: string, role: "sales" | "technical" | "admin") {
   return {
     userId,
     username: `${userId}@example.com`,
     displayName: userId,
-    role
+    role,
+    organizationUnitId: role === "sales" ? "org-sales" : role === "technical" ? "org-technical-presales" : "org-company",
+    projectGroupIds: []
   };
 }
 

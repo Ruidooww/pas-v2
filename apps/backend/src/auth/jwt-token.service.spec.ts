@@ -12,14 +12,23 @@ const user: AuthenticatedUser = {
   userId: "user-1",
   username: "alice",
   displayName: "Alice",
-  role: "presales"
+  role: "technical",
+  organizationUnitId: "org-technical-presales",
+  projectGroupIds: ["project-group-1"]
 };
 
 describe("JwtTokenService negative paths", () => {
   it("round-trips a valid token", () => {
     const service = new JwtTokenService(config);
     const payload = service.verify(service.sign(user));
-    expect(payload.sub).toBe("user-1");
+    expect(payload).toEqual(
+      expect.objectContaining({
+        sub: "user-1",
+        role: "technical",
+        organizationUnitId: "org-technical-presales",
+        projectGroupIds: ["project-group-1"]
+      })
+    );
   });
 
   it("rejects a malformed token with missing segments", () => {

@@ -8,14 +8,18 @@ const salesActor = {
   userId: "sales-1",
   username: "sales@example.com",
   displayName: "Sales One",
-  role: "sales" as const
+  role: "sales" as const,
+  organizationUnitId: "org-sales",
+  projectGroupIds: []
 };
 
-const presalesActor = {
-  userId: "presales-1",
-  username: "presales@example.com",
-  displayName: "Presales One",
-  role: "presales" as const
+const technicalActor = {
+  userId: "technical-1",
+  username: "technical@example.com",
+  displayName: "Technical One",
+  role: "technical" as const,
+  organizationUnitId: "org-technical-presales",
+  projectGroupIds: []
 };
 
 describe("BusinessFlowService", () => {
@@ -109,7 +113,7 @@ describe("BusinessFlowService", () => {
           "客户关注图纸外发审计，需要下周给出透明加密试点方案。决策人周明，待办：售前输出测试计划。",
         sourceRef: "meeting-1"
       },
-      presalesActor
+      technicalActor
     );
 
     const minutes = meeting.outputs.meetingMinutes;
@@ -118,13 +122,13 @@ describe("BusinessFlowService", () => {
     expect(minutes!.requirements).toContain("透明加密试点方案");
     expect(minutes!.actionItems[0]).toContain("测试计划");
 
-    const result = await service.createMeetingProposal(meeting.recordId, presalesActor);
+    const result = await service.createMeetingProposal(meeting.recordId, technicalActor);
 
     expect(result.proposalJob).toBe(proposalJob);
     expect(generate).toHaveBeenCalledWith({
       customerId: "demo-huaxin-manufacturing",
-      userId: "presales-1",
-      user: presalesActor,
+      userId: "technical-1",
+      user: technicalActor,
       humanInputs: expect.arrayContaining([
         expect.objectContaining({
           inputId: "meeting-requirement-1",
@@ -145,7 +149,7 @@ describe("BusinessFlowService", () => {
         contractText: "付款周期为验收后180天。乙方承担无限责任。验收标准以后续邮件为准。",
         sourceRef: "contract-1"
       },
-      presalesActor
+      technicalActor
     );
 
     const review = record.outputs.contractReview;
@@ -157,7 +161,7 @@ describe("BusinessFlowService", () => {
     ]);
     expect(record.status).toBe("pending_confirmation");
 
-    const confirmed = service.confirmContractReview(record.recordId, presalesActor);
+    const confirmed = service.confirmContractReview(record.recordId, technicalActor);
     expect(confirmed.status).toBe("confirmed");
     expect(confirmed.events.map((event) => event.type)).toContain("contract_review_confirmed");
   });
@@ -170,7 +174,7 @@ describe("BusinessFlowService", () => {
         question: "终端离线后策略不生效并且客户要求赔偿，怎么办？",
         sourceRef: "ticket-1"
       },
-      presalesActor
+      technicalActor
     );
 
     const afterSalesAnswer = answer.outputs.afterSalesAnswer;
@@ -185,7 +189,7 @@ describe("BusinessFlowService", () => {
         contractEndDate: "2026-10-01",
         sourceRef: "contract-1"
       },
-      presalesActor
+      technicalActor
     );
 
     const maintenanceReminders = reminders.outputs.maintenanceReminders;
@@ -253,7 +257,7 @@ describe("BusinessFlowService", () => {
         contractText: "乙方承担无限责任。",
         sourceRef: "contract-1"
       },
-      presalesActor
+      technicalActor
     );
 
     const metrics = service.getMetrics({
@@ -328,7 +332,7 @@ function createProposalJob(): ProposalJob {
     status: "completed",
     request: {
       customerId: "demo-huaxin-manufacturing",
-      userId: "presales-1"
+      userId: "technical-1"
     },
     progress: [],
     createdAt: "2026-07-05T00:00:00.000Z",

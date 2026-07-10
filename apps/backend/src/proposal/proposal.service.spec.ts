@@ -65,7 +65,7 @@ describe("ProposalService", () => {
     const acceptedJob = await service.generate({
       customerId: "demo-huaxin-manufacturing",
       userId: "user-1",
-      user: createUser("user-1", "presales"),
+      user: createUser("user-1", "technical"),
       humanInputs: [
         {
           inputId: "input-1",
@@ -87,7 +87,7 @@ describe("ProposalService", () => {
     expect(customerAnalysisService.analyze).toHaveBeenCalledWith({
       customerId: "demo-huaxin-manufacturing",
       userId: "user-1",
-      user: createUser("user-1", "presales")
+      user: createUser("user-1", "technical")
     });
     expect(job).toEqual(
       expect.objectContaining({
@@ -180,7 +180,7 @@ describe("ProposalService", () => {
     const acceptedJob = await service.generate({
       customerId: "demo-huaxin-manufacturing",
       userId: "user-1",
-      user: createUser("user-1", "presales")
+      user: createUser("user-1", "technical")
     });
     const failedJob = await waitForJob(service, acceptedJob.jobId, "failed");
     const retryActor = createUser("user-1", "sales");
@@ -207,10 +207,10 @@ describe("ProposalService", () => {
     const job = await service.generate({
       customerId: "demo-huaxin-manufacturing",
       userId: "user-1",
-      user: createUser("user-1", "presales")
+      user: createUser("user-1", "technical")
     });
 
-    await expect(service.retry(job.jobId, createUser("user-1", "presales"))).rejects.toBeInstanceOf(
+    await expect(service.retry(job.jobId, createUser("user-1", "technical"))).rejects.toBeInstanceOf(
       ProposalJobRetryRejectedError
     );
   });
@@ -227,12 +227,12 @@ describe("ProposalService", () => {
     });
     const failedJob = await waitForJob(service, acceptedJob.jobId, "failed");
 
-    expect(service.getJobForUser(failedJob.jobId, createUser("owner-1", "presales"))).toEqual(failedJob);
+    expect(service.getJobForUser(failedJob.jobId, createUser("owner-1", "technical"))).toEqual(failedJob);
     expect(service.getJobForUser(failedJob.jobId, createUser("admin-1", "admin"))).toEqual(failedJob);
-    expect(() => service.getJobForUser(failedJob.jobId, createUser("other-1", "presales"))).toThrow(
+    expect(() => service.getJobForUser(failedJob.jobId, createUser("other-1", "technical"))).toThrow(
       ProposalJobAccessDeniedError
     );
-    await expect(service.retry(failedJob.jobId, createUser("other-1", "presales"))).rejects.toBeInstanceOf(
+    await expect(service.retry(failedJob.jobId, createUser("other-1", "technical"))).rejects.toBeInstanceOf(
       ProposalJobAccessDeniedError
     );
   });
@@ -246,7 +246,7 @@ describe("ProposalService", () => {
     const ownerJob = await service.generate({
       customerId: "demo-huaxin-manufacturing",
       userId: "owner-1",
-      user: createUser("owner-1", "presales")
+      user: createUser("owner-1", "technical")
     });
     const otherJob = await service.generate({
       customerId: "demo-chenyu-energy",
@@ -254,7 +254,7 @@ describe("ProposalService", () => {
       user: createUser("other-1", "sales")
     });
 
-    expect(service.listJobsForUser(createUser("owner-1", "presales")).map((job) => job.jobId)).toEqual([
+    expect(service.listJobsForUser(createUser("owner-1", "technical")).map((job) => job.jobId)).toEqual([
       ownerJob.jobId
     ]);
     const adminJobIds = service.listJobsForUser(createUser("admin-1", "admin")).map((job) => job.jobId);
@@ -271,11 +271,11 @@ describe("ProposalService", () => {
     const acceptedJob = await service.generate({
       customerId: "demo-huaxin-manufacturing",
       userId: "owner-1",
-      user: createUser("owner-1", "presales")
+      user: createUser("owner-1", "technical")
     });
     const job = await waitForJob(service, acceptedJob.jobId, "completed");
-    const ownerLibrary = service.listLibrary(createUser("owner-1", "presales"));
-    const otherLibrary = service.listLibrary(createUser("other-1", "presales"));
+    const ownerLibrary = service.listLibrary(createUser("owner-1", "technical"));
+    const otherLibrary = service.listLibrary(createUser("other-1", "technical"));
 
     expect(ownerLibrary).toEqual(
       expect.arrayContaining([
@@ -297,7 +297,7 @@ describe("ProposalService", () => {
     } as unknown as CustomerAnalysisService;
     const { service } = createService(customerAnalysisService);
 
-    expect(service.listLibrary(createUser("owner-1", "presales"))).toEqual([]);
+    expect(service.listLibrary(createUser("owner-1", "technical"))).toEqual([]);
   });
 
   it("stores failed jobs without an export package when draft provider fails", async () => {
@@ -312,7 +312,7 @@ describe("ProposalService", () => {
     const acceptedJob = await service.generate({
       customerId: "demo-huaxin-manufacturing",
       userId: "user-1",
-      user: createUser("user-1", "presales")
+      user: createUser("user-1", "technical")
     });
     const job = await waitForJob(service, acceptedJob.jobId, "failed");
 
@@ -337,12 +337,14 @@ function createService(
   return { service, auditLog };
 }
 
-function createUser(userId: string, role: "sales" | "presales" | "admin") {
+function createUser(userId: string, role: "sales" | "technical" | "admin") {
   return {
     userId,
     username: `${userId}@example.com`,
     displayName: userId,
-    role
+    role,
+    organizationUnitId: role === "sales" ? "org-sales" : role === "technical" ? "org-technical-presales" : "org-company",
+    projectGroupIds: []
   };
 }
 

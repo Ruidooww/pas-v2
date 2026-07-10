@@ -268,7 +268,7 @@ export class PlatformService {
   }
 
   runWorkflow(request: RunWorkflowRequest, actor: AuthenticatedUser): WorkflowExecution {
-    assertAdminOrPresales(actor);
+    assertAdminOrTechnical(actor);
     const state = this.store.getState();
     const workflow = state.workflows.find((item) => item.workflowId === request.workflowId);
     if (!workflow || workflow.status !== "active") {
@@ -341,7 +341,7 @@ export class PlatformService {
   }
 
   detectCipSignals(request: DetectCipSignalsRequest, actor: AuthenticatedUser): CipSignal[] {
-    assertAdminOrPresales(actor);
+    assertAdminOrTechnical(actor);
     const signals = detectSignals(request);
     const auditEvent = createAuditEvent("cip_signal", actor.userId, "info", request.customerId, `识别到 ${signals.length} 个客户动态信号`);
     this.store.update((draft) => {
@@ -423,7 +423,7 @@ function createDefaultState(): PlatformState {
         purpose: "把客户输入路由到知识库、方案和交付物任务。",
         status: "active",
         allowedScopes: ["knowledge:read", "proposal:write", "export:write"],
-        ownerRole: "presales"
+        ownerRole: "technical"
       },
       {
         agentId: "customer_growth_agent",
@@ -658,9 +658,9 @@ function assertAdmin(actor: AuthenticatedUser): void {
   }
 }
 
-function assertAdminOrPresales(actor: AuthenticatedUser): void {
-  if (actor.role !== "admin" && actor.role !== "presales") {
-    throw new ForbiddenException("admin or presales role is required");
+function assertAdminOrTechnical(actor: AuthenticatedUser): void {
+  if (actor.role !== "admin" && actor.role !== "technical") {
+    throw new ForbiddenException("admin or technical role is required");
   }
 }
 

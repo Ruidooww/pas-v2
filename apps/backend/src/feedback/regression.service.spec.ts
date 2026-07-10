@@ -7,7 +7,7 @@ import { RegressionService } from "./regression.service";
 describe("RegressionService", () => {
   it("blocks go-live when the regression question set has fewer than 50 cases", () => {
     const service = new RegressionService(new AuditLogService());
-    const run = service.createRun(createUser("presales"), {
+    const run = service.createRun(createUser("technical"), {
       name: "V0 smoke regression",
       owner: "QA owner",
       approver: "Business approver",
@@ -108,7 +108,7 @@ describe("RegressionService", () => {
       cases: createPassingCases(50)
     });
 
-    const report = service.getReport(createUser("presales"), run.runId);
+    const report = service.getReport(createUser("technical"), run.runId);
 
     expect(report).toEqual(
       expect.objectContaining({
@@ -137,7 +137,7 @@ describe("RegressionService", () => {
     const hydrated = new RegressionService(new AuditLogService());
     hydrated.seed([run]);
 
-    expect(hydrated.getReport(createUser("presales"), run.runId)).toEqual(
+    expect(hydrated.getReport(createUser("technical"), run.runId)).toEqual(
       expect.objectContaining({
         runId: run.runId,
         evidenceType: "regression_report"
@@ -195,6 +195,8 @@ function createUser(role: AuthenticatedUser["role"]): AuthenticatedUser {
     userId: `${role}-1`,
     username: `${role}@example.com`,
     displayName: role,
-    role
+    role,
+    organizationUnitId: role === "sales" ? "org-sales" : role === "technical" ? "org-technical-presales" : "org-company",
+    projectGroupIds: []
   };
 }

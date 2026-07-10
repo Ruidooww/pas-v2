@@ -68,6 +68,8 @@ function createUser(role: AuthenticatedUser["role"]): AuthenticatedUser {
     userId: `${role}-1`,
     username: `${role}@example.com`,
     displayName: role,
-    role
+    role,
+    organizationUnitId: role === "sales" ? "org-sales" : role === "technical" ? "org-technical-presales" : "org-company",
+    projectGroupIds: []
   };
 }

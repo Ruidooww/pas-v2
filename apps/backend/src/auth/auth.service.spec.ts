@@ -1,6 +1,9 @@
-import { ForbiddenException, UnauthorizedException } from "@nestjs/common";
+import { BadRequestException, ForbiddenException, UnauthorizedException } from "@nestjs/common";
 import { describe, expect, it } from "vitest";
 import { AuditLogService } from "../audit/audit-log.service";
+import { OrganizationService } from "../organization/organization.service";
+import { OrganizationStoreService } from "../organization/organization-store.service";
+import { DEFAULT_ORGANIZATION_UNIT_IDS, createDefaultOrganizationState } from "../organization/organization.types";
 import { AuthService } from "./auth.service";
 import { JwtTokenService } from "./jwt-token.service";
 import { PasswordHasher } from "./password-hasher";
@@ -16,21 +19,23 @@ describe("AuthService", () => {
     });
 
     const created = await service.createUser(admin, {
-      username: "presales@example.com",
+      username: "technical@example.com",
       password: "user-secret",
-      displayName: "Presales User",
-      role: "presales"
+      displayName: "Technical User",
+      role: "technical"
     });
     const login = await service.login({
-      username: "presales@example.com",
+      username: "technical@example.com",
       password: "user-secret"
     });
     const me = await service.getMe(login.accessToken);
 
     expect(created).toEqual(
       expect.objectContaining({
-        username: "presales@example.com",
-        role: "presales",
+        username: "technical@example.com",
+        role: "technical",
+        organizationUnitId: DEFAULT_ORGANIZATION_UNIT_IDS.technicalPresales,
+        projectGroupIds: [],
         active: true
       })
     );
@@ -38,8 +43,10 @@ describe("AuthService", () => {
     expect(me).toEqual(
       expect.objectContaining({
         userId: created.userId,
-        username: "presales@example.com",
-        role: "presales"
+        username: "technical@example.com",
+        role: "technical",
+        organizationUnitId: DEFAULT_ORGANIZATION_UNIT_IDS.technicalPresales,
+        projectGroupIds: []
       })
     );
     expect(auditLog.list()).toEqual(
@@ -78,7 +85,7 @@ describe("AuthService", () => {
         username: "blocked@example.com",
         password: "blocked-secret",
         displayName: "Blocked User",
-        role: "presales"
+        role: "technical"
       })
     ).rejects.toBeInstanceOf(ForbiddenException);
     expect(auditLog.list()).toEqual(
@@ -109,7 +116,7 @@ describe("AuthService", () => {
 
     const updated = service.updateUser(admin, sales.userId, {
       displayName: "Sales Lead",
-      role: "presales",
+      role: "technical",
       active: false
     });
 
@@ -117,7 +124,8 @@ describe("AuthService", () => {
       expect.objectContaining({
         userId: sales.userId,
         displayName: "Sales Lead",
-        role: "presales",
+        role: "technical",
+        organizationUnitId: DEFAULT_ORGANIZATION_UNIT_IDS.technicalPresales,
         active: false
       })
     );
@@ -162,6 +170,26 @@ describe("AuthService", () => {
     );
   });
 
+  it("rejects role membership outside the approved organization subtree", async () => {
+    const { service } = createAuthService();
+    const admin = await service.bootstrapAdmin({
+      username: "admin@example.com",
+      password: "admin-secret",
+      displayName: "V0 Admin"
+    });
+
+    await expect(
+      service.createUser(admin, {
+        username: "invalid-technical@example.com",
+        password: "user-secret",
+        displayName: "Invalid Technical",
+        role: "technical",
+        organizationUnitId: DEFAULT_ORGANIZATION_UNIT_IDS.sales,
+        projectGroupIds: []
+      })
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
   it("keeps at least one active admin account", async () => {
     const { service } = createAuthService();
     const admin = await service.bootstrapAdmin({
@@ -203,6 +231,8 @@ describe("AuthService", () => {
 
 function createAuthService(): { service: AuthService; auditLog: AuditLogService } {
   const auditLog = new AuditLogService();
+  const organizationStore = new OrganizationStoreService();
+  organizationStore.seed(createDefaultOrganizationState("2026-07-10T00:00:00.000Z"));
   const service = new AuthService(
     new InMemoryUserStore(),
     new PasswordHasher(),
@@ -210,7 +240,8 @@ function createAuthService(): { service: AuthService; auditLog: AuditLogService 
       secret: "test-secret",
       expiresInSeconds: 3600
     }),
-    auditLog
+    auditLog,
+    new OrganizationService(organizationStore, auditLog)
   );
   return { service, auditLog };
 }

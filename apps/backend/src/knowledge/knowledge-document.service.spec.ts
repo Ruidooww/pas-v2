@@ -6,10 +6,10 @@ import { KnowledgeDocumentService } from "./knowledge-document.service";
 import type { KnowledgeDocument, UpsertKnowledgeDocumentRequest } from "./knowledge.types";
 
 describe("KnowledgeDocumentService", () => {
-  it("registers document metadata for presales users", () => {
+  it("registers document metadata for technical users", () => {
     const service = new KnowledgeDocumentService(new AuditLogService());
 
-    const document = service.upsertDocument(createUser("presales"), createRequest());
+    const document = service.upsertDocument(createUser("technical"), createRequest());
 
     expect(document).toEqual(
       expect.objectContaining({
@@ -22,7 +22,7 @@ describe("KnowledgeDocumentService", () => {
         chunkCount: 42,
         hitCount: 0,
         badFeedbackCount: 0,
-        ownerUserId: "presales-1",
+        ownerUserId: "technical-1",
         tags: ["IP-Guard", "manual"]
       })
     );
@@ -48,7 +48,7 @@ describe("KnowledgeDocumentService", () => {
 
     const tagged = service.updateTags(createUser("admin"), "doc-1", ["IP-Guard", "FAQ"]);
     const disabled = service.setEnabled(createUser("admin"), "doc-1", false, "duplicate material");
-    const reparse = service.requestReparse(createUser("presales"), "doc-1", "parser params changed");
+    const reparse = service.requestReparse(createUser("technical"), "doc-1", "parser params changed");
 
     expect(tagged.tags).toEqual(["IP-Guard", "FAQ"]);
     expect(disabled).toEqual(
@@ -60,7 +60,7 @@ describe("KnowledgeDocumentService", () => {
     expect(reparse).toEqual(
       expect.objectContaining({
         parseStatus: "pending",
-        reparseRequestedBy: "presales-1",
+        reparseRequestedBy: "technical-1",
         reparseReason: "parser params changed",
         reparseRequestedAt: expect.any(String)
       })
@@ -84,13 +84,13 @@ describe("KnowledgeDocumentService", () => {
       createDocument("doc-public", "done", true),
       { ...createDocument("doc-admin", "done", true), visibility: { scope: "roles", roles: ["admin"] } },
       { ...createDocument("doc-sales", "done", true), visibility: { scope: "roles", roles: ["sales"] } },
-      { ...createDocument("doc-user", "done", true), visibility: { scope: "users", userIds: ["presales-1"] } },
+      { ...createDocument("doc-user", "done", true), visibility: { scope: "users", userIds: ["technical-1"] } },
       { ...createDocument("doc-disabled", "done", false), visibility: { scope: "public" } }
     ]);
 
     expect(service.hasDocuments()).toBe(true);
     expect(service.getAccessibleDocumentIds(createUser("sales"))).toEqual(["doc-public", "doc-sales"]);
-    expect(service.getAccessibleDocumentIds(createUser("presales"))).toEqual(["doc-public", "doc-user"]);
+    expect(service.getAccessibleDocumentIds(createUser("technical"))).toEqual(["doc-public", "doc-user"]);
     expect(service.listDocuments(createUser("sales")).map((document) => document.documentId)).toEqual([
       "doc-public",
       "doc-sales"
@@ -141,6 +141,8 @@ function createUser(role: AuthenticatedUser["role"]): AuthenticatedUser {
     userId: `${role}-1`,
     username: `${role}@example.com`,
     displayName: role,
-    role
+    role,
+    organizationUnitId: role === "sales" ? "org-sales" : role === "technical" ? "org-technical-presales" : "org-company",
+    projectGroupIds: []
   };
 }

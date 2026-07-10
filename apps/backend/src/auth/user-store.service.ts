@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import type { PersistenceSink } from "../persistence/persistence-sink";
+import { DEFAULT_ORGANIZATION_UNIT_IDS } from "../organization/organization.types";
 import type { CreateUserRequest, UpdateUserRequest, UserRecord } from "./auth.types";
 
 export class UserAlreadyExistsError extends Error {
@@ -17,9 +18,10 @@ export class InMemoryUserStore {
 
   seed(records: UserRecord[]): void {
     for (const record of records) {
-      if (this.userIdsByUsername.has(record.username)) continue;
-      this.usersById.set(record.userId, { ...record });
-      this.userIdsByUsername.set(record.username, record.userId);
+      const normalized = normalizeHydratedUser(record);
+      if (this.userIdsByUsername.has(normalized.username)) continue;
+      this.usersById.set(normalized.userId, normalized);
+      this.userIdsByUsername.set(normalized.username, normalized.userId);
     }
   }
 
@@ -34,6 +36,8 @@ export class InMemoryUserStore {
       username,
       displayName: request.displayName.trim(),
       role: request.role,
+      organizationUnitId: request.organizationUnitId ?? defaultOrganizationUnitId(request.role),
+      projectGroupIds: normalizeProjectGroupIds(request.projectGroupIds ?? []),
       passwordHash,
       active: true,
       createdAt: new Date().toISOString()
@@ -69,6 +73,10 @@ export class InMemoryUserStore {
       ...current,
       displayName: request.displayName?.trim() || current.displayName,
       role: request.role ?? current.role,
+      organizationUnitId: request.organizationUnitId ?? current.organizationUnitId,
+      projectGroupIds: request.projectGroupIds
+        ? normalizeProjectGroupIds(request.projectGroupIds)
+        : current.projectGroupIds,
       active: request.active ?? current.active
     };
     this.usersById.set(userId, next);
@@ -82,5 +90,33 @@ function normalizeUsername(username: string): string {
 }
 
 function cloneUser(user: UserRecord): UserRecord {
-  return { ...user };
+  return { ...user, projectGroupIds: [...user.projectGroupIds] };
+}
+
+function normalizeHydratedUser(record: UserRecord): UserRecord {
+  const legacy = record as Omit<UserRecord, "role" | "organizationUnitId" | "projectGroupIds"> & {
+    role: string;
+    organizationUnitId?: string;
+    projectGroupIds?: string[];
+  };
+  const role = legacy.role === "presales" ? "technical" : legacy.role;
+  if (role !== "sales" && role !== "technical" && role !== "admin") {
+    throw new Error(`Unsupported user role: ${legacy.role}`);
+  }
+  return {
+    ...record,
+    role,
+    organizationUnitId: legacy.organizationUnitId || defaultOrganizationUnitId(role),
+    projectGroupIds: normalizeProjectGroupIds(legacy.projectGroupIds ?? [])
+  };
+}
+
+function defaultOrganizationUnitId(role: UserRecord["role"]): string {
+  if (role === "sales") return DEFAULT_ORGANIZATION_UNIT_IDS.sales;
+  if (role === "technical") return DEFAULT_ORGANIZATION_UNIT_IDS.technicalPresales;
+  return DEFAULT_ORGANIZATION_UNIT_IDS.company;
+}
+
+function normalizeProjectGroupIds(projectGroupIds: string[]): string[] {
+  return [...new Set(projectGroupIds.map((projectGroupId) => projectGroupId.trim()).filter(Boolean))];
 }

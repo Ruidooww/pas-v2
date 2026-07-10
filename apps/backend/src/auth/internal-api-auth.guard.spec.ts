@@ -1,6 +1,9 @@
 import { ExecutionContext, UnauthorizedException } from "@nestjs/common";
 import { describe, expect, it } from "vitest";
 import { AuditLogService } from "../audit/audit-log.service";
+import { OrganizationService } from "../organization/organization.service";
+import { OrganizationStoreService } from "../organization/organization-store.service";
+import { createDefaultOrganizationState } from "../organization/organization.types";
 import { AuthService } from "./auth.service";
 import { InternalApiAuthGuard } from "./internal-api-auth.guard";
 import { JwtTokenService } from "./jwt-token.service";
@@ -159,6 +162,9 @@ describe("InternalApiAuthGuard", () => {
 });
 
 function createGuard(): { service: AuthService; guard: InternalApiAuthGuard } {
+  const auditLog = new AuditLogService();
+  const organizationStore = new OrganizationStoreService();
+  organizationStore.seed(createDefaultOrganizationState("2026-07-10T00:00:00.000Z"));
   const service = new AuthService(
     new InMemoryUserStore(),
     new PasswordHasher(),
@@ -166,7 +172,8 @@ function createGuard(): { service: AuthService; guard: InternalApiAuthGuard } {
       secret: "test-secret",
       expiresInSeconds: 3600
     }),
-    new AuditLogService()
+    auditLog,
+    new OrganizationService(organizationStore, auditLog)
   );
   return {
     service,

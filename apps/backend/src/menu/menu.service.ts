@@ -17,7 +17,7 @@ import type {
 
 type MenuAuditLog = Pick<AuditLogService, "record">;
 
-const VALID_ROLES: UserRole[] = ["sales", "presales", "admin"];
+const VALID_ROLES: UserRole[] = ["sales", "technical", "admin"];
 
 export class MenuService {
   constructor(

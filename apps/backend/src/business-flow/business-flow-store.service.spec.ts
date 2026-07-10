@@ -25,13 +25,13 @@ describe("BusinessFlowStoreService", () => {
     const store = new BusinessFlowStoreService();
     store.create(createRecord({ recordId: "own-opportunity", kind: "opportunity", ownerUserId: "sales-1" }));
     store.create(createRecord({ recordId: "other-opportunity", kind: "opportunity", ownerUserId: "sales-2" }));
-    store.create(createRecord({ recordId: "other-contract", kind: "contract_review", ownerUserId: "presales-1" }));
+    store.create(createRecord({ recordId: "other-contract", kind: "contract_review", ownerUserId: "technical-1" }));
     store.create(createRecord({ recordId: "other-channel", kind: "channel", ownerUserId: "sales-2" }));
 
     expect(store.listForActor({ userId: "sales-1", role: "sales" }).map((record) => record.recordId)).toEqual([
       "own-opportunity"
     ]);
-    expect(store.listForActor({ userId: "presales-2", role: "presales" }).map((record) => record.recordId)).toEqual([]);
+    expect(store.listForActor({ userId: "technical-2", role: "technical" }).map((record) => record.recordId)).toEqual([]);
     expect(store.listForActor({ userId: "admin-1", role: "admin" })).toHaveLength(4);
   });
 

@@ -10,7 +10,7 @@ export class MenuStoreService {
 
   seed(state: MenuState | undefined): void {
     if (!state || this.state) return;
-    this.state = cloneState(state);
+    this.state = normalizeLegacyState(state);
   }
 
   getState(): MenuState {
@@ -38,4 +38,12 @@ export class MenuStoreService {
 
 function cloneState(state: MenuState): MenuState {
   return JSON.parse(JSON.stringify(state)) as MenuState;
+}
+
+function normalizeLegacyState(state: MenuState): MenuState {
+  const normalized = cloneState(state);
+  for (const override of normalized.overrides) {
+    override.roles = [...new Set(override.roles.map((role) => (String(role) === "presales" ? "technical" : role)))];
+  }
+  return normalized;
 }

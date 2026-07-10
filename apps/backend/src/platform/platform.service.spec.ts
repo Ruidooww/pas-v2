@@ -9,14 +9,18 @@ const adminActor: AuthenticatedUser = {
   userId: "admin-1",
   username: "admin@example.com",
   displayName: "Admin",
-  role: "admin"
+  role: "admin",
+  organizationUnitId: "org-company",
+  projectGroupIds: []
 };
 
 const salesActor: AuthenticatedUser = {
   userId: "sales-1",
   username: "sales@example.com",
   displayName: "Sales",
-  role: "sales"
+  role: "sales",
+  organizationUnitId: "org-sales",
+  projectGroupIds: []
 };
 
 describe("PlatformService", () => {

@@ -1,5 +1,6 @@
 import type { AuthenticatedUser } from "../auth/auth.types";
 import type { FilesService } from "../files/files.service";
+import { DEFAULT_ORGANIZATION_UNIT_IDS } from "../organization/organization.types";
 import type { ExportPackage } from "../proposal/proposal.types";
 import { ExportAuditLogService } from "./export-audit-log.service";
 import {
@@ -90,7 +91,16 @@ export class ExportService {
     format: ExportFormat,
     actor: AuthenticatedUser | string = "anonymous-v0"
   ): Promise<ExportDownloadResponse> {
-    const user = typeof actor === "string" ? { userId: actor, username: actor, displayName: actor, role: "presales" as const } : actor;
+    const user = typeof actor === "string"
+      ? {
+          userId: actor,
+          username: actor,
+          displayName: actor,
+          role: "technical" as const,
+          organizationUnitId: DEFAULT_ORGANIZATION_UNIT_IDS.technicalPresales,
+          projectGroupIds: []
+        }
+      : actor;
     const job = this.getJobOrThrow(jobId);
     assertCanAccessJob(job, user);
     const record = job.formats.find((item) => item.format === format);
