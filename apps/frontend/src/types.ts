@@ -319,6 +319,13 @@ export type KnowledgeDocumentParseStatus = "pending" | "parsing" | "done" | "fai
 
 export type KnowledgeDocumentMaterialType = "pdf" | "pptx" | "docx" | "xlsx" | "image" | "scan" | "other";
 
+export type KnowledgeDocumentVisibility =
+  | { scope: "public" }
+  | { scope: "roles"; roles: PublicUser["role"][] }
+  | { scope: "users"; userIds: string[] }
+  | { scope: "organization_units"; organizationUnitIds: string[] }
+  | { scope: "project_groups"; projectGroupIds: string[] };
+
 export type KnowledgeDocument = {
   documentId: string;
   title: string;
@@ -331,10 +338,7 @@ export type KnowledgeDocument = {
   hitCount: number;
   badFeedbackCount: number;
   tags: string[];
-  visibility:
-    | { scope: "public" }
-    | { scope: "roles"; roles: PublicUser["role"][] }
-    | { scope: "users"; userIds: string[] };
+  visibility: KnowledgeDocumentVisibility;
   ownerUserId: string;
   createdAt: string;
   updatedAt: string;

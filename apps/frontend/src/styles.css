@@ -572,6 +572,48 @@ select,
   margin-bottom: 12px;
 }
 
+.knowledge-filter-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
+.knowledge-filter-row .ant-select {
+  min-width: 132px;
+}
+
+.knowledge-form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(160px, 1fr));
+  gap: 10px;
+}
+
+.knowledge-form-grid .ant-select,
+.knowledge-visibility-row > .ant-select {
+  width: 100%;
+  min-width: 0;
+}
+
+.knowledge-visibility-row {
+  display: grid;
+  grid-template-columns: minmax(160px, 220px) minmax(240px, 1fr) auto;
+  gap: 10px;
+  align-items: start;
+  margin-top: 10px;
+}
+
+.knowledge-form-actions {
+  display: flex;
+  grid-column: -2 / -1;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.knowledge-visibility-targets {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .knowledge-draft-body.ant-input {
   margin-bottom: 12px;
   background: #f5f5f7;
@@ -1394,6 +1436,20 @@ select,
 
   .knowledge-list-item {
     grid-template-columns: 1fr;
+  }
+
+  .knowledge-form-grid,
+  .knowledge-visibility-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .knowledge-filter-row,
+  .knowledge-form-actions {
+    justify-content: flex-start;
+  }
+
+  .knowledge-form-actions {
+    grid-column: auto;
   }
 
   .knowledge-list-actions {
