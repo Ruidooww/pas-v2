@@ -3,6 +3,7 @@ import type { AuditEvent } from "../audit/audit.types";
 import type { BusinessFlowRecord } from "../business-flow/business-flow.types";
 import type { RegressionRun } from "../feedback/feedback.types";
 import type { KnowledgeBlock, KnowledgeDocument } from "../knowledge/knowledge.types";
+import { createDefaultOrganizationState } from "../organization/organization.types";
 import { PersistenceSink } from "./persistence-sink";
 
 describe("PersistenceSink", () => {
@@ -282,6 +283,39 @@ describe("PersistenceSink", () => {
     });
     await expect(sink.loadRegressionRuns()).resolves.toEqual([run]);
     expect(findMany).toHaveBeenCalledWith({ orderBy: { createdAt: "asc" }, take: 1000 });
+  });
+
+  it("mirrors and loads organization state", async () => {
+    const state = createDefaultOrganizationState("2026-07-10T00:00:00.000Z");
+    const upsert = vi.fn().mockResolvedValue(undefined);
+    const findFirst = vi.fn().mockResolvedValue({ data: state });
+    const sink = new PersistenceSink("");
+    Object.defineProperty(sink, "client", {
+      value: {
+        organizationStateSnapshot: {
+          upsert,
+          findFirst
+        }
+      }
+    });
+
+    sink.mirrorOrganizationState(state);
+    await flushMicrotasks();
+
+    expect(upsert).toHaveBeenCalledWith({
+      where: { snapshotId: "pas-organization-state" },
+      create: {
+        snapshotId: "pas-organization-state",
+        data: state,
+        updatedAt: expect.any(Date)
+      },
+      update: {
+        data: state,
+        updatedAt: expect.any(Date)
+      }
+    });
+    await expect(sink.loadOrganizationState()).resolves.toEqual(state);
+    expect(findFirst).toHaveBeenCalledWith({ orderBy: { updatedAt: "desc" } });
   });
 });
 

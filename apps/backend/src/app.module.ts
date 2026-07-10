@@ -13,6 +13,7 @@ import { HealthController } from "./health/health.controller";
 import { IntegrationModule } from "./integration/integration.module";
 import { KnowledgeModule } from "./knowledge/knowledge.module";
 import { MenuModule } from "./menu/menu.module";
+import { OrganizationModule } from "./organization/organization.module";
 import { QaModule } from "./qa/qa.module";
 import { ProposalModule } from "./proposal/proposal.module";
 import { RagflowModule } from "./ragflow/ragflow.module";
@@ -41,6 +42,7 @@ const throttleConfig = createThrottleConfig();
     FeedbackModule,
     KnowledgeModule,
     MenuModule,
+    OrganizationModule,
     BusinessFlowModule,
     PlatformModule,
     IntegrationModule,

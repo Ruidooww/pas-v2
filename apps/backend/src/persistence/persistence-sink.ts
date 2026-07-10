@@ -9,6 +9,7 @@ import type { ExportTemplate } from "../export/export-template.types";
 import type { FeedbackRecord, RegressionRun } from "../feedback/feedback.types";
 import type { KnowledgeBlock, KnowledgeDocument } from "../knowledge/knowledge.types";
 import type { MenuState } from "../menu/menu.types";
+import type { OrganizationState } from "../organization/organization.types";
 import type { PlatformState } from "../platform/platform.types";
 import type { ProposalJob } from "../proposal/proposal.types";
 
@@ -335,6 +336,28 @@ export class PersistenceSink implements OnModuleInit, OnModuleDestroy {
     if (!this.client) return undefined;
     const row = await this.client.menuStateSnapshot.findFirst({ orderBy: { updatedAt: "desc" } });
     return row ? (row.data as unknown as MenuState) : undefined;
+  }
+
+  mirrorOrganizationState(state: OrganizationState): void {
+    const client = this.client;
+    if (!client) return;
+    const data = {
+      data: state as unknown as object,
+      updatedAt: new Date(state.updatedAt)
+    };
+    this.enqueueMirror("organization_state", state.stateId, () =>
+      client.organizationStateSnapshot.upsert({
+        where: { snapshotId: state.stateId },
+        create: { snapshotId: state.stateId, ...data },
+        update: data
+      })
+    );
+  }
+
+  async loadOrganizationState(): Promise<OrganizationState | undefined> {
+    if (!this.client) return undefined;
+    const row = await this.client.organizationStateSnapshot.findFirst({ orderBy: { updatedAt: "desc" } });
+    return row ? (row.data as unknown as OrganizationState) : undefined;
   }
 
   async onModuleDestroy(): Promise<void> {

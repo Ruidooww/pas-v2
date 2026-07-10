@@ -13,13 +13,15 @@ datasource db {
 // with full repositories.
 
 model User {
-  id           String   @id
-  username     String   @unique
-  displayName  String   @map("display_name")
-  role         String
-  passwordHash String   @map("password_hash")
-  active       Boolean  @default(true)
-  createdAt    DateTime @map("created_at")
+  id                 String   @id
+  username           String   @unique
+  displayName        String   @map("display_name")
+  role               String
+  passwordHash       String   @map("password_hash")
+  active             Boolean  @default(true)
+  organizationUnitId String?  @map("organization_unit_id")
+  projectGroupIds    String[] @default([]) @map("project_group_ids")
+  createdAt          DateTime @map("created_at")
 
   @@map("users")
 }
@@ -166,4 +168,13 @@ model MenuStateSnapshot {
 
   @@index([updatedAt])
   @@map("menu_state_snapshots")
+}
+
+model OrganizationStateSnapshot {
+  snapshotId String   @id @map("snapshot_id")
+  data       Json
+  updatedAt  DateTime @map("updated_at")
+
+  @@index([updatedAt])
+  @@map("organization_state_snapshots")
 }
