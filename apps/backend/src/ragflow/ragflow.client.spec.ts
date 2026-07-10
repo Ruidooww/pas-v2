@@ -291,8 +291,54 @@ describe("RagflowClient", () => {
     });
   });
 
+  it("retries once when RAGFlow returns a transient business error", async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          code: 100,
+          data: null,
+          message: "AssertionError()"
+        })
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          data: {
+            chunks: [
+              {
+                id: "chunk-1",
+                document_id: "doc-1",
+                document_name: "Product Manual",
+                content: "IP-guard content",
+                similarity: 0.82
+              }
+            ]
+          }
+        })
+      });
+    const client = new RagflowClient(baseConfig, fetcher);
+
+    await expect(client.retrieveKnowledgeChunks({ datasetId: "pas-v0", query: "risk boundary" })).resolves.toEqual([
+      expect.objectContaining({
+        chunkId: "chunk-1",
+        documentId: "doc-1"
+      })
+    ]);
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    const [, retryInit] = fetcher.mock.calls[1] ?? [];
+    expect(JSON.parse(String(retryInit?.body))).toMatchObject({
+      question: "IP-Guard risk boundary",
+      similarity_threshold: 0,
+      vector_similarity_weight: 0.1
+    });
+  });
+
   it("rejects retrieval when RAGFlow returns a non-zero business code", async () => {
-    const fetcher = vi.fn().mockResolvedValueOnce({
+    const fetcher = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
       json: async () => ({
@@ -306,7 +352,7 @@ describe("RagflowClient", () => {
     await expect(client.retrieveKnowledgeChunks({ datasetId: "pas-v0", query: "risk boundary" })).rejects.toThrow(
       "RAGFlow retrieval rejected with code 100"
     );
-    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(fetcher).toHaveBeenCalledTimes(2);
   });
 
   it("returns no retrieval chunks without network calls when client mode is disabled", async () => {

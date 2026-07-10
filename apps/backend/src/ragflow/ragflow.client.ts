@@ -86,10 +86,23 @@ export class RagflowClient {
       return [];
     }
 
-    const chunks = filterAllowedDocuments(
-      await this.retrieveWithQuery(params.datasetId, query, topK),
-      params.allowedDocumentIds
-    );
+    let chunks: KnowledgeChunk[];
+    try {
+      chunks = filterAllowedDocuments(
+        await this.retrieveWithQuery(params.datasetId, query, topK),
+        params.allowedDocumentIds
+      );
+    } catch (error) {
+      if (!this.shouldRetryWithFallback(query)) {
+        throw error;
+      }
+      return filterAllowedDocuments(
+        await this.retrieveWithQuery(params.datasetId, `${this.config.fallbackQueryPrefix} ${query}`, topK, {
+          fallbackTuning: true
+        }),
+        params.allowedDocumentIds
+      );
+    }
     if (chunks.length > 0 || !this.shouldRetryWithFallback(query)) {
       return chunks;
     }

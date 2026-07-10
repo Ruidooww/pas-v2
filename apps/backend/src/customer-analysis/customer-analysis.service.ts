@@ -43,7 +43,7 @@ export class CustomerAnalysisService {
       datasetId: this.config.datasetId,
       query: buildRetrievalQuery(customer),
       topK: this.config.topK,
-      ...(request.user && this.documentService
+      ...(request.user && this.documentService?.hasDocuments()
         ? { allowedDocumentIds: this.documentService.getAccessibleDocumentIds(request.user) }
         : {})
     });

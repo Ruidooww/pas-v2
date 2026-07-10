@@ -30,7 +30,7 @@ export class QaService {
     let chunks: KnowledgeChunk[];
     try {
       const allowedDocumentIds =
-        request.user && this.documentService
+        request.user && this.documentService?.hasDocuments()
           ? this.documentService.getAccessibleDocumentIds(request.user)
           : undefined;
       chunks = await this.ragflowClient.retrieveKnowledgeChunks({

@@ -51,7 +51,9 @@ export class RagflowController {
       datasetId: this.config.pasKbId,
       query,
       topK: body.topK,
-      ...(this.documentService ? { allowedDocumentIds: this.documentService.getAccessibleDocumentIds(request.user) } : {})
+      ...(this.documentService?.hasDocuments()
+        ? { allowedDocumentIds: this.documentService.getAccessibleDocumentIds(request.user) }
+        : {})
     });
 
     return { chunks };

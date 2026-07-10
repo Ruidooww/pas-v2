@@ -55,6 +55,7 @@ describe("CustomerAnalysisService", () => {
     } as unknown as RagflowClient;
     const auditLog = new CustomerAnalysisAuditLogService();
     const documents = {
+      hasDocuments: vi.fn().mockReturnValue(true),
       getAccessibleDocumentIds: vi.fn().mockReturnValue(["doc-1"])
     } as unknown as KnowledgeDocumentService;
     const service = new CustomerAnalysisService(crmClient, ragflowClient, auditLog, {
@@ -157,6 +158,7 @@ describe("CustomerAnalysisService", () => {
       retrieveKnowledgeChunks: vi.fn().mockResolvedValue([])
     } as unknown as RagflowClient;
     const documents = {
+      hasDocuments: vi.fn().mockReturnValue(true),
       getAccessibleDocumentIds: vi.fn().mockReturnValue([])
     } as unknown as KnowledgeDocumentService;
     const service = new CustomerAnalysisService(crmClient, ragflowClient, new CustomerAnalysisAuditLogService(), {
@@ -171,6 +173,42 @@ describe("CustomerAnalysisService", () => {
       query: expect.stringContaining("岚云软件"),
       topK: 5,
       allowedDocumentIds: []
+    });
+  });
+
+  it("retrieves evidence without document ACL filters before the metadata catalog is configured", async () => {
+    const crmClient = {
+      getCustomerContext: vi.fn().mockResolvedValue({
+        customerId: "demo-customer",
+        name: "Demo Customer",
+        industry: "Software",
+        region: "East",
+        accountOwner: "Sales",
+        contacts: [],
+        opportunities: [],
+        purchasedProducts: [],
+        followUps: []
+      })
+    } as unknown as CrmClient;
+    const ragflowClient = {
+      retrieveKnowledgeChunks: vi.fn().mockResolvedValue([])
+    } as unknown as RagflowClient;
+    const documents = {
+      hasDocuments: vi.fn().mockReturnValue(false),
+      getAccessibleDocumentIds: vi.fn().mockReturnValue([])
+    } as unknown as KnowledgeDocumentService;
+    const service = new CustomerAnalysisService(crmClient, ragflowClient, new CustomerAnalysisAuditLogService(), {
+      datasetId: "pas-v0",
+      topK: 5
+    }, undefined, documents);
+
+    await service.analyze({ customerId: "demo-customer", userId: "user-1", user: createUser("sales") });
+
+    expect(documents.getAccessibleDocumentIds).not.toHaveBeenCalled();
+    expect(ragflowClient.retrieveKnowledgeChunks).toHaveBeenCalledWith({
+      datasetId: "pas-v0",
+      query: expect.stringContaining("Demo Customer"),
+      topK: 5
     });
   });
 });

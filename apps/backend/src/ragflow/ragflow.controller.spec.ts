@@ -95,10 +95,27 @@ describe("RagflowController", () => {
       allowedDocumentIds: []
     });
   });
+
+  it("searches without document ACL filters before the metadata catalog is configured", async () => {
+    const client = {
+      retrieveKnowledgeChunks: vi.fn().mockResolvedValue([])
+    } as unknown as RagflowClient;
+    const documents = createDocumentService([], false);
+    const controller = new RagflowController(client, { pasKbId: "pas-v0" }, documents);
+
+    await expect(controller.search(request, { query: "IP-Guard" })).resolves.toEqual({ chunks: [] });
+    expect(documents.getAccessibleDocumentIds).not.toHaveBeenCalled();
+    expect(client.retrieveKnowledgeChunks).toHaveBeenCalledWith({
+      datasetId: "pas-v0",
+      query: "IP-Guard",
+      topK: undefined
+    });
+  });
 });
 
-function createDocumentService(ids: string[] = ["doc-1"]) {
+function createDocumentService(ids: string[] = ["doc-1"], hasDocuments = true) {
   return {
+    hasDocuments: vi.fn().mockReturnValue(hasDocuments),
     getAccessibleDocumentIds: vi.fn().mockReturnValue(ids)
   } as unknown as KnowledgeDocumentService;
 }

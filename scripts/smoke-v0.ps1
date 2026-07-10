@@ -91,6 +91,42 @@ function Read-CandidateQuestions {
   return @($questions)
 }
 
+function Invoke-CandidateQa {
+  param(
+    [Parameter(Mandatory = $true)]
+    [object]$Candidate,
+
+    [Parameter(Mandatory = $true)]
+    [string]$UserId,
+
+    [Parameter(Mandatory = $true)]
+    [hashtable]$Headers
+  )
+
+  for ($attempt = 1; $attempt -le 13; $attempt += 1) {
+    try {
+      return Invoke-Json -Method "Post" -Path "/api/internal/qa/ask" -Headers $Headers -Body @{
+        query = $Candidate.question
+        userId = $UserId
+      }
+    } catch {
+      $statusCode = [int]$_.Exception.Response.StatusCode
+      if ($statusCode -ne 429 -or $attempt -eq 13) {
+        throw
+      }
+
+      $delaySeconds = 5
+      $parsedDelay = 0
+      $retryAfter = $_.Exception.Response.Headers["Retry-After"]
+      if ([int]::TryParse($retryAfter, [ref]$parsedDelay) -and $parsedDelay -gt 0) {
+        $delaySeconds = [Math]::Min($parsedDelay + 1, 60)
+      }
+      Write-Host "  $($Candidate.question_id): rate limited, retrying in $delaySeconds seconds"
+      Start-Sleep -Seconds $delaySeconds
+    }
+  }
+}
+
 $BaseUrl = $BaseUrl.TrimEnd("/")
 
 Write-Host "PAS V0 smoke: login"
@@ -176,10 +212,7 @@ if ($CandidateQuestionFile) {
   foreach ($candidate in $candidateQuestions) {
     Assert-Condition ([bool]$candidate.question_id) "Candidate question is missing question_id"
     Assert-Condition ([bool]$candidate.question) "Candidate question $($candidate.question_id) is missing question"
-    $candidateQa = Invoke-Json -Method "Post" -Path "/api/internal/qa/ask" -Headers $headers -Body @{
-      query = $candidate.question
-      userId = $me.userId
-    }
+    $candidateQa = Invoke-CandidateQa -Candidate $candidate -UserId $me.userId -Headers $headers
     Assert-Condition ($candidateQa.status -in @("answered", "no_hit")) "Candidate QA failed: $($candidate.question_id) status=$($candidateQa.status)"
     $candidateQaSummary[$candidateQa.status] += 1
     Write-Host "  $($candidate.question_id): $($candidateQa.status)"

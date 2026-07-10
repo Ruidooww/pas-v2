@@ -115,6 +115,7 @@ describe("QaService", () => {
       ])
     } as unknown as RagflowClient;
     const documentService = {
+      hasDocuments: vi.fn().mockReturnValue(true),
       getAccessibleDocumentIds: vi.fn().mockReturnValue(["doc-allowed"])
     } as unknown as KnowledgeDocumentService;
     const service = new QaService(ragflowClient, new LocalQaDraftProvider(), new QaAuditLogService(), {
@@ -138,6 +139,7 @@ describe("QaService", () => {
       retrieveKnowledgeChunks: vi.fn().mockResolvedValue([])
     } as unknown as RagflowClient;
     const documentService = {
+      hasDocuments: vi.fn().mockReturnValue(true),
       getAccessibleDocumentIds: vi.fn().mockReturnValue([])
     } as unknown as KnowledgeDocumentService;
     const service = new QaService(ragflowClient, new LocalQaDraftProvider(), new QaAuditLogService(), {
@@ -152,6 +154,29 @@ describe("QaService", () => {
       query: "如何保护研发图纸？",
       topK: 3,
       allowedDocumentIds: []
+    });
+  });
+
+  it("does not apply document ACL filters before the metadata catalog is configured", async () => {
+    const ragflowClient = {
+      retrieveKnowledgeChunks: vi.fn().mockResolvedValue([])
+    } as unknown as RagflowClient;
+    const documentService = {
+      hasDocuments: vi.fn().mockReturnValue(false),
+      getAccessibleDocumentIds: vi.fn().mockReturnValue([])
+    } as unknown as KnowledgeDocumentService;
+    const service = new QaService(ragflowClient, new LocalQaDraftProvider(), new QaAuditLogService(), {
+      datasetId: "qa-v0",
+      topK: 3
+    }, documentService);
+
+    await service.ask({ query: "How does IP-Guard protect files?", userId: "user-1", user: createUser("sales") });
+
+    expect(documentService.getAccessibleDocumentIds).not.toHaveBeenCalled();
+    expect(ragflowClient.retrieveKnowledgeChunks).toHaveBeenCalledWith({
+      datasetId: "qa-v0",
+      query: "How does IP-Guard protect files?",
+      topK: 3
     });
   });
 
