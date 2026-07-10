@@ -1,4 +1,4 @@
-# PAS Plan Status Audit - 2026-07-07
+# PAS Plan Status Audit - 2026-07-10
 
 This audit is the current dispatch source for PAS V0-V3 code-layer work. The
 older files in `docs/superpowers/plans/` remain useful as implementation notes,
@@ -7,12 +7,16 @@ Do not use historical checkbox state alone to decide what still needs coding.
 
 ## Evidence Checked
 
-- `main` is currently at `1dc6dab fix: replace deprecated alert props`.
-- GitHub returned no open issues and no open pull requests during this refresh.
-- PRs `#49` through `#53` landed after the original audit: platform overview
-  load errors are visible in the UI, empty states were polished, remaining
-  frontend pages no longer import deprecated Ant Design `List`, and frontend
-  `Alert` usage now avoids the deprecated `message` prop.
+- The implementation head before this audit update is
+  `2e345ab test: stabilize throttle metadata coverage` on `main`.
+- `main` through `2e345ab` was pushed to `origin/main` during this refresh.
+- GitHub returned no open issues and no open pull requests on `2026-07-10`.
+- `pnpm test` passed: backend `55` files / `232` tests and frontend `12`
+  files / `43` tests.
+- `pnpm typecheck`, `pnpm build`, `pnpm compose:config`, and
+  `pnpm test:smoke` passed.
+- The frontend build still reports one non-blocking bundle warning: the main
+  JavaScript chunk is about `1.15 MB` before gzip (`354.60 kB` after gzip).
 - Backend modules exist for `auth`, `audit`, `crm`, `ragflow`, `qa`,
   `customer-analysis`, `proposal`, `export`, `knowledge`, `business-flow`,
   `platform`, `menu`, `workbench`, `system`, `integration`, and `feedback`.
@@ -24,14 +28,25 @@ Do not use historical checkbox state alone to decide what still needs coding.
 - `scripts/smoke-local-menu.mjs` validates 6 primary menus and 23 visible
   secondary menus, including login, `/api/health`, `/api/me`, effective menu
   loading, and at least one backend endpoint for every visible secondary menu.
-- The latest local smoke on `2026-07-07` passed against
+- The latest real local browser smoke on `2026-07-07` passed against
   `http://127.0.0.1:5174` with backend on port `3000` after PR `#53` merged.
+- The `2026-07-10` automated smoke uses a local fake server. It verifies the
+  frontend route/menu contract but is not a real PostgreSQL/RAGFlow/CRM E2E.
+
+## Scope Interpretation
+
+`Code-ready` below means the staged V0-V3 code-layer scope has an implemented
+API/UI path. It does not mean the full 15-module, 139-requirement roadmap is
+complete. The detailed roadmap mapping dated `2026-07-08` estimated strict
+feature coverage at about `35-40%`; later remediation commits mainly improved
+security, reliability, deployment, and tests rather than adding the missing
+long-range business capabilities.
 
 ## Code-Layer Status
 
 | Area | Status | Current boundary |
 | --- | --- | --- |
-| V0 foundation | Code-ready | Monorepo scripts, four PAS-owned containers, HYYN container names, auth bootstrap, health, CI/build/test lanes are present. |
+| V0 foundation | Code-ready | Monorepo scripts, four PAS-owned containers, HYYN container names, auth bootstrap, cookie/CSRF sessions, endpoint throttling, health, CI/build/test lanes are present. |
 | V0 RAGFlow adapter | Code-ready | RAGFlow remains external. PAS reads it through backend APIs. Dataset quality gates are still deferred. |
 | V0 CRM mock context | Code-ready | Uses fake/mock customer profiles. Real CRM API integration is blocked until external API docs, auth, test account, and sample data are provided. |
 | V0 QA citations | Code-ready | `/api/internal/qa/ask` is wired and smoke-covered. Real answer quality remains gated by the final regression set. |
@@ -70,6 +85,7 @@ and GitHub PR history instead of flipping old checkboxes in place.
 
 - Final V0 50-question regression gate.
 - Final V1 100-question regression gate.
+- Real Docker-backed E2E with PostgreSQL plus the configured external RAGFlow.
 - Real CRM API documentation, auth method, test account, and sample customer
   records.
 - Real export templates from the user.
@@ -77,17 +93,24 @@ and GitHub PR history instead of flipping old checkboxes in place.
 - Business-material inputs for higher-quality proposal and analysis content.
 - File/data ingestion. Current direction is to keep using fake data until the
   user explicitly reopens ingestion work.
-- Production registry/deployment hardening if the next rollout targets ACR,
-  self-hosted GitLab, or a formal release environment.
+- Formal registry/release-environment rollout. Secure cookies, frontend
+  security headers, trusted proxy handling, and TLS termination guidance are
+  now implemented; registry credentials and the actual HTTPS terminator remain
+  environment work.
+- Frontend route-level code splitting for the current `1.15 MB` main chunk.
+- Broad CSS/inline-style restructuring remains deferred until a concrete UI
+  maintenance problem or redesign pass.
 
 ## Next Dispatch Guidance
 
-1. Keep code work on the current fake-data boundary unless the user provides
+1. Add or execute a real four-container E2E lane before treating the project as
+   release-ready; keep RAGFlow external and do not mutate its volumes.
+2. Keep code work on the current fake-data boundary unless the user provides
    real CRM, template, or source-data inputs.
-2. For UI changes, update both the frontend shell and
+3. For UI changes, update both the frontend shell and
    `scripts/smoke-local-menu.mjs` so every visible secondary menu keeps a
    backend-backed smoke check.
-3. Treat the 50/100-question sets as final quality gates, not as blockers for
+4. Treat the 50/100-question sets as final quality gates, not as blockers for
    normal code polishing.
-4. Before opening new V0-V3 implementation issues, check this audit first and
+5. Before opening new V0-V3 implementation issues, check this audit first and
    avoid re-dispatching already merged code layers.

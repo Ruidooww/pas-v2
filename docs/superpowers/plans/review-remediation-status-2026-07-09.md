@@ -8,8 +8,8 @@ already-fixed items are not re-opened.
 ## Evidence Checked
 
 - Current branch: `main`.
-- Current remediation head before endpoint deployment closeout:
-  `acc07b2 fix: add endpoint rate limits`.
+- Current remediation head before this status refresh:
+  `2e345ab test: stabilize throttle metadata coverage`.
 - Unrelated worktree content before this pass: only untracked `design-qa.md`.
   The deployment files changed alongside this document belong to this pass.
 - Review source checked:
@@ -42,6 +42,8 @@ already-fixed items are not re-opened.
 | `43f0d62` | Fixed | Frontend deployment adds browser security headers and secure cookie defaults. |
 | `74672e6` | Fixed | Throttle environment values use validated shared configuration. |
 | `acc07b2` | Fixed | Login and QA apply stricter endpoint limits with trusted proxy IP handling. |
+| `e2eaed3` | Fixed | Compose and deployment docs expose the endpoint limits and trusted proxy topology. |
+| `2e345ab` | Fixed | Throttle metadata coverage is stable in the complete backend test suite. |
 
 ## Review Item Status
 
@@ -68,14 +70,18 @@ already-fixed items are not re-opened.
 | 19 | `mirrorAudit()` writes one DB row per event | Fixed by `7264e91` | No further action in this pass. |
 | 20 | Mock CRM uses linear `Array.find()` | Downgraded | Current data is tiny mock data; do not optimize until real or large mock datasets arrive. |
 | 21 | Hard-coded defaults spread across code/config | Partially fixed | Security/runtime defaults addressed; moving all mock/default values to a config layer would be broad cleanup, not urgent. |
-| 22 | Test coverage gaps / no E2E | Fixed by `ac97316` | `test:smoke` now verifies the visible menu contract and key frontend routes against a local fake server. |
+| 22 | Test coverage gaps / no E2E | Partially fixed by `ac97316` | `test:smoke` verifies visible menus and key frontend routes against a local fake server; real Docker/PostgreSQL/RAGFlow E2E remains open. |
 | 23 | Proposal `humanInputs` runtime type risk | Fixed by `0324e24` | No further action in this pass. |
 | 24 | Frontend API lacks timeout/cancel/dedupe | Partially fixed | Timeout/network handling fixed by `ae63974`; blind retry/cancel remains intentionally deferred to avoid duplicate POSTs. |
 | 25 | CSS and inline style maintenance debt | Open refactor task | Defer; no user-facing bug and refactor risk is broad. |
 
 ## Remaining Dispatch Queue
 
-1. Broad UI/style cleanup.
+1. Real full-stack E2E coverage.
+   Start the four PAS containers, keep RAGFlow external, and verify login plus
+   the critical API path against PostgreSQL and the configured RAGFlow.
+
+2. Broad UI/style cleanup.
    Defer CSS Modules/Tailwind-style restructuring until there is a concrete UI
    maintenance problem or redesign pass.
 
