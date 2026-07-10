@@ -11,7 +11,8 @@ export type AuditAction =
   | "export"
   | "download"
   | "feedback"
-  | "menu_configuration";
+  | "menu_configuration"
+  | "organization";
 
 export type AuditResult = "success" | "failure";
 
