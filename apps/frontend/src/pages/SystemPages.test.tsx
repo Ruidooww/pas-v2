@@ -11,6 +11,8 @@ const adminUser: PublicUser = {
   username: "admin",
   displayName: "Admin",
   role: "admin",
+  organizationUnitId: "org-company",
+  projectGroupIds: [],
   active: true
 };
 
@@ -29,10 +31,70 @@ describe("system pages", () => {
     expect(await screen.findByText("Admin")).toBeTruthy();
     fireEvent.click(screen.getByRole("switch", { name: "admin 启用" }));
 
-    expect(fetchMock).toHaveBeenCalledWith(
-      "/api/internal/auth/users/admin-1",
-      expect.objectContaining({ method: "PATCH" })
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/internal/auth/users/admin-1",
+        expect.objectContaining({ method: "PATCH" })
+      )
     );
+    await waitFor(() => expect(screen.getByRole("switch", { name: "admin 启用" })).not.toBeChecked());
+  });
+
+  it("uses current roles and restricts technical account membership to the technical subtree", async () => {
+    const fetchMock = vi.fn(mockSystemFetch);
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<AccountsPage />);
+    expect(await screen.findByText("Admin")).toBeTruthy();
+
+    fireEvent.mouseDown(screen.getByLabelText("新账号角色"));
+    await waitFor(() => expect(screen.getAllByRole("option").length).toBeGreaterThan(0));
+    const roleOptions = screen.getAllByRole("option");
+    expect(roleOptions.map((option) => option.textContent)).toEqual(expect.arrayContaining(["sales", "technical", "admin"]));
+    expect(roleOptions.some((option) => option.textContent === "presales")).toBe(false);
+    fireEvent.click(roleOptions.find((option) => option.textContent === "technical")!);
+
+    fireEvent.mouseDown(screen.getByLabelText("新账号组织单元"));
+    await waitFor(() => expect(screen.getAllByRole("option").length).toBeGreaterThan(0));
+    const unitOptions = screen.getAllByRole("option");
+    expect(unitOptions.some((option) => option.textContent === "Presales Team")).toBe(true);
+    expect(unitOptions.some((option) => option.textContent === "Technical Team")).toBe(true);
+    expect(unitOptions.some((option) => option.textContent === "After-sales Team")).toBe(true);
+    expect(unitOptions.some((option) => option.textContent === "Sales Department")).toBe(false);
+    fireEvent.click(unitOptions.find((option) => option.textContent === "Presales Team")!);
+
+    fireEvent.mouseDown(screen.getByLabelText("admin 项目组"));
+    await waitFor(() => expect(screen.getAllByRole("option").some((option) => option.textContent === "Project Alpha")).toBe(true));
+    fireEvent.click(screen.getAllByRole("option").find((option) => option.textContent === "Project Alpha")!);
+
+    await waitFor(() => {
+      const update = fetchMock.mock.calls.find(
+        ([path, init]) => path === "/api/internal/auth/users/admin-1" && String(init?.body).includes('"projectGroupIds":["project-alpha"]')
+      );
+      expect(update).toBeTruthy();
+    });
+  });
+
+  it("keeps accounts visible when organization metadata fails to load", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+        if (String(input).startsWith("/api/internal/organization/")) {
+          return Promise.resolve({
+            ok: false,
+            status: 503,
+            json: async () => ({ message: "organization unavailable" })
+          } as Response);
+        }
+        return mockSystemFetch(input, init);
+      })
+    );
+
+    render(<AccountsPage />);
+
+    expect(await screen.findByText("Admin")).toBeTruthy();
+    expect(await screen.findByText("服务暂时不可用，请稍后再试")).toBeTruthy();
+    expect(screen.getByLabelText("admin 角色")).toBeTruthy();
   });
 
   it("loads audit events", async () => {
@@ -100,7 +162,23 @@ function mockSystemFetch(input: RequestInfo | URL, init?: RequestInit): Promise<
     return Promise.resolve(jsonResponse([adminUser]));
   }
   if (path === "/api/internal/auth/users/admin-1" && init?.method === "PATCH") {
-    return Promise.resolve(jsonResponse({ ...adminUser, active: false }));
+    return Promise.resolve(jsonResponse({ ...adminUser, ...JSON.parse(String(init.body)) }));
+  }
+  if (path === "/api/internal/organization/units") {
+    return Promise.resolve(jsonResponse(createOrganizationUnits()));
+  }
+  if (path === "/api/internal/organization/project-groups") {
+    return Promise.resolve(
+      jsonResponse([
+        {
+          projectGroupId: "project-alpha",
+          name: "Project Alpha",
+          active: true,
+          createdAt: "2026-07-10T00:00:00.000Z",
+          updatedAt: "2026-07-10T00:00:00.000Z"
+        }
+      ])
+    );
   }
   if (path === "/api/internal/audit/events") {
     return Promise.resolve(jsonResponse(createAuditEvents()));
@@ -121,6 +199,18 @@ function jsonResponse(payload: unknown): Response {
     status: 200,
     json: async () => payload
   } as Response;
+}
+
+function createOrganizationUnits() {
+  const now = "2026-07-10T00:00:00.000Z";
+  return [
+    { unitId: "org-company", name: "Company", kind: "company", active: true, createdAt: now, updatedAt: now },
+    { unitId: "org-sales", name: "Sales Department", kind: "department", parentUnitId: "org-company", active: true, createdAt: now, updatedAt: now },
+    { unitId: "org-technical", name: "Technical Department", kind: "department", parentUnitId: "org-company", active: true, createdAt: now, updatedAt: now },
+    { unitId: "org-technical-presales", name: "Presales Team", kind: "team", parentUnitId: "org-technical", active: true, createdAt: now, updatedAt: now },
+    { unitId: "org-technical-engineering", name: "Technical Team", kind: "team", parentUnitId: "org-technical", active: true, createdAt: now, updatedAt: now },
+    { unitId: "org-technical-aftersales", name: "After-sales Team", kind: "team", parentUnitId: "org-technical", active: true, createdAt: now, updatedAt: now }
+  ];
 }
 
 function createAuditEvents(): AuditEvent[] {

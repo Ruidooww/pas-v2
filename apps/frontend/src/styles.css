@@ -963,6 +963,127 @@ select,
   align-items: center;
 }
 
+.account-create-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  align-items: center;
+}
+
+.account-row-actions {
+  display: grid;
+  width: min(100%, 680px);
+  grid-template-columns: repeat(3, minmax(142px, 1fr)) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.organization-access-panel {
+  display: grid;
+  gap: 16px;
+  padding: 22px 0 4px;
+  border-top: 1px solid #e3e8ef;
+}
+
+.organization-access-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.organization-access-heading .ant-typography {
+  margin: 0;
+}
+
+.organization-access-counts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.organization-access-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.65fr);
+  gap: 24px;
+}
+
+.organization-admin-section {
+  min-width: 0;
+  padding-top: 14px;
+  border-top: 2px solid #202a36;
+}
+
+.organization-section-heading {
+  display: grid;
+  gap: 2px;
+  margin-bottom: 14px;
+}
+
+.organization-section-heading .ant-typography {
+  margin: 0;
+}
+
+.organization-create-row {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.organization-create-unit {
+  grid-template-columns: minmax(160px, 1fr) minmax(160px, 1fr) minmax(120px, 0.65fr) 34px;
+}
+
+.organization-create-group {
+  grid-template-columns: minmax(0, 1fr) 34px;
+}
+
+.organization-group-list {
+  display: grid;
+}
+
+.organization-record-row {
+  display: grid;
+  grid-template-columns: minmax(160px, 0.75fr) minmax(260px, 1.25fr);
+  gap: 10px;
+  align-items: center;
+  min-width: 0;
+  padding: 9px 0;
+  border-bottom: 1px solid #eceff3;
+}
+
+.organization-record-label {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.organization-record-label .ant-typography {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.organization-record-controls {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) 34px 38px;
+  gap: 6px;
+  align-items: center;
+  min-width: 0;
+}
+
+.organization-tree-row {
+  width: 100%;
+}
+
+.organization-access-panel .ant-tree-node-content-wrapper,
+.organization-access-panel .ant-tree-title {
+  min-width: 0;
+  width: 100%;
+}
+
 .system-path-grid,
 .system-settings-grid {
   display: grid;
@@ -1246,6 +1367,29 @@ select,
 
   .system-list-meta {
     justify-items: start;
+  }
+
+  .account-create-grid,
+  .account-row-actions,
+  .organization-access-grid,
+  .organization-create-unit,
+  .organization-record-row,
+  .organization-record-controls {
+    width: 100%;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .organization-access-heading {
+    display: grid;
+  }
+
+  .organization-access-counts {
+    justify-content: flex-start;
+  }
+
+  .organization-record-controls .ant-btn,
+  .organization-record-controls .ant-switch {
+    justify-self: start;
   }
 
   .knowledge-list-item {

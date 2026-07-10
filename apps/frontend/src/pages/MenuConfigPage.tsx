@@ -23,7 +23,7 @@ type MenuConfigRow = SecondaryMenuDefinition & {
 
 const ROLE_OPTIONS: Array<{ label: string; value: Role }> = [
   { label: "sales", value: "sales" },
-  { label: "presales", value: "presales" },
+  { label: "technical", value: "technical" },
   { label: "admin", value: "admin" }
 ];
 
@@ -169,7 +169,7 @@ export function MenuConfigPage() {
               可调整显示状态、展示名称、角色可见性、排序和默认入口。
             </Typography.Paragraph>
             <Typography.Paragraph type="secondary">
-              后端会校验管理员权限，普通销售和售前只能读取自己的有效菜单。
+              后端会校验管理员权限，普通销售和技术部用户只能读取自己的有效菜单。
             </Typography.Paragraph>
           </Space>
         </Card>

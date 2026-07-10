@@ -8,6 +8,8 @@ const adminUser: PublicUser = {
   username: "admin",
   displayName: "Admin",
   role: "admin",
+  organizationUnitId: "org-company",
+  projectGroupIds: [],
   active: true
 };
 

@@ -77,7 +77,7 @@ function createMenuConfiguration(): MenuConfiguration {
         icon: "home",
         order: 10,
         children: [
-          { key: "overview", label: "总览看板", route: "/workbench/overview", roles: ["sales", "presales", "admin"], order: 10 }
+          { key: "overview", label: "总览看板", route: "/workbench/overview", roles: ["sales", "technical", "admin"], order: 10 }
         ]
       },
       {
@@ -86,11 +86,11 @@ function createMenuConfiguration(): MenuConfiguration {
         icon: "customer",
         order: 20,
         children: [
-          { key: "customer_management", label: "客户管理", route: "/customers", roles: ["sales", "presales", "admin"], order: 10 },
-          { key: "customer_insights", label: "客户画像", route: "/customers/insights", roles: ["sales", "presales", "admin"], order: 20 },
-          { key: "opportunities", label: "商机推进", route: "/business/opportunities", roles: ["sales", "presales", "admin"], order: 30 },
-          { key: "meeting_minutes", label: "会议纪要", route: "/business/meetings", roles: ["sales", "presales", "admin"], order: 40 },
-          { key: "contracts_after_sales", label: "合同售后", route: "/business/contracts-after-sales", roles: ["presales", "admin"], order: 50 }
+          { key: "customer_management", label: "客户管理", route: "/customers", roles: ["sales", "technical", "admin"], order: 10 },
+          { key: "customer_insights", label: "客户画像", route: "/customers/insights", roles: ["sales", "technical", "admin"], order: 20 },
+          { key: "opportunities", label: "商机推进", route: "/business/opportunities", roles: ["sales", "technical", "admin"], order: 30 },
+          { key: "meeting_minutes", label: "会议纪要", route: "/business/meetings", roles: ["sales", "technical", "admin"], order: 40 },
+          { key: "contracts_after_sales", label: "合同售后", route: "/business/contracts-after-sales", roles: ["technical", "admin"], order: 50 }
         ]
       },
       {

@@ -9,6 +9,8 @@ const adminUser: PublicUser = {
   username: "admin",
   displayName: "Admin",
   role: "admin",
+  organizationUnitId: "org-company",
+  projectGroupIds: [],
   active: true
 };
 
@@ -17,6 +19,8 @@ const salesUser: PublicUser = {
   username: "sales",
   displayName: "Sales",
   role: "sales",
+  organizationUnitId: "org-sales",
+  projectGroupIds: [],
   active: true
 };
 
@@ -384,7 +388,7 @@ function createMenuConfiguration(): MenuConfiguration {
         icon: "home",
         order: 10,
         children: [
-          { key: "overview", label: "总览看板", route: "/workbench/overview", roles: ["sales", "presales", "admin"], order: 10 }
+          { key: "overview", label: "总览看板", route: "/workbench/overview", roles: ["sales", "technical", "admin"], order: 10 }
         ]
       },
       {
@@ -393,7 +397,7 @@ function createMenuConfiguration(): MenuConfiguration {
         icon: "customer",
         order: 20,
         children: [
-          { key: "customer_management", label: "客户管理", route: "/customers", roles: ["sales", "presales", "admin"], order: 10 }
+          { key: "customer_management", label: "客户管理", route: "/customers", roles: ["sales", "technical", "admin"], order: 10 }
         ]
       },
       {
@@ -537,7 +541,7 @@ function createPlatformOverview(): PlatformOverview {
         status: "active",
         purpose: "编排",
         allowedScopes: [],
-        ownerRole: "presales"
+        ownerRole: "technical"
       }
     ],
     skills: [

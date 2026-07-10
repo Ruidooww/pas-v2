@@ -2,7 +2,9 @@ export type PublicUser = {
   userId: string;
   username: string;
   displayName: string;
-  role: "sales" | "presales" | "admin";
+  role: "sales" | "technical" | "admin";
+  organizationUnitId: string;
+  projectGroupIds: string[];
   active: boolean;
 };
 
@@ -12,6 +14,33 @@ export type UpdateUserRequest = {
   displayName?: string;
   role?: UserRole;
   active?: boolean;
+  organizationUnitId?: string;
+  projectGroupIds?: string[];
+};
+
+export type OrganizationUnitKind = "company" | "department" | "team";
+
+export type OrganizationUnit = {
+  unitId: string;
+  name: string;
+  kind: OrganizationUnitKind;
+  parentUnitId?: string;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ProjectGroup = {
+  projectGroupId: string;
+  name: string;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type OrganizationCatalog = {
+  units: OrganizationUnit[];
+  projectGroups: ProjectGroup[];
 };
 
 export type AuditEvent = {

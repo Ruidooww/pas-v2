@@ -56,7 +56,7 @@ export function PlatformPage({ user, mode }: { user: PublicUser; mode: PlatformP
   );
   const firstWorkflow = overview?.workflows[0];
   const isAdmin = user.role === "admin";
-  const canRunWorkflow = user.role === "admin" || user.role === "presales";
+  const canRunWorkflow = user.role === "admin" || user.role === "technical";
 
   const refresh = async () => {
     setLoading(true);
