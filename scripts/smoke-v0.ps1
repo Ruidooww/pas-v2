@@ -50,6 +50,29 @@ function Assert-Condition {
   }
 }
 
+function Wait-ProposalJob {
+  param(
+    [Parameter(Mandatory = $true)]
+    [object]$Job,
+
+    [Parameter(Mandatory = $true)]
+    [hashtable]$Headers
+  )
+
+  Assert-Condition ([bool]$Job.jobId) "Proposal generation did not return jobId"
+  $current = $Job
+  for ($attempt = 0; $attempt -lt 60 -and $current.status -eq "running"; $attempt += 1) {
+    Start-Sleep -Milliseconds 500
+    $current = Invoke-Json -Method "Get" -Path "/api/internal/proposals/$($Job.jobId)" -Headers $Headers
+  }
+
+  if ($current.status -eq "running") {
+    throw "Proposal generation timed out: jobId=$($Job.jobId)"
+  }
+
+  return $current
+}
+
 function Read-CandidateQuestions {
   param(
     [Parameter(Mandatory = $true)]
@@ -110,7 +133,8 @@ $proposalJob = Invoke-Json -Method "Post" -Path "/api/internal/proposals/generat
   customerId = $customerId
   userId = $me.userId
 }
-Assert-Condition ($proposalJob.status -eq "completed") "Proposal generation failed"
+$proposalJob = Wait-ProposalJob -Job $proposalJob -Headers $headers
+Assert-Condition ($proposalJob.status -eq "completed") "Proposal generation failed: status=$($proposalJob.status) reason=$($proposalJob.failureReason)"
 Assert-Condition ([bool]$proposalJob.exportPackage) "Proposal did not return exportPackage"
 
 Write-Host "PAS V0 smoke: export"
