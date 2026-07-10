@@ -438,8 +438,8 @@ In `.env.example`, add:
 ```text
 THROTTLE_LOGIN_LIMIT_PER_MINUTE=10
 THROTTLE_QA_LIMIT_PER_MINUTE=30
-# Use 1 for frontend-only proxying and 2 when a separate TLS terminator is in front of pas-frontend.
-TRUST_PROXY_HOPS=2
+# Set to 2 only when a separate TLS terminator is in front of pas-frontend.
+TRUST_PROXY_HOPS=1
 ```
 
 - [ ] **Step 4: Document the release topology and close review item #9**

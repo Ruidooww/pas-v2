@@ -38,9 +38,19 @@ for (const header of requiredFrontendHeaders) {
 }
 
 const composeContent = readFileSync(path.join(projectRoot, "docker-compose.yml"), "utf8");
-if (!/COOKIE_SECURE:\s+\$\{COOKIE_SECURE:-true\}/.test(composeContent)) {
-  console.error("Expected backend compose environment to default COOKIE_SECURE=true.");
-  process.exit(1);
+const requiredBackendEnvironmentDefaults = [
+  { name: "COOKIE_SECURE", value: "true" },
+  { name: "THROTTLE_LOGIN_LIMIT_PER_MINUTE", value: "10" },
+  { name: "THROTTLE_QA_LIMIT_PER_MINUTE", value: "30" },
+  { name: "TRUST_PROXY_HOPS", value: "1" }
+];
+
+for (const { name, value } of requiredBackendEnvironmentDefaults) {
+  const pattern = new RegExp(`${name}:\\s+\\$\\{${name}:-${value}\\}`);
+  if (!pattern.test(composeContent)) {
+    console.error(`Expected backend compose environment to default ${name}=${value}.`);
+    process.exit(1);
+  }
 }
 
 const composeEnv = {

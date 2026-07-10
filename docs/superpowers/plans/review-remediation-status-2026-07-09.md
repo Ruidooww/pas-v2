@@ -8,8 +8,8 @@ already-fixed items are not re-opened.
 ## Evidence Checked
 
 - Current branch: `main`.
-- Current remediation head before the deployment hardening pass:
-  `fb7f880 fix: harden session auth flow`.
+- Current remediation head before endpoint deployment closeout:
+  `acc07b2 fix: add endpoint rate limits`.
 - Unrelated worktree content before this pass: only untracked `design-qa.md`.
   The deployment files changed alongside this document belong to this pass.
 - Review source checked:
@@ -39,6 +39,9 @@ already-fixed items are not re-opened.
 | `20279bb` | Fixed | Snapshot hydration uses a default `take: 1000` limit. |
 | `0324e24` | Fixed | Proposal `humanInputs` are validated at the request boundary. |
 | `fb7f880` | Fixed | Frontend sessions use `httpOnly` cookies with CSRF protection. |
+| `43f0d62` | Fixed | Frontend deployment adds browser security headers and secure cookie defaults. |
+| `74672e6` | Fixed | Throttle environment values use validated shared configuration. |
+| `acc07b2` | Fixed | Login and QA apply stricter endpoint limits with trusted proxy IP handling. |
 
 ## Review Item Status
 
@@ -52,7 +55,7 @@ already-fixed items are not re-opened.
 | 6 | Budget parsing misses common units | Fixed by `3da8a55` | No further action in this pass. |
 | 7 | Login/server error details exposed to frontend | Fixed by `cbb75ed` | No further action in this pass. |
 | 8 | QA `pre-wrap` XSS concern | Downgraded | Current React rendering escapes text and does not use `dangerouslySetInnerHTML`; do not change now. |
-| 9 | Internal APIs only use bearer token, no extra protection | Fixed by auth hardening pass | Internal routes now accept `httpOnly` session cookie auth with CSRF on unsafe cookie requests while retaining Bearer compatibility for scripts. |
+| 9 | Internal APIs only use bearer token, no extra protection | Fixed by `fb7f880` and `acc07b2` | Session cookies use CSRF protection; the global guard remains and login/QA now have stricter independently configurable limits with trusted proxy IP handling. |
 | 10 | Token stored in `localStorage` | Fixed by auth hardening pass | Backend issues session/CSRF cookies; frontend boots from `/api/me`, sends credentials/CSRF, and no longer stores login tokens. |
 | 11 | Frontend HTTP without TLS | Fixed by deployment hardening pass | Deployment SOP requires HTTPS termination in front of `pas-frontend`, keeps the backend private, and defaults session cookies to secure transport. |
 | 12 | `helmet()` without CSP | Fixed by `54d1261` and deployment hardening pass | Backend Helmet remains configured; frontend Nginx now emits CSP and the required browser security headers. |

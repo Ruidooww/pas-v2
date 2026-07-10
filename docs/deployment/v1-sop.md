@@ -77,6 +77,8 @@ Before V1 release approval:
 - `pnpm compose:config` validates only the four PAS services and `HYYN-*` containers, the secure cookie default, and frontend Nginx security headers.
 - The public entry point terminates HTTPS in front of `pas-frontend`; `pas-backend` is not exposed directly.
 - `COOKIE_SECURE=true` is set for the release environment. `false` is allowed only for local HTTP testing.
+- `TRUST_PROXY_HOPS` matches the real trusted proxy count: `1` for frontend-only proxying or `2` when a separate TLS terminator fronts `pas-frontend`.
+- Login uses `THROTTLE_LOGIN_LIMIT_PER_MINUTE=10` and QA uses `THROTTLE_QA_LIMIT_PER_MINUTE=30`, unless an approved environment-specific limit is documented.
 - The public response includes CSP, `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, and TLS-terminator `Strict-Transport-Security` headers.
 - Browser smoke confirms login and the V1 operations pages load.
 - RAGFlow health is reachable when `RAGFLOW_CLIENT_MODE=real`.

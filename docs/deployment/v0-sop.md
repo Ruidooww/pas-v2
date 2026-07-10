@@ -44,6 +44,9 @@ PAS_FRONTEND_PORT=18000
 PAS_BACKEND_PORT_INTERNAL=3000
 PAS_FRONTEND_IMAGE=${REGISTRY_HOST}/${REGISTRY_NAMESPACE}/pas-frontend:${IMAGE_TAG}
 PAS_BACKEND_IMAGE=${REGISTRY_HOST}/${REGISTRY_NAMESPACE}/pas-backend:${IMAGE_TAG}
+THROTTLE_LOGIN_LIMIT_PER_MINUTE=10
+THROTTLE_QA_LIMIT_PER_MINUTE=30
+TRUST_PROXY_HOPS=1
 
 POSTGRES_DB=pas
 POSTGRES_USER=pas
@@ -82,6 +85,15 @@ Keep this setting for every HTTPS deployment:
 ```text
 COOKIE_SECURE=true
 ```
+
+Set `TRUST_PROXY_HOPS` to the exact number of trusted proxies in front of `pas-backend`:
+
+```text
+Local frontend-only proxy: TRUST_PROXY_HOPS=1
+Release with a separate TLS terminator: TRUST_PROXY_HOPS=2
+```
+
+Any positive value requires `pas-backend` to remain private. Setting the value higher than the real proxy count can trust a client-supplied `X-Forwarded-For` value and weaken IP-based rate limiting.
 
 Set `COOKIE_SECURE=false` only for a local HTTP-only environment such as `http://127.0.0.1:18000`. That setting is not release-ready because the browser can send the session cookie over an unencrypted connection.
 
