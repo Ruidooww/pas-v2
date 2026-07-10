@@ -239,6 +239,32 @@ describe("AuthService", () => {
     expect(() => service.updateUser(admin, admin.userId, { role: "sales" })).toThrow("at least one active admin");
   });
 
+  it("rejects login and current sessions when role membership becomes inactive", async () => {
+    const { service, organizationService } = createAuthService();
+    const admin = await service.bootstrapAdmin({
+      username: "admin@example.com",
+      password: "admin-secret",
+      displayName: "V0 Admin"
+    });
+    await service.createUser(admin, {
+      username: "technical@example.com",
+      password: "technical-secret",
+      displayName: "Technical User",
+      role: "technical"
+    });
+    const login = await service.login({
+      username: "technical@example.com",
+      password: "technical-secret"
+    });
+
+    organizationService.updateUnit(admin, DEFAULT_ORGANIZATION_UNIT_IDS.technicalPresales, { active: false });
+
+    await expect(service.getMe(login.accessToken)).rejects.toBeInstanceOf(UnauthorizedException);
+    await expect(
+      service.login({ username: "technical@example.com", password: "technical-secret" })
+    ).rejects.toBeInstanceOf(UnauthorizedException);
+  });
+
   it("rejects invalid login credentials", async () => {
     const { service, auditLog } = createAuthService();
     await service.bootstrapAdmin({
@@ -266,10 +292,15 @@ describe("AuthService", () => {
   });
 });
 
-function createAuthService(): { service: AuthService; auditLog: AuditLogService } {
+function createAuthService(): {
+  service: AuthService;
+  auditLog: AuditLogService;
+  organizationService: OrganizationService;
+} {
   const auditLog = new AuditLogService();
   const organizationStore = new OrganizationStoreService();
   organizationStore.seed(createDefaultOrganizationState("2026-07-10T00:00:00.000Z"));
+  const organizationService = new OrganizationService(organizationStore, auditLog);
   const service = new AuthService(
     new InMemoryUserStore(),
     new PasswordHasher(),
@@ -278,7 +309,7 @@ function createAuthService(): { service: AuthService; auditLog: AuditLogService 
       expiresInSeconds: 3600
     }),
     auditLog,
-    new OrganizationService(organizationStore, auditLog)
+    organizationService
   );
-  return { service, auditLog };
+  return { service, auditLog, organizationService };
 }

@@ -132,6 +132,14 @@ export class OrganizationService {
     );
   }
 
+  isActiveRoleMember(user: OrganizationUserClaims): boolean {
+    if (user.role === "technical") return this.isActiveTechnicalMember(user);
+    if (user.role === "sales") {
+      return this.isUnitInActiveSubtree(user.organizationUnitId, DEFAULT_ORGANIZATION_UNIT_IDS.sales);
+    }
+    return this.isUnitInActiveSubtree(user.organizationUnitId, DEFAULT_ORGANIZATION_UNIT_IDS.company);
+  }
+
   isUserInAnyUnit(user: OrganizationUserClaims, unitIds: string[]): boolean {
     return unitIds.some(
       (unitId) => this.findUnit(unitId)?.active && this.isUnitInActiveSubtree(user.organizationUnitId, unitId)

@@ -157,6 +157,7 @@ export class AuthService {
       });
       throw new UnauthorizedException("invalid credentials");
     }
+    this.assertActiveRoleMembership(user);
 
     const publicUser = toPublicUser(user);
     this.auditLog.record({
@@ -180,6 +181,7 @@ export class AuthService {
     if (!user || !user.active) {
       throw new UnauthorizedException("invalid token");
     }
+    this.assertActiveRoleMembership(user);
 
     return toPublicUser(user);
   }
@@ -231,6 +233,19 @@ export class AuthService {
     };
     this.organizationService.validateUserMembership(role, resolved.organizationUnitId, resolved.projectGroupIds);
     return resolved;
+  }
+
+  private assertActiveRoleMembership(user: UserRecord): void {
+    if (this.organizationService.isActiveRoleMember(user)) return;
+    this.auditLog.record({
+      action: "login",
+      actorUserId: user.userId,
+      objectType: "auth_session",
+      objectId: user.userId,
+      result: "failure",
+      failureReason: "INACTIVE_ORGANIZATION_MEMBERSHIP"
+    });
+    throw new UnauthorizedException("inactive organization membership");
   }
 }
 
