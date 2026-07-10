@@ -56,7 +56,7 @@ describe("CustomerAnalysisService", () => {
     const auditLog = new CustomerAnalysisAuditLogService();
     const documents = {
       hasDocuments: vi.fn().mockReturnValue(true),
-      getAccessibleDocumentIds: vi.fn().mockReturnValue(["doc-1"])
+      getAccessibleDocumentIds: vi.fn().mockReturnValue(["doc-public", "doc-project"])
     } as unknown as KnowledgeDocumentService;
     const service = new CustomerAnalysisService(crmClient, ragflowClient, auditLog, {
       datasetId: "pas-v0",
@@ -99,7 +99,7 @@ describe("CustomerAnalysisService", () => {
       datasetId: "pas-v0",
       query: expect.stringContaining("华信精工"),
       topK: 5,
-      allowedDocumentIds: ["doc-1"]
+      allowedDocumentIds: ["doc-public", "doc-project"]
     });
     expect(auditLog.list()).toEqual(
       expect.arrayContaining([

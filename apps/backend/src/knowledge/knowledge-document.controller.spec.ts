@@ -1,3 +1,4 @@
+import { ForbiddenException } from "@nestjs/common";
 import { describe, expect, it, vi } from "vitest";
 import type { AuthenticatedUser } from "../auth/auth.types";
 import { KnowledgeDocumentController } from "./knowledge-document.controller";
@@ -49,6 +50,18 @@ describe("KnowledgeDocumentController", () => {
     expect(service.updateTags).toHaveBeenCalledWith(request.user, "doc-1", ["IP-Guard"]);
     expect(service.setEnabled).toHaveBeenCalledWith(request.user, "doc-1", false, "duplicate");
     expect(service.requestReparse).toHaveBeenCalledWith(request.user, "doc-1", "parser config changed");
+  });
+
+  it("preserves centralized document-access rejections", () => {
+    const service = {
+      getDocument: vi.fn().mockImplementation(() => {
+        throw new ForbiddenException("document is not visible to user");
+      })
+    } as unknown as KnowledgeDocumentService;
+    const controller = new KnowledgeDocumentController(service);
+
+    expect(() => controller.get(request, "doc-restricted")).toThrow(ForbiddenException);
+    expect(service.getDocument).toHaveBeenCalledWith(request.user, "doc-restricted");
   });
 });
 

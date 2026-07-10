@@ -1,6 +1,8 @@
-import { ForbiddenException, NotFoundException } from "@nestjs/common";
+import { BadRequestException, ForbiddenException, NotFoundException } from "@nestjs/common";
 import type { AuditLogService } from "../audit/audit-log.service";
-import type { AuthenticatedUser } from "../auth/auth.types";
+import type { AuthenticatedUser, UserRole } from "../auth/auth.types";
+import type { OrganizationService } from "../organization/organization.service";
+import { DEFAULT_ORGANIZATION_UNIT_IDS } from "../organization/organization.types";
 import type { PersistenceSink } from "../persistence/persistence-sink";
 import type {
   KnowledgeDocument,
@@ -24,13 +26,20 @@ export class KnowledgeDocumentService {
 
   constructor(
     private readonly auditLog: AuditLogService,
-    private readonly sink?: PersistenceSink
+    private readonly sink: PersistenceSink | undefined,
+    private readonly organizationService: OrganizationService
   ) {}
 
   seed(documents: KnowledgeDocument[]): void {
     for (const document of documents) {
       if (!this.documents.has(document.documentId)) {
-        this.documents.set(document.documentId, cloneDocument(document));
+        this.documents.set(
+          document.documentId,
+          cloneDocument({
+            ...document,
+            visibility: normalizeVisibility(document.visibility, true)
+          })
+        );
       }
     }
   }
@@ -42,12 +51,12 @@ export class KnowledgeDocumentService {
   getAccessibleDocumentIds(user: AuthenticatedUser): string[] {
     return [...this.documents.values()]
       .filter((document) => document.enabled && document.parseStatus === "done")
-      .filter((document) => isVisibleToUser(user, document))
+      .filter((document) => this.canReadDocument(user, document))
       .map((document) => document.documentId);
   }
 
   upsertDocument(user: AuthenticatedUser, request: UpsertKnowledgeDocumentRequest): KnowledgeDocument {
-    assertOperator(user);
+    this.assertCanMaintain(user, request.documentId);
     const current = this.documents.get(request.documentId);
     const now = nowIso();
     const normalized = normalizeRequest(request);
@@ -64,9 +73,10 @@ export class KnowledgeDocumentService {
   }
 
   listDocuments(user: AuthenticatedUser, filter: KnowledgeDocumentListFilter = {}): KnowledgeDocument[] {
+    const canMaintain = this.canMaintain(user);
     return [...this.documents.values()]
-      .filter((document) => (user.role === "sales" ? document.enabled && document.parseStatus === "done" : true))
-      .filter((document) => isVisibleToUser(user, document))
+      .filter((document) => canMaintain || (document.enabled && document.parseStatus === "done"))
+      .filter((document) => this.canReadDocument(user, document))
       .filter((document) => (filter.parseStatus ? document.parseStatus === filter.parseStatus : true))
       .filter((document) => (filter.enabled === undefined ? true : document.enabled === filter.enabled))
       .filter((document) => (filter.product ? document.product === filter.product : true))
@@ -79,17 +89,19 @@ export class KnowledgeDocumentService {
     if (!document) {
       throw new NotFoundException("knowledge document not found");
     }
-    if (user.role === "sales" && (!document.enabled || document.parseStatus !== "done")) {
+    if (!this.canMaintain(user) && document.ownerUserId !== user.userId && (!document.enabled || document.parseStatus !== "done")) {
+      this.recordDenied(user, documentId, "DOCUMENT_READ_FORBIDDEN");
       throw new ForbiddenException("enabled parsed document is required");
     }
-    if (!isVisibleToUser(user, document)) {
+    if (!this.canReadDocument(user, document)) {
+      this.recordDenied(user, documentId, "DOCUMENT_READ_FORBIDDEN");
       throw new ForbiddenException("document is not visible to user");
     }
     return cloneDocument(document);
   }
 
   updateTags(user: AuthenticatedUser, documentId: string, tags: string[]): KnowledgeDocument {
-    assertOperator(user);
+    this.assertCanMaintain(user, documentId);
     const document = this.getExistingDocument(documentId);
     const updated: KnowledgeDocument = {
       ...document,
@@ -101,7 +113,7 @@ export class KnowledgeDocumentService {
   }
 
   setEnabled(user: AuthenticatedUser, documentId: string, enabled: boolean, reason?: string): KnowledgeDocument {
-    assertOperator(user);
+    this.assertCanMaintain(user, documentId);
     const document = this.getExistingDocument(documentId);
     const updated: KnowledgeDocument = {
       ...document,
@@ -114,7 +126,7 @@ export class KnowledgeDocumentService {
   }
 
   requestReparse(user: AuthenticatedUser, documentId: string, reason?: string): KnowledgeDocument {
-    assertOperator(user);
+    this.assertCanMaintain(user, documentId);
     const document = this.getExistingDocument(documentId);
     const now = nowIso();
     const updated: KnowledgeDocument = {
@@ -149,6 +161,46 @@ export class KnowledgeDocumentService {
       failureReason: reason
     });
   }
+
+  private canReadDocument(user: AuthenticatedUser, document: KnowledgeDocument): boolean {
+    if (this.canMaintain(user) || document.ownerUserId === user.userId) {
+      return true;
+    }
+    if (document.visibility.scope === "public") {
+      return true;
+    }
+    if (document.visibility.scope === "roles") {
+      return document.visibility.roles.includes(user.role);
+    }
+    if (document.visibility.scope === "users") {
+      return document.visibility.userIds.includes(user.userId);
+    }
+    if (document.visibility.scope === "organization_units") {
+      return this.organizationService.isUserInAnyUnit(user, document.visibility.organizationUnitIds);
+    }
+    return this.organizationService.isUserInAnyProjectGroup(user, document.visibility.projectGroupIds);
+  }
+
+  private canMaintain(user: AuthenticatedUser): boolean {
+    return user.role === "admin" || this.organizationService.isActiveTechnicalMember(user);
+  }
+
+  private assertCanMaintain(user: AuthenticatedUser, documentId: string): void {
+    if (this.canMaintain(user)) return;
+    this.recordDenied(user, documentId, "DOCUMENT_MUTATION_FORBIDDEN");
+    throw new ForbiddenException("admin or active technical department membership is required");
+  }
+
+  private recordDenied(user: AuthenticatedUser, documentId: string, failureReason: string): void {
+    this.auditLog.record({
+      action: "knowledge",
+      actorUserId: user.userId,
+      objectType: "knowledge_document",
+      objectId: documentId,
+      result: "failure",
+      failureReason
+    });
+  }
 }
 
 function normalizeRequest(request: UpsertKnowledgeDocumentRequest): NormalizedKnowledgeDocumentInput {
@@ -163,7 +215,12 @@ function normalizeRequest(request: UpsertKnowledgeDocumentRequest): NormalizedKn
     hitCount: Math.max(0, request.hitCount ?? 0),
     badFeedbackCount: Math.max(0, request.badFeedbackCount ?? 0),
     tags: normalizeTags(request.tags ?? []),
-    visibility: request.visibility ?? { scope: "public" },
+    visibility: normalizeVisibility(
+      request.visibility ?? {
+        scope: "organization_units",
+        organizationUnitIds: [DEFAULT_ORGANIZATION_UNIT_IDS.technical]
+      }
+    ),
     failureReason: request.failureReason
   };
 }
@@ -172,22 +229,11 @@ function normalizeTags(tags: string[]): string[] {
   return [...new Set(tags.map((tag) => tag.trim()).filter(Boolean))];
 }
 
-function assertOperator(user: AuthenticatedUser): void {
-  if (user.role !== "admin" && user.role !== "technical") {
-    throw new ForbiddenException("admin or technical role is required");
-  }
-}
-
 function cloneDocument(document: KnowledgeDocument): KnowledgeDocument {
   return {
     ...document,
     tags: [...document.tags],
-    visibility:
-      document.visibility.scope === "roles"
-        ? { scope: "roles", roles: [...document.visibility.roles] }
-        : document.visibility.scope === "users"
-          ? { scope: "users", userIds: [...document.visibility.userIds] }
-          : { scope: "public" }
+    visibility: cloneVisibility(document.visibility)
   };
 }
 
@@ -195,12 +241,45 @@ function nowIso(): string {
   return new Date().toISOString();
 }
 
-function isVisibleToUser(user: AuthenticatedUser, document: KnowledgeDocument): boolean {
-  if (document.visibility.scope === "public") {
-    return true;
+function normalizeVisibility(
+  visibility: KnowledgeDocument["visibility"],
+  allowLegacyRole = false
+): KnowledgeDocument["visibility"] {
+  if (visibility.scope === "roles") {
+    return { scope: "roles", roles: normalizeRoleTargets(visibility.roles, allowLegacyRole) };
   }
-  if (document.visibility.scope === "roles") {
-    return document.visibility.roles.includes(user.role);
+  if (visibility.scope === "users") {
+    return { scope: "users", userIds: [...new Set(visibility.userIds)] };
   }
-  return document.visibility.userIds.includes(user.userId);
+  if (visibility.scope === "organization_units") {
+    return {
+      scope: "organization_units",
+      organizationUnitIds: [...new Set(visibility.organizationUnitIds)]
+    };
+  }
+  if (visibility.scope === "project_groups") {
+    return { scope: "project_groups", projectGroupIds: [...new Set(visibility.projectGroupIds)] };
+  }
+  return { scope: "public" };
+}
+
+function normalizeRoleTargets(roles: readonly unknown[], allowLegacyRole: boolean): UserRole[] {
+  const normalized = roles.map((role) => {
+    if (role === "presales" && allowLegacyRole) return "technical";
+    if (role === "sales" || role === "technical" || role === "admin") return role;
+    throw new BadRequestException(`unsupported document visibility role: ${String(role)}`);
+  });
+  return [...new Set(normalized)];
+}
+
+function cloneVisibility(visibility: KnowledgeDocument["visibility"]): KnowledgeDocument["visibility"] {
+  if (visibility.scope === "roles") return { scope: "roles", roles: [...visibility.roles] };
+  if (visibility.scope === "users") return { scope: "users", userIds: [...visibility.userIds] };
+  if (visibility.scope === "organization_units") {
+    return { scope: "organization_units", organizationUnitIds: [...visibility.organizationUnitIds] };
+  }
+  if (visibility.scope === "project_groups") {
+    return { scope: "project_groups", projectGroupIds: [...visibility.projectGroupIds] };
+  }
+  return { scope: "public" };
 }

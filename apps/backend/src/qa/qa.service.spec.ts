@@ -106,7 +106,7 @@ describe("QaService", () => {
       retrieveKnowledgeChunks: vi.fn().mockResolvedValue([
         {
           chunkId: "chunk-1",
-          documentId: "doc-allowed",
+          documentId: "doc-public",
           title: "IP-Guard 管理手册",
           content: "透明加密可对研发图纸进行自动加密保护。",
           score: 0.91,
@@ -116,7 +116,7 @@ describe("QaService", () => {
     } as unknown as RagflowClient;
     const documentService = {
       hasDocuments: vi.fn().mockReturnValue(true),
-      getAccessibleDocumentIds: vi.fn().mockReturnValue(["doc-allowed"])
+      getAccessibleDocumentIds: vi.fn().mockReturnValue(["doc-public", "doc-project"])
     } as unknown as KnowledgeDocumentService;
     const service = new QaService(ragflowClient, new LocalQaDraftProvider(), new QaAuditLogService(), {
       datasetId: "qa-v0",
@@ -130,7 +130,7 @@ describe("QaService", () => {
       datasetId: "qa-v0",
       query: "如何保护研发图纸？",
       topK: 3,
-      allowedDocumentIds: ["doc-allowed"]
+      allowedDocumentIds: ["doc-public", "doc-project"]
     });
   });
 

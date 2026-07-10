@@ -58,6 +58,14 @@ export type KnowledgeDocumentVisibility =
   | {
       scope: "users";
       userIds: string[];
+    }
+  | {
+      scope: "organization_units";
+      organizationUnitIds: string[];
+    }
+  | {
+      scope: "project_groups";
+      projectGroupIds: string[];
     };
 
 export type UpsertKnowledgeDocumentRequest = {

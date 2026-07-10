@@ -68,7 +68,7 @@ describe("RagflowController", () => {
     const client = {
       retrieveKnowledgeChunks: vi.fn().mockResolvedValue(chunks)
     } as unknown as RagflowClient;
-    const documents = createDocumentService(["doc-1"]);
+    const documents = createDocumentService(["doc-public", "doc-project"]);
     const controller = new RagflowController(client, { pasKbId: "pas-v0" }, documents);
 
     await expect(controller.search(request, { query: "IP-guard" })).resolves.toEqual({
@@ -79,7 +79,7 @@ describe("RagflowController", () => {
       datasetId: "pas-v0",
       query: "IP-guard",
       topK: undefined,
-      allowedDocumentIds: ["doc-1"]
+      allowedDocumentIds: ["doc-public", "doc-project"]
     });
   });
 
