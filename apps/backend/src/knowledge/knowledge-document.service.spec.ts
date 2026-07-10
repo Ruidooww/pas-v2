@@ -53,6 +53,19 @@ describe("KnowledgeDocumentService", () => {
     expect(service.listDocuments(createUser("sales"))).toEqual([createDocument("doc-ready", "done", true)]);
   });
 
+  it("preserves existing public visibility when metadata upsert omits visibility", () => {
+    const { service } = createDocumentService();
+    service.seed([createDocument("doc-public", "done", true)]);
+
+    const updated = service.upsertDocument(createUser("admin"), {
+      ...createRequest(),
+      documentId: "doc-public",
+      title: "Updated public document"
+    });
+
+    expect(updated.visibility).toEqual({ scope: "public" });
+  });
+
   it("updates tags, enablement, and reparse request metadata", () => {
     const { service } = createDocumentService();
     service.seed([createDocument("doc-1", "failed", true)]);

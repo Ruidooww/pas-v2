@@ -59,7 +59,7 @@ export class KnowledgeDocumentService {
     this.assertCanMaintain(user, request.documentId);
     const current = this.documents.get(request.documentId);
     const now = nowIso();
-    const normalized = normalizeRequest(request);
+    const normalized = normalizeRequest(request, current?.visibility);
     const document: KnowledgeDocument = {
       ...current,
       ...normalized,
@@ -203,7 +203,10 @@ export class KnowledgeDocumentService {
   }
 }
 
-function normalizeRequest(request: UpsertKnowledgeDocumentRequest): NormalizedKnowledgeDocumentInput {
+function normalizeRequest(
+  request: UpsertKnowledgeDocumentRequest,
+  currentVisibility?: KnowledgeDocument["visibility"]
+): NormalizedKnowledgeDocumentInput {
   return {
     documentId: request.documentId.trim(),
     title: request.title.trim(),
@@ -216,10 +219,11 @@ function normalizeRequest(request: UpsertKnowledgeDocumentRequest): NormalizedKn
     badFeedbackCount: Math.max(0, request.badFeedbackCount ?? 0),
     tags: normalizeTags(request.tags ?? []),
     visibility: normalizeVisibility(
-      request.visibility ?? {
-        scope: "organization_units",
-        organizationUnitIds: [DEFAULT_ORGANIZATION_UNIT_IDS.technical]
-      }
+      request.visibility ??
+        currentVisibility ?? {
+          scope: "organization_units",
+          organizationUnitIds: [DEFAULT_ORGANIZATION_UNIT_IDS.technical]
+        }
     ),
     failureReason: request.failureReason
   };
