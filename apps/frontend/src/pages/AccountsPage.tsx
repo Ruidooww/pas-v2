@@ -110,7 +110,7 @@ export function AccountsPage() {
               setDraft((current) => ({
                 ...current,
                 role,
-                organizationUnitId: DEFAULT_UNIT_BY_ROLE[role]
+                organizationUnitId: preferredUnitIdForRole(role, catalog.units) ?? ""
               }))
             }
           />
@@ -164,12 +164,7 @@ export function AccountsPage() {
                       virtual={false}
                       options={ROLE_OPTIONS}
                       value={user.role}
-                      onChange={(role) =>
-                        void updateUser(user.userId, {
-                          role,
-                          organizationUnitId: DEFAULT_UNIT_BY_ROLE[role]
-                        })
-                      }
+                      onChange={(role) => changeUserRole(user, role)}
                     />
                     <Select
                       aria-label={`${user.username} 组织单元`}
@@ -200,7 +195,7 @@ export function AccountsPage() {
         )}
       </Card>
 
-      <OrganizationAccessPanel onCatalogChange={setCatalog} />
+      <OrganizationAccessPanel onCatalogChange={handleCatalogChange} />
     </div>
   );
 
@@ -254,6 +249,30 @@ export function AccountsPage() {
     }
   }
 
+  function changeUserRole(user: PublicUser, role: UserRole): void {
+    const organizationUnitId = preferredUnitIdForRole(role, catalog.units);
+    if (!organizationUnitId) {
+      setError(`没有可用于 ${role} 角色的活动组织单元`);
+      return;
+    }
+    void updateUser(user.userId, { role, organizationUnitId });
+  }
+
+  function handleCatalogChange(nextCatalog: OrganizationCatalog): void {
+    setCatalog(nextCatalog);
+    setDraft((current) => {
+      const currentUnitIsValid = unitOptionsForRole(current.role, nextCatalog.units).some(
+        (option) => option.value === current.organizationUnitId
+      );
+      return currentUnitIsValid
+        ? current
+        : {
+            ...current,
+            organizationUnitId: preferredUnitIdForRole(current.role, nextCatalog.units) ?? ""
+          };
+    });
+  }
+
   function setDraftField<Key extends keyof CreateUserDraft>(key: Key, value: CreateUserDraft[Key]): void {
     setDraft((current) => ({ ...current, [key]: value }));
   }
@@ -271,17 +290,24 @@ function createEmptyDraft(): CreateUserDraft {
 }
 
 function unitOptionsForRole(role: UserRole, units: OrganizationUnit[]): Array<{ label: string; value: string }> {
-  const rootUnitId = role === "sales" ? DEFAULT_UNIT_BY_ROLE.sales : role === "technical" ? "org-technical" : undefined;
+  const rootUnitId =
+    role === "sales" ? DEFAULT_UNIT_BY_ROLE.sales : role === "technical" ? "org-technical" : DEFAULT_UNIT_BY_ROLE.admin;
   return units
-    .filter((unit) => unit.active && (!rootUnitId || isUnitInSubtree(unit.unitId, rootUnitId, units)))
+    .filter((unit) => isUnitInActiveSubtree(unit.unitId, rootUnitId, units))
     .map((unit) => ({ label: unit.name, value: unit.unitId }));
 }
 
-function isUnitInSubtree(unitId: string, rootUnitId: string, units: OrganizationUnit[]): boolean {
+function preferredUnitIdForRole(role: UserRole, units: OrganizationUnit[]): string | undefined {
+  const options = unitOptionsForRole(role, units);
+  const defaultUnitId = DEFAULT_UNIT_BY_ROLE[role];
+  return options.some((option) => option.value === defaultUnitId) ? defaultUnitId : options[0]?.value;
+}
+
+function isUnitInActiveSubtree(unitId: string, rootUnitId: string, units: OrganizationUnit[]): boolean {
   const byId = new Map(units.map((unit) => [unit.unitId, unit]));
   const visited = new Set<string>();
   let current = byId.get(unitId);
-  while (current && !visited.has(current.unitId)) {
+  while (current?.active && !visited.has(current.unitId)) {
     if (current.unitId === rootUnitId) return true;
     visited.add(current.unitId);
     current = current.parentUnitId ? byId.get(current.parentUnitId) : undefined;

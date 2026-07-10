@@ -75,6 +75,35 @@ describe("system pages", () => {
     });
   });
 
+  it("uses an active compatible unit when an account role changes", async () => {
+    const organizationUnits = createOrganizationUnits().map((unit) =>
+      unit.unitId === "org-technical-presales" ? { ...unit, active: false } : unit
+    );
+    const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      if (String(input) === "/api/internal/organization/units") {
+        return Promise.resolve(jsonResponse(organizationUnits));
+      }
+      return mockSystemFetch(input, init);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<AccountsPage />);
+    expect(await screen.findByText("Admin")).toBeTruthy();
+
+    fireEvent.mouseDown(screen.getByLabelText("admin 角色"));
+    await waitFor(() => expect(screen.getAllByRole("option").length).toBeGreaterThan(0));
+    fireEvent.click(screen.getAllByRole("option").find((option) => option.textContent === "technical")!);
+
+    await waitFor(() => {
+      const request = fetchMock.mock.calls.find(
+        ([path, init]) => path === "/api/internal/auth/users/admin-1" && init?.method === "PATCH"
+      );
+      expect(JSON.parse(String(request?.[1]?.body))).toEqual(
+        expect.objectContaining({ role: "technical", organizationUnitId: "org-technical" })
+      );
+    });
+  });
+
   it("keeps accounts visible when organization metadata fails to load", async () => {
     vi.stubGlobal(
       "fetch",
