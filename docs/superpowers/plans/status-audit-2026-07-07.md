@@ -7,8 +7,8 @@ Do not use historical checkbox state alone to decide what still needs coding.
 
 ## Evidence Checked
 
-- The M9 implementation head before this evidence update is
-  `3316c4e fix: prevent account form credential autofill`.
+- The M9 implementation and documentation baseline before this evidence update
+  is `da15ce6 docs: record M9 permission rollout`.
 - `pnpm test` passed: backend `58` files / `272` tests and frontend `13`
   files / `57` tests.
 - `pnpm typecheck`, `pnpm build`, `pnpm compose:config`, and
@@ -41,27 +41,39 @@ Do not use historical checkbox state alone to decide what still needs coding.
   frontend route/menu contract but is not a real PostgreSQL/RAGFlow/CRM E2E.
 - The `2026-07-10` live V0 smoke passed against newly rebuilt PAS containers at
   `http://127.0.0.1:18000`, real PostgreSQL, and the configured external
-  RAGFlow. CRM remained in mock mode, and missing approved export templates
-  were allowed only through the explicit `-AllowMissingExportTemplates` flag.
+  RAGFlow. CRM remained in mock mode. That earlier run allowed missing template
+  metadata through `-AllowMissingExportTemplates`; a later acceptance run
+  passed without that flag and rendered through all three current system
+  templates. Those templates are accepted only for the internal trial and are
+  not approved branded business templates.
 - The M9 live permission smoke used a temporary legacy database row and
   temporary API records. It verified migration to the Presales Team, all three
   Technical Department child teams maintaining documents, sales mutation
   rejection, project-authorized sales read, and no document-id leak to an
   unrelated sales user. Cleanup restored the original organization snapshot
   and removed all `m9-smoke-*` users and documents.
-- The current V0 smoke passed after M9. Candidate questions `Q001-Q005` returned
-  `answered=5`, `no_hit=0`, and `error=0` against real-mode RAGFlow.
+- The formal `2026-07-10` V0 technical run executed all 50 unique approved
+  candidate questions against real-mode RAGFlow at commit `da15ce6`. It returned
+  `answered=50`, `no_hit=0`, `error=0`, with five citations per question and
+  250 citations in total. The local ignored JSON and reviewer worksheet retain
+  every answer, citation, reviewer assignment, and pending human-review field.
 - Both HYYN application images were rebuilt from the M9 worktree. All four
   HYYN containers were healthy; `/api/health` and `/api/ragflow/health`
   returned `ok` through the frontend entry point.
+- The live Redis password is now persisted in the ignored local `.env`, and a
+  fresh Compose/runtime comparison found no critical configuration mismatch.
+  The localhost HTTP precheck intentionally uses `COOKIE_SECURE=false`; an
+  actual multi-user intranet trial must terminate HTTPS and restore
+  `COOKIE_SECURE=true`.
 - Browser checks passed at `1280x720` and `390x844`: account/organization and
   document-visibility pages had no horizontal overflow, clipped labels, or
   overlapping control groups. A discovered login-credential autofill issue in
   the new-account form was fixed and reverified with all three fields empty.
-- This is not formal go-live approval. The generated JSON has 50 unique
-  questions and a Technical Department reviewer is available, but the gate
-  still lacks per-question captured citations, reviewer decisions, and review
-  timestamps.
+- This is not formal go-live approval. The technical artifact now has 50 unique
+  questions and per-question citations, and a Technical Department reviewer is
+  assigned. The gate still lacks reviewer pass/fail decisions, review
+  timestamps, and a persisted regression run with `gateStatus=passed` and
+  `canGoLive=true`.
 
 ## Scope Interpretation
 
@@ -113,9 +125,9 @@ and GitHub PR history instead of flipping old checkboxes in place.
 
 ## Remaining Non-Code Or Deferred Inputs
 
-- Formal human-reviewed V0 50-question regression gate. The 50 generated
-  questions and Technical Department reviewer are available, but the run still
-  needs captured citations, per-question decisions, and review timestamps.
+- Formal human-reviewed V0 50-question regression gate. The technical run and
+  captured citations are available, but the reviewer must still record all 50
+  decisions and timestamps before submitting the persisted regression run.
 - Final V1 100-question regression gate.
 - Real CRM integration remains paused until the user reopens it and provides
   API documentation, auth method, test account, and sample customer records.
@@ -132,14 +144,14 @@ and GitHub PR history instead of flipping old checkboxes in place.
 - Frontend route-level code splitting for the current `1.15 MB` main chunk.
 - Broad CSS/inline-style restructuring remains deferred until a concrete UI
   maintenance problem or redesign pass.
-- Persist a strong `REDIS_PASSWORD` in the local/deployment secret store. The
-  live refresh used a process-only random value because `.env` still lacks it.
 
 ## Next Dispatch Guidance
 
-1. Persist the deployment secrets and turn the generated V0 50-question pool
-   into a reviewer-signed gate artifact before treating the project as
-   release-ready. The current export templates remain the trial baseline.
+1. Complete the Technical Department review of the captured V0 50-question
+   artifact and submit a passing regression run before treating the project as
+   release-ready. Local trial secrets are persisted; production secrets remain
+   an environment responsibility. The current export templates remain the
+   trial baseline.
 2. Keep code work on the current fake-data boundary unless the user provides
    real CRM, template, or source-data inputs.
 3. For UI changes, update both the frontend shell and
