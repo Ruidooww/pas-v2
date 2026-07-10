@@ -74,12 +74,16 @@ export class PersistenceSink implements OnModuleInit, OnModuleDestroy {
     });
     return rows.map((row) => {
       const role = normalizePersistedUserRole(row.role);
+      const organizationUnitId =
+        row.role === "presales"
+          ? defaultOrganizationUnitId(role)
+          : row.organizationUnitId ?? defaultOrganizationUnitId(role);
       return {
         userId: row.id,
         username: row.username,
         displayName: row.displayName,
         role,
-        organizationUnitId: row.organizationUnitId ?? defaultOrganizationUnitId(role),
+        organizationUnitId,
         projectGroupIds: row.projectGroupIds,
         passwordHash: row.passwordHash,
         active: row.active,

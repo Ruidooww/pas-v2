@@ -68,6 +68,33 @@ describe("PersistenceSink", () => {
     ]);
   });
 
+  it("moves persisted legacy presales users with an explicit unit into the technical presales team", async () => {
+    const findMany = vi.fn().mockResolvedValue([
+      {
+        id: "legacy-presales-sales-1",
+        username: "legacy-sales@example.com",
+        displayName: "Legacy Presales",
+        role: "presales",
+        organizationUnitId: "org-sales",
+        projectGroupIds: [],
+        passwordHash: "hash",
+        active: true,
+        createdAt: new Date("2026-07-01T00:00:00.000Z")
+      }
+    ]);
+    const sink = new PersistenceSink("");
+    Object.defineProperty(sink, "client", {
+      value: { user: { findMany } }
+    });
+
+    await expect(sink.loadUsers()).resolves.toEqual([
+      expect.objectContaining({
+        role: "technical",
+        organizationUnitId: "org-technical-presales"
+      })
+    ]);
+  });
+
   it("limits hydrated proposal job snapshots by default", async () => {
     const findMany = vi.fn().mockResolvedValue([]);
     const sink = new PersistenceSink("");

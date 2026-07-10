@@ -107,6 +107,9 @@ export class OrganizationService {
   }
 
   validateUserMembership(role: OrganizationRole, organizationUnitId: string, projectGroupIds: string[]): void {
+    if (!isOrganizationRole(role)) {
+      throw new BadRequestException(`unsupported organization role: ${role}`);
+    }
     this.findActiveUnit(organizationUnitId);
     if (role === "technical" && !this.isUnitInActiveSubtree(organizationUnitId, DEFAULT_ORGANIZATION_UNIT_IDS.technical)) {
       throw new BadRequestException("technical role requires Technical Department membership");
@@ -196,6 +199,10 @@ export class OrganizationService {
       failureReason: reason
     });
   }
+}
+
+function isOrganizationRole(role: string): role is OrganizationRole {
+  return role === "sales" || role === "technical" || role === "admin";
 }
 
 function requireName(value: string): string {

@@ -66,6 +66,29 @@ describe("restart hydration safety", () => {
     );
   });
 
+  it("moves hydrated presales users with an explicit legacy unit into the technical presales team", () => {
+    const userStore = new InMemoryUserStore();
+    userStore.seed([
+      {
+        userId: "legacy-presales-sales-1",
+        username: "legacy-sales@example.com",
+        displayName: "Legacy Presales",
+        role: "presales",
+        organizationUnitId: DEFAULT_ORGANIZATION_UNIT_IDS.sales,
+        passwordHash: "hash",
+        active: true,
+        createdAt: "2026-07-01T00:00:00.000Z"
+      } as never
+    ]);
+
+    expect(userStore.findById("legacy-presales-sales-1")).toEqual(
+      expect.objectContaining({
+        role: "technical",
+        organizationUnitId: DEFAULT_ORGANIZATION_UNIT_IDS.technicalPresales
+      })
+    );
+  });
+
   it("seed marks hydrated running proposal jobs as failed and retryable", () => {
     const store = new ProposalJobStoreService();
     const interrupted: ProposalJob = {

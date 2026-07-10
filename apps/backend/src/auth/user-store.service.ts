@@ -103,10 +103,14 @@ function normalizeHydratedUser(record: UserRecord): UserRecord {
   if (role !== "sales" && role !== "technical" && role !== "admin") {
     throw new Error(`Unsupported user role: ${legacy.role}`);
   }
+  const organizationUnitId =
+    legacy.role === "presales"
+      ? defaultOrganizationUnitId(role)
+      : legacy.organizationUnitId || defaultOrganizationUnitId(role);
   return {
     ...record,
     role,
-    organizationUnitId: legacy.organizationUnitId || defaultOrganizationUnitId(role),
+    organizationUnitId,
     projectGroupIds: normalizeProjectGroupIds(legacy.projectGroupIds ?? [])
   };
 }

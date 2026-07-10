@@ -190,6 +190,43 @@ describe("AuthService", () => {
     ).rejects.toBeInstanceOf(BadRequestException);
   });
 
+  it("rejects unsupported runtime roles when creating users", async () => {
+    const { service } = createAuthService();
+    const admin = await service.bootstrapAdmin({
+      username: "admin@example.com",
+      password: "admin-secret",
+      displayName: "V0 Admin"
+    });
+
+    await expect(
+      service.createUser(admin, {
+        username: "legacy-role@example.com",
+        password: "user-secret",
+        displayName: "Legacy Role",
+        role: "presales" as never
+      })
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it("rejects unsupported runtime roles when updating users", async () => {
+    const { service } = createAuthService();
+    const admin = await service.bootstrapAdmin({
+      username: "admin@example.com",
+      password: "admin-secret",
+      displayName: "V0 Admin"
+    });
+    const sales = await service.createUser(admin, {
+      username: "sales@example.com",
+      password: "sales-secret",
+      displayName: "Sales User",
+      role: "sales"
+    });
+
+    expect(() => service.updateUser(admin, sales.userId, { role: "unsupported" as never })).toThrow(
+      BadRequestException
+    );
+  });
+
   it("keeps at least one active admin account", async () => {
     const { service } = createAuthService();
     const admin = await service.bootstrapAdmin({
