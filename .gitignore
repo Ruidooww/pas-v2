@@ -24,6 +24,7 @@ coverage/
 .next/
 out/
 .codegraph/
+.worktrees/
 
 # Package manager caches
 .pnpm-store/
