@@ -50,6 +50,7 @@ POSTGRES_USER=pas
 POSTGRES_PASSWORD=<local strong password>
 
 JWT_SECRET=<local strong random secret>
+COOKIE_SECURE=true
 AUTH_BOOTSTRAP_ADMIN_USERNAME=<initial admin username>
 AUTH_BOOTSTRAP_ADMIN_PASSWORD=<initial admin password>
 AUTH_BOOTSTRAP_ADMIN_DISPLAY_NAME=<initial admin display name>
@@ -71,6 +72,32 @@ FEISHU_BOT_ENABLED=false
 Approved export templates must follow `docs/deployment/v0-export-template-contract.md`.
 
 Do not paste real secrets into issue comments, PR descriptions, or chat. Keep them in local `.env` or secret managers.
+
+## TLS And Browser Security
+
+For trial and production environments, terminate HTTPS at a reverse proxy or load balancer in front of `pas-frontend`. Expose only that HTTPS entry point; do not publish `pas-backend` directly to clients.
+
+Keep this setting for every HTTPS deployment:
+
+```text
+COOKIE_SECURE=true
+```
+
+Set `COOKIE_SECURE=false` only for a local HTTP-only environment such as `http://127.0.0.1:18000`. That setting is not release-ready because the browser can send the session cookie over an unencrypted connection.
+
+The frontend Nginx container emits Content Security Policy, clickjacking, MIME sniffing, referrer, and browser-permission headers. Configure `Strict-Transport-Security` at the HTTPS terminator, where the proxy can confirm that the public request used TLS.
+
+Verify the public HTTPS response before release:
+
+```powershell
+$headers = (Invoke-WebRequest "https://<pas-host>/").Headers
+$headers["Content-Security-Policy"]
+$headers["X-Frame-Options"]
+$headers["X-Content-Type-Options"]
+$headers["Referrer-Policy"]
+$headers["Permissions-Policy"]
+$headers["Strict-Transport-Security"]
+```
 
 ## Start PAS
 

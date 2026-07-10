@@ -74,7 +74,10 @@ Before V1 release approval:
 - `pnpm -r test` passes.
 - `pnpm -r typecheck` passes.
 - `pnpm -r build` passes.
-- `pnpm compose:config` validates only the four PAS services and `HYYN-*` containers.
+- `pnpm compose:config` validates only the four PAS services and `HYYN-*` containers, the secure cookie default, and frontend Nginx security headers.
+- The public entry point terminates HTTPS in front of `pas-frontend`; `pas-backend` is not exposed directly.
+- `COOKIE_SECURE=true` is set for the release environment. `false` is allowed only for local HTTP testing.
+- The public response includes CSP, `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, and TLS-terminator `Strict-Transport-Security` headers.
 - Browser smoke confirms login and the V1 operations pages load.
 - RAGFlow health is reachable when `RAGFLOW_CLIENT_MODE=real`.
 - Real company templates are uploaded or the release notes explicitly mark templates as temporary.

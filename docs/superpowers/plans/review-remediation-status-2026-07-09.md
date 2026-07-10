@@ -8,10 +8,10 @@ already-fixed items are not re-opened.
 ## Evidence Checked
 
 - Current branch: `main`.
-- Current remediation head when this file was written:
-  `0324e24 fix: validate proposal human inputs`.
-- Worktree status before this document change: only unrelated untracked
-  `design-qa.md`.
+- Current remediation head before the deployment hardening pass:
+  `fb7f880 fix: harden session auth flow`.
+- Unrelated worktree content before this pass: only untracked `design-qa.md`.
+  The deployment files changed alongside this document belong to this pass.
 - Review source checked:
   `C:\Users\Ruidoww\Desktop\【新】pas-v2-纯代码质量审查.md`.
 - Existing project status anchor checked:
@@ -38,6 +38,7 @@ already-fixed items are not re-opened.
 | `7264e91` | Fixed | Audit persistence writes are batched with `createMany`. |
 | `20279bb` | Fixed | Snapshot hydration uses a default `take: 1000` limit. |
 | `0324e24` | Fixed | Proposal `humanInputs` are validated at the request boundary. |
+| `fb7f880` | Fixed | Frontend sessions use `httpOnly` cookies with CSRF protection. |
 
 ## Review Item Status
 
@@ -53,8 +54,8 @@ already-fixed items are not re-opened.
 | 8 | QA `pre-wrap` XSS concern | Downgraded | Current React rendering escapes text and does not use `dangerouslySetInnerHTML`; do not change now. |
 | 9 | Internal APIs only use bearer token, no extra protection | Fixed by auth hardening pass | Internal routes now accept `httpOnly` session cookie auth with CSRF on unsafe cookie requests while retaining Bearer compatibility for scripts. |
 | 10 | Token stored in `localStorage` | Fixed by auth hardening pass | Backend issues session/CSRF cookies; frontend boots from `/api/me`, sends credentials/CSRF, and no longer stores login tokens. |
-| 11 | Frontend HTTP without TLS | Open deployment task | Keep in deployment/SOP or reverse-proxy work; not an app-code patch. |
-| 12 | `helmet()` without CSP | Fixed for backend by `54d1261` | Frontend Nginx security headers can be handled with deployment hardening. |
+| 11 | Frontend HTTP without TLS | Fixed by deployment hardening pass | Deployment SOP requires HTTPS termination in front of `pas-frontend`, keeps the backend private, and defaults session cookies to secure transport. |
+| 12 | `helmet()` without CSP | Fixed by `54d1261` and deployment hardening pass | Backend Helmet remains configured; frontend Nginx now emits CSP and the required browser security headers. |
 | 13 | File name filtering and path safety | Fixed by `7475ced` | No further action in this pass. |
 | 14 | Persistence module marked `@Global()` | Fixed by `8e3b960` | No further action in this pass. |
 | 15 | Proposal generation runs synchronously in HTTP request | Fixed by `32eeb47` | BullMQ/SSE remains a later scale-up task, not required for V0. |
@@ -71,11 +72,7 @@ already-fixed items are not re-opened.
 
 ## Remaining Dispatch Queue
 
-1. Deployment hardening.
-   Document or implement TLS termination and frontend Nginx security headers
-   in the deployment lane, not in normal backend/frontend feature commits.
-
-2. Broad UI/style cleanup.
+1. Broad UI/style cleanup.
    Defer CSS Modules/Tailwind-style restructuring until there is a concrete UI
    maintenance problem or redesign pass.
 

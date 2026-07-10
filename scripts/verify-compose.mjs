@@ -12,6 +12,13 @@ const forbiddenCredentialDefaults = [
   { pattern: /change-me/i, label: "change-me placeholder password" },
   { pattern: /redis:\/\/pas-redis:6379/i, label: "unauthenticated Redis URL" }
 ];
+const requiredFrontendHeaders = [
+  "Content-Security-Policy",
+  "X-Frame-Options",
+  "X-Content-Type-Options",
+  "Referrer-Policy",
+  "Permissions-Policy"
+];
 
 for (const relativePath of ["docker-compose.yml", ".env.example"]) {
   const content = readFileSync(path.join(projectRoot, relativePath), "utf8");
@@ -20,6 +27,20 @@ for (const relativePath of ["docker-compose.yml", ".env.example"]) {
     console.error(`Forbidden compose credential default in ${relativePath}: ${match.label}`);
     process.exit(1);
   }
+}
+
+const frontendNginxConfig = readFileSync(path.join(projectRoot, "apps/frontend/nginx.conf"), "utf8");
+for (const header of requiredFrontendHeaders) {
+  if (!new RegExp(`add_header\\s+${header}\\s+`, "i").test(frontendNginxConfig)) {
+    console.error(`Expected frontend nginx.conf to set ${header}.`);
+    process.exit(1);
+  }
+}
+
+const composeContent = readFileSync(path.join(projectRoot, "docker-compose.yml"), "utf8");
+if (!/COOKIE_SECURE:\s+\$\{COOKIE_SECURE:-true\}/.test(composeContent)) {
+  console.error("Expected backend compose environment to default COOKIE_SECURE=true.");
+  process.exit(1);
 }
 
 const composeEnv = {

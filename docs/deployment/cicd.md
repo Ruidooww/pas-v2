@@ -16,6 +16,8 @@ pnpm build
 pnpm compose:config
 ```
 
+`pnpm compose:config` also enforces the frontend Nginx security headers and the compose default `COOKIE_SECURE=true`, so a deployment security regression fails before image publication.
+
 Docker images are built through:
 
 ```powershell
