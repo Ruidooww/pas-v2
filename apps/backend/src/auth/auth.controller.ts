@@ -1,4 +1,6 @@
 import { BadRequestException, Body, Controller, Get, Inject, Param, Patch, Post, Req, Res } from "@nestjs/common";
+import { Throttle } from "@nestjs/throttler";
+import { createThrottleConfig } from "../throttle.config";
 import { clearAuthCookies, resolveAccessToken, writeAuthCookies } from "./auth-session";
 import { AUTH_SERVICE } from "./auth.tokens";
 import { AuthService } from "./auth.service";
@@ -23,10 +25,13 @@ type RequestWithUser = {
 
 type CookieResponse = NonNullable<Parameters<typeof writeAuthCookies>[0]>;
 
+const throttleConfig = createThrottleConfig();
+
 @Controller()
 export class AuthController {
   constructor(@Inject(AUTH_SERVICE) private readonly authService: AuthService) {}
 
+  @Throttle({ default: { limit: throttleConfig.loginLimit, ttl: throttleConfig.ttlMs } })
   @Post("api/auth/login")
   async login(@Body() body: LoginRequest, @Res({ passthrough: true }) response?: CookieResponse): Promise<LoginResponse> {
     if (!body.username?.trim() || !body.password) {
