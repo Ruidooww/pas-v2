@@ -85,18 +85,24 @@ export function AccountsPage() {
         <div className="account-create-grid">
           <Input
             aria-label="账号"
+            autoComplete="off"
+            name="new-account-username"
             placeholder="账号"
             value={draft.username}
             onChange={(event) => setDraftField("username", event.target.value)}
           />
           <Input
             aria-label="姓名"
+            autoComplete="off"
+            name="new-account-display-name"
             placeholder="姓名"
             value={draft.displayName}
             onChange={(event) => setDraftField("displayName", event.target.value)}
           />
           <Input.Password
             aria-label="初始密码"
+            autoComplete="new-password"
+            name="new-account-password"
             placeholder="初始密码"
             value={draft.password}
             onChange={(event) => setDraftField("password", event.target.value)}

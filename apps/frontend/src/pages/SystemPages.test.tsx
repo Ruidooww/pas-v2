@@ -40,6 +40,17 @@ describe("system pages", () => {
     await waitFor(() => expect(screen.getByRole("switch", { name: "admin 启用" })).not.toBeChecked());
   });
 
+  it("keeps login credentials out of the new-account form", async () => {
+    vi.stubGlobal("fetch", vi.fn(mockSystemFetch));
+
+    render(<AccountsPage />);
+    expect(await screen.findByText("Admin")).toBeTruthy();
+
+    expect(screen.getByLabelText("账号")).toHaveAttribute("autocomplete", "off");
+    expect(screen.getByLabelText("姓名")).toHaveAttribute("autocomplete", "off");
+    expect(screen.getByLabelText("初始密码")).toHaveAttribute("autocomplete", "new-password");
+  });
+
   it("uses current roles and restricts technical account membership to the technical subtree", async () => {
     const fetchMock = vi.fn(mockSystemFetch);
     vi.stubGlobal("fetch", fetchMock);
