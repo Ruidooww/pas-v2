@@ -311,6 +311,13 @@ select,
   padding: 22px 26px 30px;
 }
 
+.pas-page-loading {
+  display: flex;
+  min-height: 240px;
+  align-items: center;
+  justify-content: center;
+}
+
 .pas-page-stack {
   width: 100%;
 }

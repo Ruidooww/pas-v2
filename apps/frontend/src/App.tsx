@@ -1,26 +1,29 @@
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { BellOutlined, DownOutlined, SearchOutlined } from "@ant-design/icons";
 import { Avatar, Button, ConfigProvider, Dropdown, Input, Layout, Menu, Spin, Typography } from "antd";
 import { api, clearToken } from "./api";
 import { clearCustomerCache } from "./customer-api";
-import { AccountsPage } from "./pages/AccountsPage";
-import { AuditLogsPage } from "./pages/AuditLogsPage";
-import { BusinessFlowsPage, type BusinessFlowPageMode } from "./pages/BusinessFlowsPage";
-import { CustomerManagementPage } from "./pages/CustomerManagementPage";
-import { DataAttachmentsPage } from "./pages/DataAttachmentsPage";
-import { ExportJobsPage } from "./pages/ExportJobsPage";
-import { ExportTemplatesPage } from "./pages/ExportTemplatesPage";
-import { FeedbackPage } from "./pages/FeedbackPage";
+import {
+  AccountsPage,
+  AuditLogsPage,
+  BusinessFlowsPage,
+  CustomerManagementPage,
+  DataAttachmentsPage,
+  ExportJobsPage,
+  ExportTemplatesPage,
+  FeedbackPage,
+  KnowledgeBlocksPage,
+  KnowledgeDocumentsPage,
+  MenuConfigPage,
+  PlatformPage,
+  ProposalLibraryPage,
+  QaPage,
+  SystemSettingsPage,
+  WorkbenchOverviewPage,
+  WorkbenchPage
+} from "./lazy-pages";
+import type { BusinessFlowPageMode } from "./pages/BusinessFlowsPage";
 import { LoginPage } from "./pages/LoginPage";
-import { KnowledgeBlocksPage } from "./pages/KnowledgeBlocksPage";
-import { KnowledgeDocumentsPage } from "./pages/KnowledgeDocumentsPage";
-import { MenuConfigPage } from "./pages/MenuConfigPage";
-import { PlatformPage } from "./pages/PlatformPage";
-import { ProposalLibraryPage } from "./pages/ProposalLibraryPage";
-import { QaPage } from "./pages/QaPage";
-import { SystemSettingsPage } from "./pages/SystemSettingsPage";
-import { WorkbenchPage } from "./pages/WorkbenchPage";
-import { WorkbenchOverviewPage } from "./pages/WorkbenchOverviewPage";
 import {
   buildAntMenuItems,
   buildPrimaryMenuItems,
@@ -292,7 +295,9 @@ export function App() {
               </div>
             )}
             <Layout.Content className="pas-content">
-              {renderActiveContent(activeView, user, activeSecondaryKey)}
+              <Suspense fallback={<PageLoading />}>
+                {renderActiveContent(activeView, user, activeSecondaryKey)}
+              </Suspense>
             </Layout.Content>
           </Layout>
         </Layout>
@@ -307,6 +312,14 @@ export function App() {
     const nextPrimary = findPrimaryBySecondary(nextMenu, nextActiveKey);
     setOpenKeys(nextPrimary ? [primaryKeyToMenuKey(nextPrimary.key)] : []);
   }
+}
+
+function PageLoading() {
+  return (
+    <div className="pas-page-loading" role="status" aria-label="页面加载中">
+      <Spin size="large" />
+    </div>
+  );
 }
 
 function secondaryKeyForPath(menu: EffectivePrimaryMenuItem[], pathname: string): SecondaryMenuKey | null {

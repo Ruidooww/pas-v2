@@ -147,7 +147,7 @@ describe("App", () => {
     fireEvent.click(opportunityMenuItem as HTMLElement);
 
     expect(await screen.findByRole("heading", { name: "商机推进" })).toBeTruthy();
-    expect(screen.getByText("业务记录")).toBeTruthy();
+    expect(await screen.findByText("业务记录")).toBeTruthy();
     expect(screen.queryByText("会议")).toBeNull();
     expect(screen.queryByText("合同")).toBeNull();
   });
@@ -181,7 +181,7 @@ describe("App", () => {
     fireEvent.click(await screen.findByText("导出中心"));
 
     expect((await screen.findAllByRole("heading", { name: "导出中心" })).length).toBeGreaterThan(0);
-    expect(screen.getByText("导出任务")).toBeTruthy();
+    expect(await screen.findByText("导出任务")).toBeTruthy();
     expect(screen.queryByRole("heading", { name: "模板运营" })).toBeNull();
   });
 

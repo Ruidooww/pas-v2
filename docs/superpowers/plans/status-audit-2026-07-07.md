@@ -7,14 +7,16 @@ Do not use historical checkbox state alone to decide what still needs coding.
 
 ## Evidence Checked
 
-- The M9 implementation and documentation baseline before this evidence update
-  is `da15ce6 docs: record M9 permission rollout`.
-- `pnpm test` passed: backend `58` files / `272` tests and frontend `13`
-  files / `57` tests.
+- The M9 implementation and internal-trial acceptance baseline before this
+  evidence update is `2c99eff docs: add internal trial acceptance evidence`.
+- `pnpm test` passed: backend `58` files / `272` tests and frontend `15`
+  files / `59` tests.
 - `pnpm typecheck`, `pnpm build`, `pnpm compose:config`, and
   `pnpm test:smoke` passed.
-- The frontend build still reports one non-blocking bundle warning: the main
-  JavaScript chunk is about `1.17 MB` before gzip (`359.97 kB` after gzip).
+- Frontend authenticated pages now load through route-level chunks. The build
+  emits 33 JavaScript chunks; the entry chunk is `145.44 kB` before gzip
+  (`47.35 kB` after gzip), the largest shared chunk is `545.56 kB`, and the
+  previous 800 kB bundle warning is gone.
 - M9 seeds `Company`, `Sales Department`, and `Technical Department`, with
   Presales, Technical, and After-sales child teams under the Technical
   Department. Runtime roles are now only `sales`, `technical`, and `admin`.
@@ -69,6 +71,10 @@ Do not use historical checkbox state alone to decide what still needs coding.
   document-visibility pages had no horizontal overflow, clipped labels, or
   overlapping control groups. A discovered login-credential autofill issue in
   the new-account form was fixed and reverified with all three fields empty.
+- Route-splitting browser checks passed at the same desktop and mobile sizes:
+  authenticated navigation loaded the account and audit chunks, the loading
+  fallback cleared, and neither viewport introduced document-level horizontal
+  overflow.
 - This is not formal go-live approval. The technical artifact now has 50 unique
   questions and per-question citations, and a Technical Department reviewer is
   assigned. The gate still lacks reviewer pass/fail decisions, review
@@ -100,7 +106,7 @@ long-range business capabilities.
 | V1 knowledge operations | Code-ready; M9 permission model verified | The active Technical Department tree maintains knowledge. Document metadata supports five visibility scopes and applies fail-closed retrieval filtering. |
 | V2 business flow | Code-ready | Opportunity, meeting, contract/after-sales, feedback, and metrics paths are implemented on fake/internal data. File/data ingestion is explicitly deferred. |
 | V3 platform | Code-ready | Platform dashboard/service/controller/store code exists. User-facing menu now exposes the platform access surface under system settings. |
-| Navigation/UI shell | Code-ready | Primary menu groups, left secondary menus, horizontal tertiary tabs, admin menu configuration, polished empty states, deprecated-list cleanup, and deprecated-Alert cleanup are implemented and smoke-covered. |
+| Navigation/UI shell | Code-ready | Primary menu groups, left secondary menus, horizontal tertiary tabs, lazy authenticated page chunks with a stable loading state, admin menu configuration, polished empty states, deprecated-list cleanup, and deprecated-Alert cleanup are implemented and smoke-covered. |
 | System/admin pages | Code-ready | Account permissions now include active role-compatible organization units and project groups. Organization management, audit logs, data/attachments, menu config, runtime config, and platform access have backend-backed pages or smoke endpoints. |
 
 ## Historical Plan Files
@@ -141,7 +147,6 @@ and GitHub PR history instead of flipping old checkboxes in place.
   security headers, trusted proxy handling, and TLS termination guidance are
   now implemented; registry credentials and the actual HTTPS terminator remain
   environment work.
-- Frontend route-level code splitting for the current `1.15 MB` main chunk.
 - Broad CSS/inline-style restructuring remains deferred until a concrete UI
   maintenance problem or redesign pass.
 
