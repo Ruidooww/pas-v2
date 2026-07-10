@@ -142,6 +142,27 @@ describe("AuthService", () => {
     );
   });
 
+  it("lets technical knowledge maintainers list users without granting account updates", async () => {
+    const { service } = createAuthService();
+    const admin = await service.bootstrapAdmin({
+      username: "admin@example.com",
+      password: "admin-secret",
+      displayName: "V0 Admin"
+    });
+    const technical = await service.createUser(admin, {
+      username: "technical@example.com",
+      password: "technical-secret",
+      displayName: "Technical User",
+      role: "technical"
+    });
+
+    expect(service.listUsers(technical).map((user) => user.username)).toEqual([
+      "admin@example.com",
+      "technical@example.com"
+    ]);
+    expect(() => service.updateUser(technical, admin.userId, { active: false })).toThrow(ForbiddenException);
+  });
+
   it("rejects non-admin user listing and updates", async () => {
     const { service, auditLog } = createAuthService();
     const admin = await service.bootstrapAdmin({

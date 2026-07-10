@@ -83,7 +83,7 @@ export class AuthService {
   }
 
   listUsers(actor: AuthenticatedUser): PublicUser[] {
-    this.requireAdmin(actor, "user_listed", "list");
+    this.requireUserReader(actor);
     return this.userStore
       .listUsers()
       .map(toPublicUser)
@@ -205,6 +205,19 @@ export class AuthService {
       failureReason: "INSUFFICIENT_ROLE"
     });
     throw new ForbiddenException("admin role is required");
+  }
+
+  private requireUserReader(actor: AuthenticatedUser): void {
+    if (actor.role === "admin" || actor.role === "technical") return;
+    this.auditLog.record({
+      action: "user_listed",
+      actorUserId: actor.userId,
+      objectType: "user",
+      objectId: "list",
+      result: "failure",
+      failureReason: "INSUFFICIENT_ROLE"
+    });
+    throw new ForbiddenException("technical or admin role is required");
   }
 
   private assertActiveAdminRemains(current: UserRecord, request: UpdateUserRequest): void {
