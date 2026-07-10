@@ -45,13 +45,15 @@ The 100 questions should cover:
 - document visibility and role-boundary cases
 - template selection and deliverable checks
 - feedback-to-knowledge correction flow
+- Technical Department hierarchy, inactive-unit revocation, and project-group membership
+- all five document visibility scopes and sales/technical/admin permission boundaries
 
 ## Case Shape
 
 | Field | Required | Description |
 | --- | --- | --- |
 | `questionId` | Yes | Stable id such as `V1-Q001`. |
-| `question` | Yes | Real user, sales, presales, or administrator question. |
+| `question` | Yes | Real user, sales, technical, or administrator question. |
 | `expectedEvidence` | Yes | What answer evidence or operational behavior must be present. |
 | `passed` | Yes | `true` only after human review. |
 | `failureReason` | Required on fail | Short reason such as no hit, missing citation, permission leak, wrong template, or weak evidence. |

@@ -7,17 +7,23 @@ Do not use historical checkbox state alone to decide what still needs coding.
 
 ## Evidence Checked
 
-- The implementation head before this audit update is
-  `f6e9b2f fix: restore RAGFlow regression retrieval` on `main`.
-- `main` through `f4e2db5` was pushed to `origin/main` before this retrieval
-  and regression follow-up.
-- GitHub returned no open issues and no open pull requests on `2026-07-10`.
-- `pnpm test` passed: backend `55` files / `236` tests and frontend `12`
-  files / `43` tests.
+- The M9 implementation head before this evidence update is
+  `3316c4e fix: prevent account form credential autofill`.
+- `pnpm test` passed: backend `58` files / `272` tests and frontend `13`
+  files / `57` tests.
 - `pnpm typecheck`, `pnpm build`, `pnpm compose:config`, and
   `pnpm test:smoke` passed.
 - The frontend build still reports one non-blocking bundle warning: the main
-  JavaScript chunk is about `1.15 MB` before gzip (`354.60 kB` after gzip).
+  JavaScript chunk is about `1.17 MB` before gzip (`359.97 kB` after gzip).
+- M9 seeds `Company`, `Sales Department`, and `Technical Department`, with
+  Presales, Technical, and After-sales child teams under the Technical
+  Department. Runtime roles are now only `sales`, `technical`, and `admin`.
+- Persisted legacy `presales` role values are normalized to `technical` in the
+  Presales Team. Role-bearing inactive units invalidate sessions, while an
+  inactive project group revokes only that group grant.
+- Document visibility now supports public, roles, users, organization units,
+  and project groups. New documents default to the Technical Department;
+  enabled/parsed filtering and empty-catalog compatibility remain intact.
 - Backend modules exist for `auth`, `audit`, `crm`, `ragflow`, `qa`,
   `customer-analysis`, `proposal`, `export`, `knowledge`, `business-flow`,
   `platform`, `menu`, `workbench`, `system`, `integration`, and `feedback`.
@@ -37,14 +43,25 @@ Do not use historical checkbox state alone to decide what still needs coding.
   `http://127.0.0.1:18000`, real PostgreSQL, and the configured external
   RAGFlow. CRM remained in mock mode, and missing approved export templates
   were allowed only through the explicit `-AllowMissingExportTemplates` flag.
-- The live 50-question technical precheck completed with `answered=50`,
-  `no_hit=0`, and `error=0`. The runner respected the production QA throttle by
-  waiting on `429`, and retrieval recovered from a deterministic RAGFlow
-  keyword-parser error through the existing prefixed fallback query.
-- This is not the formal go-live approval. The candidate JSON has 50 unique
-  question IDs but no reviewer, review timestamp, expected evidence, captured
-  citations, or human pass/fail record; the regression template still defines
-  it as a candidate source rather than an approval artifact.
+- The M9 live permission smoke used a temporary legacy database row and
+  temporary API records. It verified migration to the Presales Team, all three
+  Technical Department child teams maintaining documents, sales mutation
+  rejection, project-authorized sales read, and no document-id leak to an
+  unrelated sales user. Cleanup restored the original organization snapshot
+  and removed all `m9-smoke-*` users and documents.
+- The current V0 smoke passed after M9. Candidate questions `Q001-Q005` returned
+  `answered=5`, `no_hit=0`, and `error=0` against real-mode RAGFlow.
+- Both HYYN application images were rebuilt from the M9 worktree. All four
+  HYYN containers were healthy; `/api/health` and `/api/ragflow/health`
+  returned `ok` through the frontend entry point.
+- Browser checks passed at `1280x720` and `390x844`: account/organization and
+  document-visibility pages had no horizontal overflow, clipped labels, or
+  overlapping control groups. A discovered login-credential autofill issue in
+  the new-account form was fixed and reverified with all three fields empty.
+- This is not formal go-live approval. The generated JSON has 50 unique
+  questions and a Technical Department reviewer is available, but the gate
+  still lacks per-question captured citations, reviewer decisions, and review
+  timestamps.
 
 ## Scope Interpretation
 
@@ -61,18 +78,18 @@ long-range business capabilities.
 | --- | --- | --- |
 | V0 foundation | Code-ready | Monorepo scripts, four PAS-owned containers, HYYN container names, auth bootstrap, cookie/CSRF sessions, endpoint throttling, health, CI/build/test lanes are present. |
 | V0 RAGFlow adapter | Code-ready; technical precheck passed | RAGFlow remains external. Empty PAS document metadata no longer suppresses all external retrieval, while configured metadata still applies fail-closed ACL filtering. Human answer-quality approval remains deferred. |
-| V0 CRM mock context | Code-ready | Uses fake/mock customer profiles. Real CRM API integration is blocked until external API docs, auth, test account, and sample data are provided. |
+| V0 CRM mock context | Code-ready; real CRM paused | Uses fake/mock customer profiles. Real CRM integration is explicitly deferred for the internal trial. |
 | V0 QA citations | Code-ready; 50/50 retrieval precheck passed | `/api/internal/qa/ask` returned answers and citations for all 50 candidate questions. Real answer correctness remains gated by human review. |
 | V0 customer analysis | Code-ready | Uses deterministic customer context and evidence shape over fake/mock data. |
 | V0 proposal generation | Code-ready | Proposal generation, job detail, retry, and job list APIs are implemented and UI-backed. |
 | V0 export | Code-ready | Export jobs and template registry are implemented. Real customer templates are expected to be uploaded later. |
 | V0 feedback/regression | Code-ready; formal gate deferred | Feedback APIs exist and the 50-question technical run passed. Reviewer-signed evidence and pass/fail decisions remain the final go-live gate. |
 | Feishu reservation | Code-ready as disabled integration | Backend route exists as a reserved channel; real bot rollout is still disabled by config. |
-| V1 knowledge operations | Code-ready | Knowledge blocks, lifecycle review/publish, knowledge documents, document permissions, and template operations exist. |
+| V1 knowledge operations | Code-ready; M9 permission model verified | The active Technical Department tree maintains knowledge. Document metadata supports five visibility scopes and applies fail-closed retrieval filtering. |
 | V2 business flow | Code-ready | Opportunity, meeting, contract/after-sales, feedback, and metrics paths are implemented on fake/internal data. File/data ingestion is explicitly deferred. |
 | V3 platform | Code-ready | Platform dashboard/service/controller/store code exists. User-facing menu now exposes the platform access surface under system settings. |
 | Navigation/UI shell | Code-ready | Primary menu groups, left secondary menus, horizontal tertiary tabs, admin menu configuration, polished empty states, deprecated-list cleanup, and deprecated-Alert cleanup are implemented and smoke-covered. |
-| System/admin pages | Code-ready | Account permissions, audit logs, data/attachments, menu config, runtime config, and platform access all have backend-backed pages or smoke endpoints. |
+| System/admin pages | Code-ready | Account permissions now include active role-compatible organization units and project groups. Organization management, audit logs, data/attachments, menu config, runtime config, and platform access have backend-backed pages or smoke endpoints. |
 
 ## Historical Plan Files
 
@@ -96,13 +113,14 @@ and GitHub PR history instead of flipping old checkboxes in place.
 
 ## Remaining Non-Code Or Deferred Inputs
 
-- Formal human-reviewed V0 50-question regression gate. Technical retrieval is
-  `50/50`, but the candidate set still needs reviewer identity, review time,
-  expected evidence, captured citations, and pass/fail decisions.
+- Formal human-reviewed V0 50-question regression gate. The 50 generated
+  questions and Technical Department reviewer are available, but the run still
+  needs captured citations, per-question decisions, and review timestamps.
 - Final V1 100-question regression gate.
-- Real CRM API documentation, auth method, test account, and sample customer
-  records.
-- Real export templates from the user.
+- Real CRM integration remains paused until the user reopens it and provides
+  API documentation, auth method, test account, and sample customer records.
+- The current export templates are accepted for the internal trial; replacement
+  business templates will be provided later.
 - Production LLM/API keys and secret material in local or deployment env files.
 - Business-material inputs for higher-quality proposal and analysis content.
 - File/data ingestion. Current direction is to keep using fake data until the
@@ -119,9 +137,9 @@ and GitHub PR history instead of flipping old checkboxes in place.
 
 ## Next Dispatch Guidance
 
-1. Persist the deployment secrets, install approved export templates, and turn
-   the successful V0 50-question technical run into a reviewer-signed gate
-   artifact before treating the project as release-ready.
+1. Persist the deployment secrets and turn the generated V0 50-question pool
+   into a reviewer-signed gate artifact before treating the project as
+   release-ready. The current export templates remain the trial baseline.
 2. Keep code work on the current fake-data boundary unless the user provides
    real CRM, template, or source-data inputs.
 3. For UI changes, update both the frontend shell and

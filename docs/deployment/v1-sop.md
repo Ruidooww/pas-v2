@@ -17,19 +17,30 @@ This SOP is the non-gate V1 operating procedure. It assumes V0 remains the rollb
 | Role | V1 operating responsibility |
 | --- | --- |
 | `admin` | User/account setup, audit review, knowledge operations, template operations, release approval |
-| `presales` | Knowledge block drafting, review support, document metadata maintenance, template maintenance |
+| `technical` | Technical Department knowledge maintenance, including the Presales Team, Technical Team, and After-sales Team |
 | `sales` | Read published knowledge, ask QA questions, generate reviewed drafts |
+
+## Organization And Permission SOP
+
+- The seeded hierarchy is `Company` -> `Sales Department` and `Technical Department`; the Technical Department contains `Presales Team`, `Technical Team`, and `After-sales Team`.
+- A `technical` account must belong to an active unit in the Technical Department subtree. All three child teams can maintain knowledge documents.
+- A `sales` account must belong to an active unit in the Sales Department subtree. Project groups provide explicit cross-department document grants.
+- Legacy persisted role value `presales` is migration input only. On hydration it becomes role `technical` in `org-technical-presales`.
+- Disabling a role-bearing unit immediately invalidates affected sessions. Disabling a project group revokes that group grant without invalidating the user's role membership.
+- Account role changes must select a currently active compatible unit. The `org-company` switch remains protected in the UI to avoid invalidating every account at once.
 
 ## Knowledge Document SOP
 
 Use the **文档运营** page for PAS-owned metadata over RAGFlow documents.
 
-1. Register each selected RAGFlow document with `documentId`, title, product, material type, source name, tags, and visibility.
+1. Register each selected RAGFlow document with `documentId`, title, product, material type, source name, tags, and visibility. New documents default to `organization_units=[org-technical]`.
 2. Keep `parseStatus=done` only for documents that RAGFlow has parsed successfully.
 3. Disable documents that are obsolete, duplicated, legally sensitive, or repeatedly causing bad answers.
 4. Use reparse requests when the source file has been replaced or parsing quality is poor.
 5. Sales users only see enabled, parsed, visible documents.
 6. When any document metadata exists, QA retrieval is filtered by the authenticated user's accessible document ids. An empty accessible list fails closed.
+7. Visibility can target everyone, current roles, named users, organization units, or active project groups. Existing visibility is preserved when an upsert omits it.
+8. `technical` users in the active Technical Department tree and administrators can mutate document metadata; sales mutations are rejected.
 
 ## Knowledge Block SOP
 
@@ -81,12 +92,24 @@ Before V1 release approval:
 - Login uses `THROTTLE_LOGIN_LIMIT_PER_MINUTE=10` and QA uses `THROTTLE_QA_LIMIT_PER_MINUTE=30`, unless an approved environment-specific limit is documented.
 - The public response includes CSP, `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, and TLS-terminator `Strict-Transport-Security` headers.
 - Browser smoke confirms login and the V1 operations pages load.
+- Browser smoke at desktop and 390px confirms account/organization controls and document visibility controls have no horizontal overflow, clipped labels, or overlapping action groups.
 - RAGFlow health is reachable when `RAGFLOW_CLIENT_MODE=real`.
 - Real company templates are uploaded or the release notes explicitly mark templates as temporary.
 - The final approved regression gate passes:
   - V0 compatibility runs use the default `requiredCaseCount=50`.
   - V1 launch runs must submit `requiredCaseCount=100`.
   This item is intentionally deferred until the approved set is ready.
+
+## M9 Internal Trial Evidence - 2026-07-10
+
+- `pnpm test` passed: backend `58` files / `272` tests; frontend `13` files / `57` tests.
+- `pnpm typecheck`, `pnpm build`, `pnpm compose:config`, `pnpm test:smoke`, and `git diff --check` passed.
+- `HYYN-backend`, `HYYN-frontend`, `HYYN-postgres`, and `HYYN-redis` were healthy after rebuilding the local backend and frontend images.
+- `/api/health` and real-mode `/api/ragflow/health` returned `ok` through `http://127.0.0.1:18000`.
+- Live migration normalized a temporary legacy `presales` record to `technical` in the Presales Team. Live authorization confirmed all three Technical Department teams could maintain documents, sales mutation returned `403`, a project-authorized sales user could read the document, and an unrelated sales user received `403` with no leaked document id.
+- Temporary permission-smoke users, documents, project group state, and browser account were removed; the original organization snapshot was restored and the backend returned to healthy.
+- The V0 smoke passed with the current temporary export-template boundary. Candidate questions `Q001-Q005` returned `answered=5`, `no_hit=0`, and `error=0`.
+- The generated 50-question pool has a Technical Department reviewer available, but the formal human-reviewed gate remains open until each result, citations, reviewer decision, and review time are recorded.
 
 ## Rollback
 
