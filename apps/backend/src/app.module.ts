@@ -17,15 +17,18 @@ import { QaModule } from "./qa/qa.module";
 import { ProposalModule } from "./proposal/proposal.module";
 import { RagflowModule } from "./ragflow/ragflow.module";
 import { SystemModule } from "./system/system.module";
+import { createThrottleConfig } from "./throttle.config";
 import { WorkbenchModule } from "./workbench/workbench.module";
+
+const throttleConfig = createThrottleConfig();
 
 @Module({
   controllers: [HealthController],
   imports: [
     ThrottlerModule.forRoot([
       {
-        ttl: 60_000,
-        limit: Number(process.env.THROTTLE_LIMIT_PER_MINUTE || 120)
+        ttl: throttleConfig.ttlMs,
+        limit: throttleConfig.globalLimit
       }
     ]),
     AuditModule,
