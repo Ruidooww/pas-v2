@@ -8,8 +8,9 @@ Do not use historical checkbox state alone to decide what still needs coding.
 ## Evidence Checked
 
 - The implementation head before this audit update is
-  `2e345ab test: stabilize throttle metadata coverage` on `main`.
-- `main` through `2e345ab` was pushed to `origin/main` during this refresh.
+  `c866e6f fix: poll asynchronous proposal smoke` on `main`.
+- `main` through `2e345ab` was pushed to `origin/main` before the status and
+  live-smoke follow-up commits in this refresh.
 - GitHub returned no open issues and no open pull requests on `2026-07-10`.
 - `pnpm test` passed: backend `55` files / `232` tests and frontend `12`
   files / `43` tests.
@@ -32,6 +33,10 @@ Do not use historical checkbox state alone to decide what still needs coding.
   `http://127.0.0.1:5174` with backend on port `3000` after PR `#53` merged.
 - The `2026-07-10` automated smoke uses a local fake server. It verifies the
   frontend route/menu contract but is not a real PostgreSQL/RAGFlow/CRM E2E.
+- The `2026-07-10` live V0 smoke passed against newly rebuilt PAS containers at
+  `http://127.0.0.1:18000`, real PostgreSQL, and the configured external
+  RAGFlow. CRM remained in mock mode, and missing approved export templates
+  were allowed only through the explicit `-AllowMissingExportTemplates` flag.
 
 ## Scope Interpretation
 
@@ -85,7 +90,6 @@ and GitHub PR history instead of flipping old checkboxes in place.
 
 - Final V0 50-question regression gate.
 - Final V1 100-question regression gate.
-- Real Docker-backed E2E with PostgreSQL plus the configured external RAGFlow.
 - Real CRM API documentation, auth method, test account, and sample customer
   records.
 - Real export templates from the user.
@@ -100,11 +104,13 @@ and GitHub PR history instead of flipping old checkboxes in place.
 - Frontend route-level code splitting for the current `1.15 MB` main chunk.
 - Broad CSS/inline-style restructuring remains deferred until a concrete UI
   maintenance problem or redesign pass.
+- Persist a strong `REDIS_PASSWORD` in the local/deployment secret store. The
+  live refresh used a process-only random value because `.env` still lacks it.
 
 ## Next Dispatch Guidance
 
-1. Add or execute a real four-container E2E lane before treating the project as
-   release-ready; keep RAGFlow external and do not mutate its volumes.
+1. Persist the deployment secrets, install approved export templates, and run
+   the V0 50-question gate before treating the project as release-ready.
 2. Keep code work on the current fake-data boundary unless the user provides
    real CRM, template, or source-data inputs.
 3. For UI changes, update both the frontend shell and
