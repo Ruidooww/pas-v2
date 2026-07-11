@@ -1607,11 +1607,15 @@ select,
 }
 
 .ai-model-ragflow-details .ant-descriptions-item-content,
-.ai-model-ragflow-details .ant-descriptions-item-label,
 .ai-model-value {
   min-width: 0;
   overflow-wrap: anywhere;
   word-break: break-word;
+}
+
+.ai-model-ragflow-details .ant-descriptions-item-label {
+  width: 96px;
+  white-space: nowrap;
 }
 
 .ai-model-loading {

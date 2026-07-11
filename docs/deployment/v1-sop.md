@@ -87,7 +87,10 @@ The **AI 模型接入** page is visible only to `admin`. PAS generation configur
 1. Generate a dedicated 32-byte encryption key in PowerShell. Store the output only in the deployment `.env`:
 
 ```powershell
-[Convert]::ToBase64String([Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
+$bytes = New-Object byte[] 32
+$rng = [Security.Cryptography.RandomNumberGenerator]::Create()
+try { $rng.GetBytes($bytes) } finally { $rng.Dispose() }
+[Convert]::ToBase64String($bytes)
 ```
 
 2. Set `MODEL_CONFIG_ENCRYPTION_KEY` to that output. Never commit `.env` or place this key in logs, tickets, screenshots, or command history shared outside operations.
