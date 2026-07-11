@@ -33,6 +33,18 @@ export type RetrieveKnowledgeChunksRequest = {
   allowedDocumentIds?: string[];
 };
 
+export type RagflowDatasetOverview = {
+  datasetId: string;
+  name?: string;
+  embeddingModel?: string;
+  rerankerModel?: string;
+  chatModel?: string;
+  language?: string;
+  chunkMethod?: string;
+  documentCount?: number;
+  chunkCount?: number;
+};
+
 export class RagflowClient {
   constructor(
     private readonly config: RagflowConfig,
@@ -115,6 +127,31 @@ export class RagflowClient {
     );
   }
 
+  async getDatasetOverview(datasetId: string): Promise<RagflowDatasetOverview | undefined> {
+    if (this.config.clientMode === "disabled") {
+      return undefined;
+    }
+
+    const normalizedDatasetId = datasetId.trim();
+    if (!normalizedDatasetId) {
+      return undefined;
+    }
+    const response = await this.fetcher(
+      `${this.config.baseUrl}/api/v1/datasets?id=${encodeURIComponent(normalizedDatasetId)}`,
+      {
+        method: "GET",
+        headers: this.createHeaders()
+      }
+    );
+    if (!response.ok) {
+      throw new Error(`RAGFlow dataset lookup failed with HTTP ${response.status}`);
+    }
+
+    const payload = response.json ? await response.json() : {};
+    const dataset = extractDataset(payload, normalizedDatasetId);
+    return mapDatasetOverview(dataset, normalizedDatasetId);
+  }
+
   private async retrieveWithQuery(
     datasetId: string,
     query: string,
@@ -182,6 +219,61 @@ function extractChunks(payload: unknown): Record<string, unknown>[] {
   const chunks = Array.isArray(data.chunks) ? data.chunks : [];
 
   return chunks.filter(isRecord);
+}
+
+function extractDataset(payload: unknown, datasetId: string): Record<string, unknown> {
+  const root = asRecord(payload);
+  const code = numberValue(root.code);
+  if (code !== undefined && code !== 0) {
+    throw new Error(`RAGFlow dataset lookup rejected with code ${code}`);
+  }
+
+  const data = root.data;
+  const dataRecord = asRecord(data);
+  const nestedDatasets = dataRecord.datasets;
+  const rows = Array.isArray(data)
+    ? data.filter(isRecord)
+    : Array.isArray(nestedDatasets)
+      ? nestedDatasets.filter(isRecord)
+      : [];
+  return rows.find((row) => stringValue(row.id) === datasetId) ?? rows[0] ?? {};
+}
+
+function mapDatasetOverview(dataset: Record<string, unknown>, fallbackId: string): RagflowDatasetOverview {
+  const overview: RagflowDatasetOverview = {
+    datasetId: stringValue(dataset.id) || fallbackId
+  };
+  addString(overview, "name", dataset.name);
+  addString(overview, "embeddingModel", dataset.embd_id ?? dataset.embedding_model);
+  addString(overview, "rerankerModel", dataset.rerank_id ?? dataset.reranker_model);
+  addString(overview, "chatModel", dataset.llm_id ?? dataset.chat_model);
+  addString(overview, "language", dataset.language);
+  addString(overview, "chunkMethod", dataset.parser_id ?? dataset.chunk_method);
+  addNumber(overview, "documentCount", dataset.document_count ?? dataset.doc_num);
+  addNumber(overview, "chunkCount", dataset.chunk_count ?? dataset.chunk_num);
+  return overview;
+}
+
+function addString(
+  target: RagflowDatasetOverview,
+  key: "name" | "embeddingModel" | "rerankerModel" | "chatModel" | "language" | "chunkMethod",
+  value: unknown
+): void {
+  const normalized = stringValue(value);
+  if (normalized) {
+    target[key] = normalized;
+  }
+}
+
+function addNumber(
+  target: RagflowDatasetOverview,
+  key: "documentCount" | "chunkCount",
+  value: unknown
+): void {
+  const normalized = numberValue(value);
+  if (normalized !== undefined) {
+    target[key] = normalized;
+  }
 }
 
 function filterAllowedDocuments(chunks: KnowledgeChunk[], allowedDocumentIds: string[] | undefined): KnowledgeChunk[] {

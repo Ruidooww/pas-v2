@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 import { APP_GUARD } from "@nestjs/core";
 import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
+import { AiModelModule } from "./ai-model/ai-model.module";
 import { AuditModule } from "./audit/audit.module";
 import { BusinessFlowModule } from "./business-flow/business-flow.module";
 import { PlatformModule } from "./platform/platform.module";
@@ -32,6 +33,7 @@ const throttleConfig = createThrottleConfig();
         limit: throttleConfig.globalLimit
       }
     ]),
+    AiModelModule,
     AuditModule,
     AuthModule,
     CrmModule,

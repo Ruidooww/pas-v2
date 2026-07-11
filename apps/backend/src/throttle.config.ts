@@ -5,6 +5,7 @@ type ThrottleEnv = Partial<
     NodeJS.ProcessEnv,
     | "THROTTLE_LIMIT_PER_MINUTE"
     | "THROTTLE_LOGIN_LIMIT_PER_MINUTE"
+    | "THROTTLE_MODEL_TEST_LIMIT_PER_MINUTE"
     | "THROTTLE_QA_LIMIT_PER_MINUTE"
     | "TRUST_PROXY_HOPS"
   >
@@ -14,6 +15,7 @@ export type ThrottleConfig = {
   ttlMs: number;
   globalLimit: number;
   loginLimit: number;
+  modelTestLimit: number;
   qaLimit: number;
   trustProxyHops: number;
 };
@@ -23,6 +25,7 @@ export function createThrottleConfig(env: ThrottleEnv = process.env): ThrottleCo
     ttlMs: THROTTLE_WINDOW_MS,
     globalLimit: readInteger(env.THROTTLE_LIMIT_PER_MINUTE, 120, 1),
     loginLimit: readInteger(env.THROTTLE_LOGIN_LIMIT_PER_MINUTE, 10, 1),
+    modelTestLimit: readInteger(env.THROTTLE_MODEL_TEST_LIMIT_PER_MINUTE, 5, 1),
     qaLimit: readInteger(env.THROTTLE_QA_LIMIT_PER_MINUTE, 30, 1),
     trustProxyHops: readInteger(env.TRUST_PROXY_HOPS, 0, 0)
   };

@@ -81,3 +81,80 @@ export type OpenAiCompatibleTransportPort = {
     request: AiModelCompletionRequest
   ): Promise<AiModelTransportCompletion>;
 };
+
+export type AiModelCandidateRequest = {
+  provider: AiModelProvider;
+  baseUrl: string;
+  model: string;
+  apiKey?: string;
+  timeoutSeconds: number;
+};
+
+export type AiModelTestResult = {
+  ok: boolean;
+  provider: AiModelProvider;
+  model: string;
+  elapsedMs: number;
+  errorCode?: AiModelErrorCode;
+};
+
+export type AiModelGenerationOverview = {
+  status: EffectiveAiModelSnapshot["status"];
+  source: EffectiveAiModelSnapshot["source"];
+  provider?: AiModelProvider;
+  baseUrl?: string;
+  model?: string;
+  keyConfigured: boolean;
+  timeoutSeconds: number;
+  errorCode?: AiModelErrorCode;
+  lastTestStatus?: ModelTestStatus;
+  lastTestedAt?: string;
+  updatedBy?: string;
+  updatedAt?: string;
+};
+
+export type SavedAiModelConfigurationOverview = {
+  enabled: boolean;
+  provider: AiModelProvider;
+  baseUrl: string;
+  model: string;
+  keyConfigured: boolean;
+  timeoutSeconds: number;
+  lastTestStatus: ModelTestStatus;
+  lastTestedAt: string;
+  updatedBy: string;
+  updatedAt: string;
+};
+
+export type AiModelProviderPreset = {
+  provider: AiModelProvider;
+  label: string;
+  defaultBaseUrl: string;
+};
+
+export type AiModelOverview = {
+  providers: AiModelProviderPreset[];
+  generation: AiModelGenerationOverview;
+  savedConfiguration?: SavedAiModelConfigurationOverview;
+};
+
+export type RagflowDatasetModelOverview = {
+  datasetId: string;
+  name?: string;
+  embeddingModel?: string;
+  rerankerModel?: string;
+  chatModel?: string;
+  language?: string;
+  chunkMethod?: string;
+  documentCount?: number;
+  chunkCount?: number;
+};
+
+export type RagflowModelOverview = {
+  status: "ok" | "error" | "disabled";
+  baseUrl: string;
+  dataset?: RagflowDatasetModelOverview;
+  unavailableFields: string[];
+  errorKind?: string;
+  refreshedAt: string;
+};

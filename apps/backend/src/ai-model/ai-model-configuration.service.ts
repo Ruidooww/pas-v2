@@ -1,5 +1,5 @@
 import type { LlmConfig } from "../llm/llm.config";
-import { decryptApiKey } from "./ai-model.crypto";
+import { decryptApiKey, encryptApiKey } from "./ai-model.crypto";
 import { AiModelError } from "./ai-model.errors";
 import { MODEL_PROVIDER_PRESETS, normalizeModelEndpoint, validateModelTimeout } from "./ai-model.endpoint-policy";
 import type {
@@ -39,6 +39,15 @@ export class AiModelConfigurationService implements AiModelRuntimePort {
 
   getPersistedConfiguration(): PersistedAiModelConfiguration | undefined {
     return clonePersisted(this.persistedConfiguration);
+  }
+
+  getPersistedApiKey(): string | undefined {
+    const persisted = this.persistedConfiguration;
+    return persisted ? decryptApiKey(persisted, this.options.encryptionKey) : undefined;
+  }
+
+  encryptApiKeyForPersistence(apiKey: string) {
+    return encryptApiKey(apiKey, this.options.encryptionKey);
   }
 
   async activatePersistedConfiguration(

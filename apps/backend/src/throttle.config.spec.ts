@@ -8,6 +8,7 @@ describe("createThrottleConfig", () => {
       globalLimit: 120,
       loginLimit: 10,
       qaLimit: 30,
+      modelTestLimit: 5,
       trustProxyHops: 0
     });
   });
@@ -18,6 +19,7 @@ describe("createThrottleConfig", () => {
         THROTTLE_LIMIT_PER_MINUTE: "240",
         THROTTLE_LOGIN_LIMIT_PER_MINUTE: "8",
         THROTTLE_QA_LIMIT_PER_MINUTE: "45",
+        THROTTLE_MODEL_TEST_LIMIT_PER_MINUTE: "4",
         TRUST_PROXY_HOPS: "2"
       })
     ).toEqual({
@@ -25,6 +27,7 @@ describe("createThrottleConfig", () => {
       globalLimit: 240,
       loginLimit: 8,
       qaLimit: 45,
+      modelTestLimit: 4,
       trustProxyHops: 2
     });
   });
@@ -35,6 +38,7 @@ describe("createThrottleConfig", () => {
         THROTTLE_LIMIT_PER_MINUTE: "0",
         THROTTLE_LOGIN_LIMIT_PER_MINUTE: "-1",
         THROTTLE_QA_LIMIT_PER_MINUTE: "1.5",
+        THROTTLE_MODEL_TEST_LIMIT_PER_MINUTE: "0",
         TRUST_PROXY_HOPS: "-1"
       })
     ).toEqual({
@@ -42,6 +46,7 @@ describe("createThrottleConfig", () => {
       globalLimit: 120,
       loginLimit: 10,
       qaLimit: 30,
+      modelTestLimit: 5,
       trustProxyHops: 0
     });
   });

@@ -12,7 +12,9 @@ export type AuditAction =
   | "download"
   | "feedback"
   | "menu_configuration"
-  | "organization";
+  | "organization"
+  | "ai_model_configuration"
+  | "llm_generation";
 
 export type AuditResult = "success" | "failure";
 
@@ -24,6 +26,7 @@ export type AuditEvent = {
   objectId: string;
   result: AuditResult;
   failureReason?: string;
+  metadata?: Record<string, string | number | boolean | null>;
   occurredAt: string;
 };
 

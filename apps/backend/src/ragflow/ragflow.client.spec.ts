@@ -362,4 +362,68 @@ describe("RagflowClient", () => {
     await expect(client.retrieveKnowledgeChunks({ datasetId: "pas-v0", query: "IP-guard" })).resolves.toEqual([]);
     expect(fetcher).not.toHaveBeenCalled();
   });
+
+  it("maps read-only dataset model and count fields", async () => {
+    const fetcher = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        code: 0,
+        data: [
+          {
+            id: "qa-v0",
+            name: "PAS QA",
+            embd_id: "text-embedding-v3",
+            rerank_id: "qwen3-rerank",
+            llm_id: "qwen-max",
+            language: "Chinese",
+            parser_id: "naive",
+            document_count: 20,
+            chunk_count: 500
+          }
+        ]
+      })
+    });
+    const client = new RagflowClient(baseConfig, fetcher);
+
+    await expect(client.getDatasetOverview("qa-v0")).resolves.toEqual({
+      datasetId: "qa-v0",
+      name: "PAS QA",
+      embeddingModel: "text-embedding-v3",
+      rerankerModel: "qwen3-rerank",
+      chatModel: "qwen-max",
+      language: "Chinese",
+      chunkMethod: "naive",
+      documentCount: 20,
+      chunkCount: 500
+    });
+    expect(fetcher).toHaveBeenCalledWith(
+      "http://ragflow.local/api/v1/datasets?id=qa-v0",
+      expect.objectContaining({ method: "GET" })
+    );
+  });
+
+  it("returns partial dataset state without inventing unavailable fields", async () => {
+    const fetcher = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ data: { datasets: [{ id: "qa-v0", name: "PAS QA", doc_num: 3, chunk_num: 42 }] } })
+    });
+    const client = new RagflowClient(baseConfig, fetcher);
+
+    await expect(client.getDatasetOverview("qa-v0")).resolves.toEqual({
+      datasetId: "qa-v0",
+      name: "PAS QA",
+      documentCount: 3,
+      chunkCount: 42
+    });
+  });
+
+  it("does not request dataset state when RAGFlow is disabled", async () => {
+    const fetcher = vi.fn();
+    const client = new RagflowClient({ ...baseConfig, clientMode: "disabled" }, fetcher);
+
+    await expect(client.getDatasetOverview("qa-v0")).resolves.toBeUndefined();
+    expect(fetcher).not.toHaveBeenCalled();
+  });
 });

@@ -101,6 +101,7 @@
 - `apps/frontend/src/pages/MenuConfigPage.test.tsx`
 - `apps/frontend/src/pages/SystemPages.test.tsx`
 - `apps/frontend/src/styles.css`
+- `apps/frontend/nginx.conf`
 - `.env.example`
 - `docker-compose.yml`
 - `scripts/verify-compose.mjs`
@@ -364,7 +365,7 @@ git commit -m "feat: add dynamic AI model runtime"
 - Modify: `apps/backend/src/ai-model/ai-model.module.ts`
 - Modify: `apps/backend/src/app.module.ts`
 - Modify: `apps/backend/src/audit/audit.types.ts`
-- Modify: `apps/backend/src/audit/audit-log.service.spec.ts`
+- Create: `apps/backend/src/audit/audit-log.service.spec.ts`
 - Modify: `apps/backend/src/ragflow/ragflow.client.ts`
 - Modify: `apps/backend/src/ragflow/ragflow.client.spec.ts`
 - Modify: `apps/backend/src/throttle.config.ts`
@@ -695,6 +696,7 @@ Expected: focused tests, typecheck, and production build pass.
 **Files:**
 - Modify: `.env.example`
 - Modify: `docker-compose.yml`
+- Modify: `apps/frontend/nginx.conf`
 - Modify: `scripts/verify-compose.mjs`
 - Modify: `scripts/smoke-local-menu.mjs`
 - Modify: `scripts/smoke-local-menu.test.mjs`
@@ -711,6 +713,8 @@ THROTTLE_MODEL_TEST_LIMIT_PER_MINUTE=5
 ```
 
 Add `ai_model_access` to expected secondary keys, route smoke checks, and an admin `GET /api/internal/ai-models/overview` check that asserts no secret-shaped fields.
+
+Add an Nginx config assertion that preserves an incoming TLS terminator's `X-Forwarded-Proto` value and falls back to `$scheme` only when that header is absent.
 
 - [ ] **Step 2: Run checks and verify RED**
 
@@ -738,7 +742,7 @@ State that rotating `MODEL_CONFIG_ENCRYPTION_KEY` without re-encrypting the stor
 ```powershell
 pnpm compose:config
 pnpm test:smoke
-git add .env.example docker-compose.yml scripts/verify-compose.mjs scripts/smoke-local-menu.mjs scripts/smoke-local-menu.test.mjs docs/deployment/v1-sop.md
+git add .env.example docker-compose.yml apps/frontend/nginx.conf scripts/verify-compose.mjs scripts/smoke-local-menu.mjs scripts/smoke-local-menu.test.mjs docs/deployment/v1-sop.md
 git commit -m "docs: add AI model deployment controls"
 ```
 
