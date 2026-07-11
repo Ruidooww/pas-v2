@@ -1,5 +1,6 @@
 import type { AuditLogService } from "../audit/audit-log.service";
 import type { RagflowClient, RagflowDatasetOverview } from "../ragflow/ragflow.client";
+import { classifyRagflowError } from "../ragflow/ragflow.errors";
 import { AiModelConfigurationService } from "./ai-model-configuration.service";
 import { AiModelError, type AiModelErrorCode } from "./ai-model.errors";
 import { MODEL_PROVIDER_PRESETS, normalizeModelEndpoint, validateModelTimeout } from "./ai-model.endpoint-policy";
@@ -211,8 +212,14 @@ export class AiModelManagementService {
     let dataset: RagflowDatasetOverview = { datasetId };
     try {
       dataset = (await this.ragflow.getDatasetOverview(datasetId)) ?? dataset;
-    } catch {
-      // Dataset metadata is optional; retrieval health remains authoritative.
+    } catch (error) {
+      return {
+        status: "error",
+        baseUrl: health.baseUrl,
+        unavailableFields: [],
+        errorKind: classifyRagflowError(error),
+        refreshedAt
+      };
     }
     return {
       status: "ok",

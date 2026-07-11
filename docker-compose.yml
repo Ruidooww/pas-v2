@@ -10,8 +10,10 @@ services:
     depends_on:
       pas-backend:
         condition: service_healthy
+    environment:
+      PAS_EXTERNAL_SCHEME: ${PAS_EXTERNAL_SCHEME:-http}
     ports:
-      - "${PAS_FRONTEND_PORT:-18000}:80"
+      - "${PAS_FRONTEND_BIND_ADDRESS:-127.0.0.1}:${PAS_FRONTEND_PORT:-18000}:80"
     networks:
       - pas
     healthcheck:

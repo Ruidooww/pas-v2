@@ -120,6 +120,45 @@ describe("AiModelConfigurationService", () => {
     expect(service.getSnapshot()).toBe(previous);
   });
 
+  it("serializes save and disable mutations against the latest persisted configuration", async () => {
+    const firstSave = deferred<void>();
+    const secondSave = deferred<void>();
+    const persisted = createPersistedConfiguration({ ...encryptApiKey("database-key", ENCRYPTION_KEY) });
+    const persistence = createPersistence(persisted);
+    persistence.saveAiModelConfiguration = vi
+      .fn()
+      .mockReturnValueOnce(firstSave.promise)
+      .mockReturnValueOnce(secondSave.promise);
+    const service = createService(persistence);
+    await service.initialize();
+    const replacement = createPersistedConfiguration({
+      ...encryptApiKey("replacement-key", ENCRYPTION_KEY),
+      model: "qwen-replacement",
+      updatedBy: "admin-save"
+    });
+
+    const activation = service.activatePersistedConfiguration(replacement, "replacement-key");
+    const disable = service.disablePersistedConfiguration("admin-disable");
+
+    await vi.waitFor(() => expect(persistence.saveAiModelConfiguration).toHaveBeenCalledTimes(1));
+    firstSave.resolve();
+    await activation;
+    await vi.waitFor(() => expect(persistence.saveAiModelConfiguration).toHaveBeenCalledTimes(2));
+    expect(persistence.saveAiModelConfiguration).toHaveBeenLastCalledWith(
+      expect.objectContaining({ model: "qwen-replacement", enabled: false, updatedBy: "admin-disable" })
+    );
+    expect(service.getSnapshot()).toEqual(
+      expect.objectContaining({ source: "database", model: "qwen-replacement", apiKey: "replacement-key" })
+    );
+
+    secondSave.resolve();
+    await disable;
+    expect(service.getPersistedConfiguration()).toEqual(
+      expect.objectContaining({ model: "qwen-replacement", enabled: false, updatedBy: "admin-disable" })
+    );
+    expect(service.getSnapshot()).toEqual(expect.objectContaining({ source: "environment" }));
+  });
+
   it("disables the database row before activating environment fallback", async () => {
     const persisted = createPersistedConfiguration({ ...encryptApiKey("database-key", ENCRYPTION_KEY) });
     const persistence = createPersistence(persisted);

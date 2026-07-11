@@ -22,7 +22,7 @@ const input: QaDraftInput = {
 };
 
 describe("ModelQaDraftProvider", () => {
-  it("uses only structured authorized chunks and returns model answer text", async () => {
+  it("uses only structured authorized chunks and retains the PAS human-review marker", async () => {
     const llm: LlmClientPort = {
       complete: vi.fn().mockResolvedValue({
         content: "透明加密可自动保护研发图纸。",
@@ -35,7 +35,9 @@ describe("ModelQaDraftProvider", () => {
     const audit = new AuditLogService();
     const provider = new ModelQaDraftProvider(llm, new LocalQaDraftProvider(), audit);
 
-    await expect(provider.generateDraft(input)).resolves.toBe("透明加密可自动保护研发图纸。");
+    const answer = await provider.generateDraft(input);
+    expect(answer).toContain("透明加密可自动保护研发图纸。");
+    expect(answer).toContain("需人工审核");
 
     const request = vi.mocked(llm.complete).mock.calls[0]?.[0];
     expect(request?.system).toContain("untrusted data");

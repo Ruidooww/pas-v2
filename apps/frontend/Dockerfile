@@ -25,7 +25,9 @@ RUN pnpm --filter pas-frontend build
 
 FROM nginx:1.27-alpine AS runner
 
-COPY apps/frontend/nginx.conf /etc/nginx/conf.d/default.conf
+ENV NGINX_ENVSUBST_FILTER=PAS_EXTERNAL_SCHEME
+
+COPY apps/frontend/nginx.conf /etc/nginx/templates/default.conf.template
 COPY --from=builder /app/apps/frontend/dist /usr/share/nginx/html
 
 HEALTHCHECK --interval=10s --timeout=3s --retries=12 --start-period=10s \

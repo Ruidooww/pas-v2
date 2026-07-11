@@ -95,7 +95,10 @@ describe("OpenAiCompatibleTransport", () => {
   it.each([
     { choices: [] },
     { choices: [{ message: { content: "   " } }] },
-    { choices: [{ message: {} }] }
+    { choices: [{ message: {} }] },
+    { choices: [{ message: { content: 42 } }] },
+    { choices: [{ message: { content: { text: "answer" } } }] },
+    { choices: [{ message: { content: "answer" } }], model: 42 }
   ])("rejects an empty or invalid assistant response", async (payload) => {
     const transport = new OpenAiCompatibleTransport(
       vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => payload }),

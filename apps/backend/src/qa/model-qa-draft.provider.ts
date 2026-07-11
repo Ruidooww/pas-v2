@@ -47,7 +47,7 @@ export class ModelQaDraftProvider implements QaDraftProvider {
           result: "success",
           fallbackUsed: false
         });
-        return completion.content.trim();
+        return `需人工审核：${completion.content.trim()}`;
       }
 
       recordLlmGeneration(this.audit, {

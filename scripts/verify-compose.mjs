@@ -42,16 +42,34 @@ for (const header of requiredFrontendHeaders) {
   }
 }
 
-const preservesForwardedProtocol =
-  /map\s+\$http_x_forwarded_proto\s+\$pas_forwarded_proto\s*\{[\s\S]*?""\s+\$scheme;[\s\S]*?default\s+\$http_x_forwarded_proto;[\s\S]*?\}/i.test(
-    frontendNginxConfig
-  ) && /proxy_set_header\s+X-Forwarded-Proto\s+\$pas_forwarded_proto;/i.test(frontendNginxConfig);
-if (!preservesForwardedProtocol) {
-  console.error("Expected frontend nginx.conf to preserve upstream X-Forwarded-Proto and fall back to $scheme.");
+if (frontendNginxConfig.includes("$http_x_forwarded_proto")) {
+  console.error("Frontend nginx.conf must not trust client-supplied X-Forwarded-Proto.");
+  process.exit(1);
+}
+if (!frontendNginxConfig.includes("proxy_set_header X-Forwarded-Proto ${PAS_EXTERNAL_SCHEME};")) {
+  console.error("Expected frontend nginx.conf to use the deployment-controlled PAS_EXTERNAL_SCHEME.");
+  process.exit(1);
+}
+
+const frontendDockerfile = readFileSync(path.join(projectRoot, "apps/frontend/Dockerfile"), "utf8");
+if (!frontendDockerfile.includes("ENV NGINX_ENVSUBST_FILTER=PAS_EXTERNAL_SCHEME")) {
+  console.error("Expected frontend Dockerfile to restrict Nginx env substitution to PAS_EXTERNAL_SCHEME.");
+  process.exit(1);
+}
+if (!frontendDockerfile.includes("/etc/nginx/templates/default.conf.template")) {
+  console.error("Expected frontend Dockerfile to install nginx.conf as a runtime template.");
   process.exit(1);
 }
 
 const composeContent = readFileSync(path.join(projectRoot, "docker-compose.yml"), "utf8");
+if (!composeContent.includes('"${PAS_FRONTEND_BIND_ADDRESS:-127.0.0.1}:${PAS_FRONTEND_PORT:-18000}:80"')) {
+  console.error("Expected pas-frontend to bind to loopback by default.");
+  process.exit(1);
+}
+if (!/PAS_EXTERNAL_SCHEME:\s+\$\{PAS_EXTERNAL_SCHEME:-http\}/.test(composeContent)) {
+  console.error("Expected pas-frontend compose environment to default PAS_EXTERNAL_SCHEME=http.");
+  process.exit(1);
+}
 const requiredBackendEnvironmentDefaults = [
   { name: "COOKIE_SECURE", value: "true" },
   { name: "THROTTLE_LOGIN_LIMIT_PER_MINUTE", value: "10" },
@@ -76,6 +94,12 @@ for (const name of requiredModelEnvironmentNames) {
 }
 
 const envExample = readFileSync(path.join(projectRoot, ".env.example"), "utf8");
+for (const name of ["PAS_EXTERNAL_SCHEME", "PAS_FRONTEND_BIND_ADDRESS"]) {
+  if (!new RegExp(`^${name}=`, "m").test(envExample)) {
+    console.error(`Expected .env.example to document ${name}.`);
+    process.exit(1);
+  }
+}
 for (const name of requiredModelEnvironmentNames) {
   if (!new RegExp(`^${name}=`, "m").test(envExample)) {
     console.error(`Expected .env.example to document ${name}.`);

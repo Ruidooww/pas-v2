@@ -103,7 +103,8 @@ docker compose --env-file .env run --rm pas-backend npx prisma migrate deploy
 docker compose --env-file .env up -d pas-backend pas-frontend
 ```
 
-6. The browser-facing endpoint must use HTTPS. Model test, save, and disable requests reject LAN HTTP; plain HTTP is permitted only for a direct backend loopback precheck. When a separate TLS terminator is used, it must set `X-Forwarded-Proto=https`, restrict direct access to `pas-frontend`, and replace any client-supplied forwarded-protocol header.
+6. The browser-facing endpoint must use HTTPS. Model test, save, and disable requests reject LAN HTTP; plain HTTP is permitted only for a direct backend loopback precheck. Keep `PAS_EXTERNAL_SCHEME=http` for local HTTP. Set it to `https` only when a trusted TLS terminator is the sole path to `pas-frontend`; Nginx ignores client-supplied `X-Forwarded-Proto` and emits this deployment-controlled value.
+7. Keep `PAS_FRONTEND_BIND_ADDRESS=127.0.0.1` when the TLS terminator runs on the PAS host. If the terminator is remote, bind a dedicated private interface and firewall the port so only that proxy can reach it. Never expose the frontend port directly while `PAS_EXTERNAL_SCHEME=https`.
 
 ### Configuration flow
 
@@ -130,6 +131,7 @@ Before V1 release approval:
 - The public entry point terminates HTTPS in front of `pas-frontend`; `pas-backend` is not exposed directly.
 - `COOKIE_SECURE=true` is set for the release environment. `false` is allowed only for local HTTP testing.
 - `TRUST_PROXY_HOPS` matches the real trusted proxy count: `1` for frontend-only proxying or `2` when a separate TLS terminator fronts `pas-frontend`.
+- `PAS_EXTERNAL_SCHEME=https` is set only behind the trusted TLS terminator, and direct access to the bound frontend port is blocked. Client-supplied forwarded-protocol headers are ignored.
 - Login uses `THROTTLE_LOGIN_LIMIT_PER_MINUTE=10` and QA uses `THROTTLE_QA_LIMIT_PER_MINUTE=30`, unless an approved environment-specific limit is documented.
 - AI model connection tests use `THROTTLE_MODEL_TEST_LIMIT_PER_MINUTE=5`, and the deployment has a backed-up `MODEL_CONFIG_ENCRYPTION_KEY` plus an exact `MODEL_ENDPOINT_ALLOWLIST`.
 - Admin smoke confirms `/system/ai-models`, a sanitized model overview, HTTPS write enforcement, and read-only RAGFlow state. Non-admin menus do not expose `ai_model_access`.

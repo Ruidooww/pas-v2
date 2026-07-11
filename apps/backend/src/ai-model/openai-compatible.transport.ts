@@ -15,11 +15,6 @@ type FetchResponse = {
 
 type Fetcher = (url: string, init?: RequestInit) => Promise<FetchResponse>;
 
-type ChatCompletionResponse = {
-  choices?: Array<{ message?: { content?: string } }>;
-  model?: string;
-};
-
 export class OpenAiCompatibleTransport implements OpenAiCompatibleTransportPort {
   private readonly fetcher: Fetcher;
 
@@ -71,22 +66,40 @@ export class OpenAiCompatibleTransport implements OpenAiCompatibleTransportPort 
       throw errorForHttpStatus(response.status);
     }
 
-    let body: ChatCompletionResponse;
+    let body: unknown;
     try {
-      body = (await response.json?.()) as ChatCompletionResponse;
+      body = await response.json?.();
     } catch {
       throw invalidResponse();
     }
-    const content = body?.choices?.[0]?.message?.content?.trim();
+    const root = asRecord(body);
+    const choices = root?.choices;
+    const firstChoice = Array.isArray(choices) ? asRecord(choices[0]) : undefined;
+    const message = asRecord(firstChoice?.message);
+    const rawContent = message?.content;
+    if (typeof rawContent !== "string") {
+      throw invalidResponse();
+    }
+    const content = rawContent.trim();
     if (!content) {
+      throw invalidResponse();
+    }
+    const responseModel = root?.model;
+    if (responseModel !== undefined && typeof responseModel !== "string") {
       throw invalidResponse();
     }
 
     return {
       content,
-      model: body.model?.trim() || config.model
+      model: responseModel?.trim() || config.model
     };
   }
+}
+
+function asRecord(value: unknown): Record<string, unknown> | undefined {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : undefined;
 }
 
 function errorForHttpStatus(status: number): AiModelError {

@@ -66,6 +66,15 @@ export class RagflowClient {
       });
 
       if (response.ok) {
+        const payload = response.json ? await response.json() : undefined;
+        const code = businessCode(payload);
+        if (code !== undefined && code !== 0) {
+          return {
+            status: "error",
+            baseUrl: this.config.baseUrl,
+            errorKind: classifyRagflowError(ragflowResponseError("RAGFlow health check rejected", code))
+          };
+        }
         return {
           status: "ok",
           baseUrl: this.config.baseUrl
@@ -144,7 +153,7 @@ export class RagflowClient {
       }
     );
     if (!response.ok) {
-      throw new Error(`RAGFlow dataset lookup failed with HTTP ${response.status}`);
+      throw ragflowResponseError(`RAGFlow dataset lookup failed with HTTP ${response.status}`, response.status);
     }
 
     const payload = response.json ? await response.json() : {};
@@ -209,10 +218,10 @@ export class RagflowClient {
 
 function extractChunks(payload: unknown): Record<string, unknown>[] {
   const root = asRecord(payload);
-  const code = numberValue(root.code);
+  const code = businessCode(root);
   if (code !== undefined && code !== 0) {
     const message = stringValue(root.message) || "RAGFlow business error";
-    throw new Error(`RAGFlow retrieval rejected with code ${code}: ${message}`);
+    throw ragflowResponseError(`RAGFlow retrieval rejected with code ${code}: ${message}`, code);
   }
 
   const data = asRecord(root.data);
@@ -223,9 +232,9 @@ function extractChunks(payload: unknown): Record<string, unknown>[] {
 
 function extractDataset(payload: unknown, datasetId: string): Record<string, unknown> {
   const root = asRecord(payload);
-  const code = numberValue(root.code);
+  const code = businessCode(root);
   if (code !== undefined && code !== 0) {
-    throw new Error(`RAGFlow dataset lookup rejected with code ${code}`);
+    throw ragflowResponseError(`RAGFlow dataset lookup rejected with code ${code}`, code);
   }
 
   const data = root.data;
@@ -355,4 +364,12 @@ function stringValue(value: unknown): string {
 
 function numberValue(value: unknown): number | undefined {
   return typeof value === "number" ? value : undefined;
+}
+
+function businessCode(payload: unknown): number | undefined {
+  return numberValue(asRecord(payload).code);
+}
+
+function ragflowResponseError(message: string, status: number): Error & { status: number } {
+  return Object.assign(new Error(message), { status });
 }

@@ -187,6 +187,23 @@ describe("AiModelManagementService", () => {
       })
     );
   });
+
+  it("surfaces RAGFlow dataset lookup failures instead of treating them as missing fields", async () => {
+    const ragflow = {
+      checkHealth: vi.fn().mockResolvedValue({ status: "ok", baseUrl: "http://ragflow.local" }),
+      getDatasetOverview: vi.fn().mockRejectedValue(Object.assign(new Error("unauthorized"), { status: 401 }))
+    } as unknown as RagflowClient;
+    const harness = await createHarness({ ragflow });
+
+    await expect(harness.management.getRagflowOverview()).resolves.toEqual(
+      expect.objectContaining({
+        status: "error",
+        baseUrl: "http://ragflow.local",
+        errorKind: "auth",
+        unavailableFields: []
+      })
+    );
+  });
 });
 
 type HarnessOptions = {

@@ -38,6 +38,21 @@ describe("RagflowClient", () => {
     expect(fetcher).toHaveBeenCalledWith("http://ragflow.local/api/v1/datasets", expect.any(Object));
   });
 
+  it("reports an upstream error when health returns a non-zero business code", async () => {
+    const fetcher = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ code: 100, message: "authentication or business failure" })
+    });
+    const client = new RagflowClient(baseConfig, fetcher);
+
+    await expect(client.checkHealth()).resolves.toEqual({
+      status: "error",
+      baseUrl: "http://ragflow.local",
+      errorKind: "upstream"
+    });
+  });
+
   it("sends API key as bearer authorization when configured", async () => {
     const fetcher = vi.fn().mockResolvedValue({
       ok: true,

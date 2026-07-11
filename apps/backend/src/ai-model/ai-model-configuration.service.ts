@@ -19,6 +19,7 @@ type ConfigurationOptions = {
 export class AiModelConfigurationService implements AiModelRuntimePort {
   private persistedConfiguration?: PersistedAiModelConfiguration;
   private snapshot: EffectiveAiModelSnapshot;
+  private mutationQueue: Promise<void> = Promise.resolve();
 
   constructor(
     private readonly persistence: AiModelConfigurationPersistence,
@@ -54,32 +55,45 @@ export class AiModelConfigurationService implements AiModelRuntimePort {
     configuration: PersistedAiModelConfiguration,
     plaintextApiKey: string
   ): Promise<void> {
-    const normalized = normalizePersistedConfiguration(configuration, this.options.endpointAllowlist);
-    const nextSnapshot = createRunningSnapshot("database", normalized, plaintextApiKey);
+    return this.enqueueMutation(async () => {
+      const normalized = normalizePersistedConfiguration(configuration, this.options.endpointAllowlist);
+      const nextSnapshot = createRunningSnapshot("database", normalized, plaintextApiKey);
 
-    await this.persistence.saveAiModelConfiguration(normalized);
-    this.persistedConfiguration = clonePersisted(normalized);
-    this.snapshot = nextSnapshot;
+      await this.persistence.saveAiModelConfiguration(normalized);
+      this.persistedConfiguration = clonePersisted(normalized);
+      this.snapshot = nextSnapshot;
+    });
   }
 
   async disablePersistedConfiguration(actorUserId: string): Promise<void> {
-    const current = this.persistedConfiguration;
-    if (!current) {
-      this.snapshot = this.resolveEnvironmentSnapshot();
-      return;
-    }
+    return this.enqueueMutation(async () => {
+      const current = this.persistedConfiguration;
+      if (!current) {
+        this.snapshot = this.resolveEnvironmentSnapshot();
+        return;
+      }
 
-    const disabled: PersistedAiModelConfiguration = {
-      ...current,
-      enabled: false,
-      updatedBy: actorUserId,
-      updatedAt: new Date().toISOString()
-    };
-    const nextSnapshot = this.resolveEnvironmentSnapshot();
+      const disabled: PersistedAiModelConfiguration = {
+        ...current,
+        enabled: false,
+        updatedBy: actorUserId,
+        updatedAt: new Date().toISOString()
+      };
+      const nextSnapshot = this.resolveEnvironmentSnapshot();
 
-    await this.persistence.saveAiModelConfiguration(disabled);
-    this.persistedConfiguration = disabled;
-    this.snapshot = nextSnapshot;
+      await this.persistence.saveAiModelConfiguration(disabled);
+      this.persistedConfiguration = disabled;
+      this.snapshot = nextSnapshot;
+    });
+  }
+
+  private enqueueMutation(operation: () => Promise<void>): Promise<void> {
+    const result = this.mutationQueue.then(operation, operation);
+    this.mutationQueue = result.then(
+      () => undefined,
+      () => undefined
+    );
+    return result;
   }
 
   private resolveSnapshot(): EffectiveAiModelSnapshot {

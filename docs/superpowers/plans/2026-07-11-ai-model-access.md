@@ -716,7 +716,7 @@ THROTTLE_MODEL_TEST_LIMIT_PER_MINUTE=5
 
 Add `ai_model_access` to expected secondary keys, route smoke checks, and an admin `GET /api/internal/ai-models/overview` check that asserts no secret-shaped fields.
 
-Add an Nginx config assertion that preserves an incoming TLS terminator's `X-Forwarded-Proto` value and falls back to `$scheme` only when that header is absent.
+Add an Nginx config assertion that ignores incoming `X-Forwarded-Proto` and emits only the deployment-controlled `PAS_EXTERNAL_SCHEME`. Bind the frontend to loopback by default; a remote TLS terminator must use a dedicated firewalled interface.
 
 - [ ] **Step 2: Run checks and verify RED**
 
