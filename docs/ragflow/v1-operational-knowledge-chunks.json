@@ -1,0 +1,193 @@
+{
+  "document_name": "PAS-V1-技术部运营知识基线-20260711.md",
+  "version": "2026-07-11",
+  "maintainer": "Technical Department",
+  "review_status": "technical_baseline_pending_human_review",
+  "tags": [
+    "PAS-V1",
+    "IP-Guard",
+    "产品边界",
+    "文档权限",
+    "技术部"
+  ],
+  "chunks": [
+    {
+      "chunk_key": "V1-PRODUCT-FIT-001",
+      "question_ids": [
+        "V1-Q003"
+      ],
+      "questions": [
+        "哪些客户需求适合由 IP-Guard 解决，哪些需求需要配合身份、网络或管理制度？",
+        "IP-Guard 适合解决哪些终端数据防泄漏需求？"
+      ],
+      "important_keywords": [
+        "IP-Guard",
+        "终端数据防泄漏",
+        "透明加密",
+        "外发管控",
+        "移动存储",
+        "打印截屏",
+        "行为审计"
+      ],
+      "content": "IP-Guard 适合解决终端侧数据防泄漏和追溯需求。可评估的能力包括文档透明加密、文档操作审计、敏感内容落地与外传控制、移动存储设备和读写控制、打印与截屏控制、水印追溯以及终端行为审计。具体应用、文件类型、操作系统、通道和版本兼容性必须以当前产品资料及客户试点实测为准，不能从相似功能直接推断全部场景都支持。",
+      "source_titles": [
+        "IP-guard 产品白皮书_2023.11.30.pdf",
+        "加密文档权限产品化使用说明.pdf",
+        "支持截屏审计与控制功能使用说明.pdf"
+      ]
+    },
+    {
+      "chunk_key": "V1-PRODUCT-BOUNDARY-001",
+      "question_ids": [
+        "V1-Q003"
+      ],
+      "questions": [
+        "哪些客户需求适合由 IP-Guard 解决，哪些需求需要配合身份、网络或管理制度？",
+        "IP-Guard 不能单独解决哪些数据安全风险？"
+      ],
+      "important_keywords": [
+        "IP-Guard",
+        "能力边界",
+        "身份治理",
+        "网络边界",
+        "物理拍照",
+        "人员制度"
+      ],
+      "content": "IP-Guard 不能单独替代企业身份治理、网络边界防护或管理制度。账号生命周期、统一身份和强认证应由身份系统协同；互联网与内网边界仍需防火墙、网关等网络控制；手机拍照、口头泄露和未纳管终端等风险还需水印、区域管理、人员制度、培训与审计配合。售前不得承诺 IP-Guard 单独实现百分之百防泄密，也不得把协同能力描述成产品替代关系。",
+      "source_titles": [
+        "IP-guard 产品白皮书_2023.11.30.pdf"
+      ],
+      "source_paths": [
+        "docs/ragflow/v1-candidate-regression-questions.json"
+      ]
+    },
+    {
+      "chunk_key": "V1-PRODUCT-VALIDATION-001",
+      "question_ids": [
+        "V1-Q003"
+      ],
+      "questions": [
+        "哪些客户需求适合由 IP-Guard 解决，哪些需求需要配合身份、网络或管理制度？",
+        "售前怎样确认 IP-Guard 能力和客户需求是否匹配？"
+      ],
+      "important_keywords": [
+        "IP-Guard",
+        "需求确认",
+        "试点验证",
+        "适用范围",
+        "协同边界"
+      ],
+      "content": "售前判断适用性时，应先盘点敏感数据类型、终端和应用、主要泄漏路径、协作方式、现有身份与网络控制、审计现状及业务影响，再映射到可验证的 IP-Guard 能力。涉及未在当前资料明确覆盖的应用、外发通道、离线场景或平台版本时，应标记为待验证并安排兼容性测试或厂商确认；身份、网络和制度缺口应列为协同项，而不是无依据地承诺由 IP-Guard 全部解决。",
+      "source_titles": [
+        "IP-guard 产品白皮书_2023.11.30.pdf"
+      ],
+      "source_paths": [
+        "docs/ragflow/v1-candidate-regression-questions.json"
+      ]
+    },
+    {
+      "chunk_key": "V1-PAS-ORG-VISIBILITY-001",
+      "question_ids": [
+        "V1-Q076"
+      ],
+      "questions": [
+        "文档授权给 Technical Department 时，三个下属团队能否继承可见？",
+        "售前、技术和售后团队如何继承技术部文档权限？"
+      ],
+      "important_keywords": [
+        "PAS v2",
+        "Technical Department",
+        "Presales Team",
+        "Technical Team",
+        "After-sales Team",
+        "organization_units",
+        "活动组织树"
+      ],
+      "content": "PAS v2 的 organization_units 可见性按当前活动组织树判断。文档授权给 Technical Department（org-technical）时，处在其活动子树中的 Presales Team、Technical Team 和 After-sales Team 的活动技术账号都能命中该组织范围。每次请求的认证守卫会从用户存储刷新用户，再由组织服务检查目标单位处于 active 状态，并确认用户到 Technical Department 的整条祖先链均为 active；相关单位停用后不再命中。知识维护仍只允许 admin 或活动技术部成员。",
+      "source_paths": [
+        "apps/backend/src/auth/internal-api-auth.guard.ts",
+        "apps/backend/src/auth/auth.service.ts",
+        "apps/backend/src/organization/organization.service.ts",
+        "apps/backend/src/knowledge/knowledge-document.service.ts"
+      ]
+    },
+    {
+      "chunk_key": "V1-PAS-PROJECT-GROUP-001",
+      "question_ids": [
+        "V1-Q077"
+      ],
+      "questions": [
+        "`project_groups` 文档授权如何随项目成员变化生效？",
+        "项目成员移除或项目组停用后，文档权限如何撤销？"
+      ],
+      "important_keywords": [
+        "PAS v2",
+        "project_groups",
+        "项目组",
+        "当前成员关系",
+        "停用撤权",
+        "citation"
+      ],
+      "content": "PAS v2 的 project_groups 可见性要求两个条件同时成立：目标项目组当前为 active，且当前用户的 projectGroupIds 包含该项目组。认证守卫在每次请求时从用户存储重新取得成员关系，组织服务同时读取项目组当前状态；成员被移除或项目组被停用后，该授权不再命中。知识文档元数据目录与 RAGFlow documentId 对齐时，撤权后的文档会从检索允许列表和返回 citation 中消失。元数据目录为空时属于兼容模式，不能把兼容模式结果作为项目组撤权验收证据。",
+      "source_paths": [
+        "apps/backend/src/auth/internal-api-auth.guard.ts",
+        "apps/backend/src/auth/auth.service.ts",
+        "apps/backend/src/organization/organization.service.ts",
+        "apps/backend/src/knowledge/knowledge-document.service.ts",
+        "apps/backend/src/ragflow/ragflow.client.ts"
+      ]
+    },
+    {
+      "chunk_key": "V1-PAS-SALES-PROJECT-READ-001",
+      "question_ids": [
+        "V1-Q099"
+      ],
+      "questions": [
+        "给销售用户加入活动项目组后，怎样证明只增加了该项目文档读取权？",
+        "销售加入项目组后如何验证没有获得其他文档或写入权限？"
+      ],
+      "important_keywords": [
+        "PAS v2",
+        "销售用户",
+        "活动项目组",
+        "只读授权",
+        "403",
+        "审计事件"
+      ],
+      "content": "验证销售用户的活动项目组授权必须同时检查三组结果：第一，项目组范围内且 enabled、parseStatus=done 的文档新增为可读；第二，未授权的私有文档仍不可读，也不能出现在检索 citation 中；第三，销售对知识文档标签、可见性、启停或重解析等写操作仍由 assertCanMaintain 拒绝，HTTP 语义为 403，并记录 DOCUMENT_MUTATION_FORBIDDEN 审计事件，原文档元数据不得改变。项目组授权只增加匹配项目文档的读取权，不提升销售角色或知识维护权限。",
+      "source_paths": [
+        "apps/backend/src/knowledge/knowledge-document.service.ts",
+        "apps/backend/src/knowledge/knowledge-document.service.spec.ts",
+        "apps/backend/src/ragflow/ragflow.client.ts"
+      ]
+    },
+    {
+      "chunk_key": "V1-PAS-REVOCATION-CITATION-001",
+      "question_ids": [
+        "V1-Q100"
+      ],
+      "questions": [
+        "组织单元或项目组失效后，检索层怎样避免继续返回旧授权 citation？",
+        "撤权后怎样验证 RAGFlow citation 不再泄漏旧文档？"
+      ],
+      "important_keywords": [
+        "PAS v2",
+        "组织单元停用",
+        "项目组停用",
+        "撤权",
+        "allowedDocumentIds",
+        "fail closed",
+        "citation 泄漏"
+      ],
+      "content": "PAS v2 的撤权检索链路以当前状态重新计算，而不是沿用旧 citation。认证守卫每次请求从用户存储刷新账号、组织和项目组成员关系；知识服务只把 enabled、parseStatus=done 且按当前活动组织或项目组可见的 documentId 放入 allowedDocumentIds；RAGFlow 检索后还会再次按该允许列表过滤 chunks，之后才生成 answer 和 citations。验收应在撤权前后用同一用户、同一问题复测，确认失效文档不再出现在 citation。该保证以 PAS 元数据目录已和 RAGFlow documentId 对齐为前提；空目录兼容模式不能作为 fail-closed 验收证据。",
+      "source_paths": [
+        "apps/backend/src/auth/internal-api-auth.guard.ts",
+        "apps/backend/src/auth/auth.service.ts",
+        "apps/backend/src/organization/organization.service.ts",
+        "apps/backend/src/knowledge/knowledge-document.service.ts",
+        "apps/backend/src/qa/qa.service.ts",
+        "apps/backend/src/ragflow/ragflow.client.ts"
+      ]
+    }
+  ]
+}
