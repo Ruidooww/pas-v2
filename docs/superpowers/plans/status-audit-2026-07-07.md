@@ -60,15 +60,25 @@ Do not use historical checkbox state alone to decide what still needs coding.
   250 citations in total. The local ignored JSON and reviewer worksheet retain
   every answer, citation, reviewer assignment, and pending human-review field.
 - The tracked V1 candidate set now contains 100 unique pending questions across
-  16 categories, with no exact question overlap with the V0 set. A real-mode
-  technical run at commit `a807a16` returned `answered=100`, `no_hit=0`,
-  `error=0`, with five citations per question and 500 citations in total;
-  average runtime was 1450 ms and P95 was 2305 ms. Independent semantic review
-  found obvious expected-evidence mismatches in `V1-Q003`, `V1-Q076`,
-  `V1-Q077`, `V1-Q099`, and `V1-Q100`, so this is request-path evidence rather
-  than an answer-quality pass. The local ignored JSON and reviewer worksheet
-  preserve every answer and citation, but the reviewer is still unassigned and
-  all human-review fields remain pending.
+  16 categories, with no exact question overlap with the V0 set. The baseline
+  real-mode run at commit `a807a16` returned `answered=100`, `no_hit=0`,
+  `error=0`, with 500 citations, but semantic review found obvious mismatches in
+  `V1-Q003`, `V1-Q076`, `V1-Q077`, `V1-Q099`, and `V1-Q100`.
+- Commit `4f84de2` added a tracked seven-chunk Technical Department operational
+  knowledge baseline and synchronized it to one new RAGFlow virtual document
+  without changing the existing 50 documents. A five-question rerun placed the
+  new document in all three answer-producing citation positions for each known
+  mismatch.
+- The post-remediation 100-question run at `4f84de2` returned `answered=100`,
+  `no_hit=0`, `error=0`, with 500 citations; average runtime was 1352 ms and P95
+  was 2324 ms. The new document entered the top three for 44 questions. Most are
+  adjacent product or permission topics, but at least eight low-score cross-topic
+  hits still need human classification or dedicated knowledge. The reviewer is
+  still unassigned and all human-review fields remain pending.
+- The live PAS knowledge-document metadata catalog remains empty. External QA
+  therefore still uses compatibility mode, so the post-remediation run does not
+  prove live fail-closed filtering despite the ACL code and prior isolated M9
+  permission smoke.
 - Both HYYN application images were rebuilt from the M9 worktree. All four
   HYYN containers were healthy; `/api/health` and `/api/ragflow/health`
   returned `ok` through the frontend entry point.
@@ -113,7 +123,7 @@ long-range business capabilities.
 | V0 export | Code-ready | Export jobs and template registry are implemented. Real customer templates are expected to be uploaded later. |
 | V0 feedback/regression | Code-ready; formal gate deferred | Feedback APIs exist and the 50-question technical run passed. Reviewer-signed evidence and pass/fail decisions remain the final go-live gate. |
 | Feishu reservation | Code-ready as disabled integration | Backend route exists as a reserved channel; real bot rollout is still disabled by config. |
-| V1 knowledge operations | Code-ready; M9 permission model verified | The active Technical Department tree maintains knowledge. Document metadata supports five visibility scopes and applies fail-closed retrieval filtering. |
+| V1 knowledge operations | Code-ready; M9 permission model verified; live catalog not enrolled | The active Technical Department tree maintains knowledge. Document metadata supports five visibility scopes and applies fail-closed retrieval filtering when enrolled, but the current external QA dataset still runs in empty-catalog compatibility mode. |
 | V2 business flow | Code-ready | Opportunity, meeting, contract/after-sales, feedback, and metrics paths are implemented on fake/internal data. File/data ingestion is explicitly deferred. |
 | V3 platform | Code-ready | Platform dashboard/service/controller/store code exists. User-facing menu now exposes the platform access surface under system settings. |
 | Navigation/UI shell | Code-ready | Primary menu groups, left secondary menus, horizontal tertiary tabs, lazy authenticated page chunks with a stable loading state, admin menu configuration, polished empty states, deprecated-list cleanup, and deprecated-Alert cleanup are implemented and smoke-covered. |
@@ -145,10 +155,14 @@ and GitHub PR history instead of flipping old checkboxes in place.
   captured citations are available, but the reviewer must still record all 50
   decisions and timestamps before submitting the persisted regression run.
 - Formal human-reviewed V1 100-question regression gate. The tracked candidate
-  set and 100/100 request-path run are available, but the five known semantic
-  mismatches require retrieval remediation and rerun before a reviewer approves
-  the question set, records all 100 decisions and timestamps, and submits the
-  persisted regression run.
+  set, known-mismatch remediation, and post-remediation 100/100 technical run are
+  available. A reviewer still needs to approve or revise the question set,
+  classify the remaining weak or cross-topic answers, record all 100 decisions
+  and timestamps, and submit the persisted regression run.
+- Reviewed visibility assignments for the 51 live RAGFlow documents. PAS metadata
+  must be aligned to those document IDs before the trial can claim live
+  fail-closed ACL behavior; bulk enrollment without per-document visibility
+  review could incorrectly expose or suppress knowledge.
 - Real CRM integration remains paused until the user reopens it and provides
   API documentation, auth method, test account, and sample customer records.
 - The current export templates are accepted for the internal trial; replacement
@@ -171,16 +185,18 @@ and GitHub PR history instead of flipping old checkboxes in place.
    release-ready. Local trial secrets are persisted; production secrets remain
    an environment responsibility. The current export templates remain the
    trial baseline.
-2. Correct the V1 RAGFlow retrieval scope or add approved PAS operational
-   knowledge for the five known mismatches, rerun the affected coverage, then
-   assign a reviewer to approve or revise all 100 questions and submit a
-   persisted passing 100-case regression run before claiming V1 launch approval.
-3. Keep code work on the current fake-data boundary unless the user provides
+2. Assign a reviewer to approve or revise all 100 V1 questions, review the
+   post-remediation answers and citations, and add dedicated approved knowledge
+   for any confirmed weak or cross-topic cases before the final 100-case rerun.
+3. Review visibility for all 51 live RAGFlow documents, enroll the approved PAS
+   metadata mapping, and run same-user before/after organization and project-group
+   revocation checks before treating ACL answers as live fail-closed evidence.
+4. Keep code work on the current fake-data boundary unless the user provides
    real CRM, template, or source-data inputs.
-4. For UI changes, update both the frontend shell and
+5. For UI changes, update both the frontend shell and
    `scripts/smoke-local-menu.mjs` so every visible secondary menu keeps a
    backend-backed smoke check.
-5. Treat the 50/100-question sets as final quality gates, not as blockers for
+6. Treat the 50/100-question sets as final quality gates, not as blockers for
    normal code polishing.
-6. Before opening new V0-V3 implementation issues, check this audit first and
+7. Before opening new V0-V3 implementation issues, check this audit first and
    avoid re-dispatching already merged code layers.
