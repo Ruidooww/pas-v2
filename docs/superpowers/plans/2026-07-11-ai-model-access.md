@@ -52,6 +52,7 @@
 - `apps/backend/src/qa/model-qa-draft.provider.spec.ts`
 - `apps/backend/src/proposal/model-proposal-draft.provider.ts`
 - `apps/backend/src/proposal/model-proposal-draft.provider.spec.ts`
+- `apps/backend/src/llm/llm-generation-audit.ts`
 - `apps/backend/prisma/migrations/20260711000000_ai_model_configuration/migration.sql`
 - `apps/frontend/src/pages/AiModelAccessPage.tsx`
 - `apps/frontend/src/pages/AiModelAccessPage.test.tsx`
@@ -477,6 +478,7 @@ git commit -m "feat: expose AI model management APIs"
 - Create: `apps/backend/src/qa/model-qa-draft.provider.spec.ts`
 - Create: `apps/backend/src/proposal/model-proposal-draft.provider.ts`
 - Create: `apps/backend/src/proposal/model-proposal-draft.provider.spec.ts`
+- Create: `apps/backend/src/llm/llm-generation-audit.ts`
 - Modify: `apps/backend/src/qa/qa.types.ts`
 - Modify: `apps/backend/src/qa/qa.service.ts`
 - Modify: `apps/backend/src/qa/qa.service.spec.ts`
@@ -549,7 +551,7 @@ Expected: all focused suites pass; existing deterministic paths remain green.
 - [ ] **Step 7: Commit feature integration**
 
 ```powershell
-git add apps/backend/src/qa/model-qa-draft.provider.ts apps/backend/src/qa/model-qa-draft.provider.spec.ts apps/backend/src/qa/qa.types.ts apps/backend/src/qa/qa.service.ts apps/backend/src/qa/qa.service.spec.ts apps/backend/src/qa/qa.module.ts apps/backend/src/customer-analysis/customer-analysis.service.ts apps/backend/src/customer-analysis/customer-analysis.module.ts apps/backend/src/customer-analysis/customer-analysis.narrative.spec.ts apps/backend/src/proposal/model-proposal-draft.provider.ts apps/backend/src/proposal/model-proposal-draft.provider.spec.ts apps/backend/src/proposal/proposal.module.ts apps/backend/src/proposal/proposal.service.spec.ts
+git add docs/superpowers/plans/2026-07-11-ai-model-access.md apps/backend/src/llm/llm-generation-audit.ts apps/backend/src/qa/model-qa-draft.provider.ts apps/backend/src/qa/model-qa-draft.provider.spec.ts apps/backend/src/qa/qa.types.ts apps/backend/src/qa/qa.service.ts apps/backend/src/qa/qa.service.spec.ts apps/backend/src/qa/qa.module.ts apps/backend/src/customer-analysis/customer-analysis.service.ts apps/backend/src/customer-analysis/customer-analysis.module.ts apps/backend/src/customer-analysis/customer-analysis.narrative.spec.ts apps/backend/src/proposal/model-proposal-draft.provider.ts apps/backend/src/proposal/model-proposal-draft.provider.spec.ts apps/backend/src/proposal/proposal.module.ts apps/backend/src/proposal/proposal.service.spec.ts
 git commit -m "feat: use configured model for generated content"
 ```
 

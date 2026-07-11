@@ -28,8 +28,9 @@ export class QaService {
     });
 
     let chunks: KnowledgeChunk[];
+    let allowedDocumentIds: string[] | undefined;
     try {
-      const allowedDocumentIds =
+      allowedDocumentIds =
         request.user && this.documentService?.hasDocuments()
           ? this.documentService.getAccessibleDocumentIds(request.user)
           : undefined;
@@ -39,6 +40,10 @@ export class QaService {
         topK: request.topK ?? this.config.topK,
         ...(allowedDocumentIds ? { allowedDocumentIds } : {})
       });
+      if (allowedDocumentIds) {
+        const allowed = new Set(allowedDocumentIds);
+        chunks = chunks.filter((chunk) => allowed.has(chunk.documentId));
+      }
     } catch {
       this.auditLog.record({
         event: "qa_retrieval_failed",
@@ -71,7 +76,7 @@ export class QaService {
     }
 
     try {
-      const answer = await this.draftProvider.generateDraft({ query, chunks });
+      const answer = await this.draftProvider.generateDraft({ query, actorUserId: userId, chunks });
       const citations = chunks.map(toCitation);
 
       this.auditLog.record({

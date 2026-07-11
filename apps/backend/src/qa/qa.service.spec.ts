@@ -5,6 +5,7 @@ import type { RagflowClient } from "../ragflow/ragflow.client";
 import { QaAuditLogService } from "./qa-audit-log.service";
 import { LocalQaDraftProvider } from "./qa-draft.provider";
 import { QaService } from "./qa.service";
+import type { QaDraftProvider } from "./qa.types";
 
 describe("QaService", () => {
   it("returns an answer draft with citations from retrieved chunks", async () => {
@@ -155,6 +156,59 @@ describe("QaService", () => {
       topK: 3,
       allowedDocumentIds: []
     });
+  });
+
+  it("post-filters returned chunks before generation and citations", async () => {
+    const ragflowClient = {
+      retrieveKnowledgeChunks: vi.fn().mockResolvedValue([
+        {
+          chunkId: "chunk-allowed",
+          documentId: "doc-allowed",
+          title: "Allowed",
+          content: "Allowed content",
+          score: 0.9,
+          source: "allowed.pdf"
+        },
+        {
+          chunkId: "chunk-denied",
+          documentId: "doc-denied",
+          title: "Denied",
+          content: "Denied content",
+          score: 0.99,
+          source: "denied.pdf"
+        }
+      ])
+    } as unknown as RagflowClient;
+    const documentService = {
+      hasDocuments: vi.fn().mockReturnValue(true),
+      getAccessibleDocumentIds: vi.fn().mockReturnValue(["doc-allowed"])
+    } as unknown as KnowledgeDocumentService;
+    const draftProvider: QaDraftProvider = {
+      generateDraft: vi.fn().mockResolvedValue("Generated answer")
+    };
+    const service = new QaService(
+      ragflowClient,
+      draftProvider,
+      new QaAuditLogService(),
+      { datasetId: "qa-v0", topK: 3 },
+      documentService
+    );
+
+    const response = await service.ask({
+      query: "Question",
+      userId: "user-1",
+      user: createUser("sales")
+    });
+
+    expect(draftProvider.generateDraft).toHaveBeenCalledWith({
+      query: "Question",
+      actorUserId: "user-1",
+      chunks: [expect.objectContaining({ chunkId: "chunk-allowed", documentId: "doc-allowed" })]
+    });
+    expect(response.citations).toEqual([
+      expect.objectContaining({ chunkId: "chunk-allowed", documentId: "doc-allowed" })
+    ]);
+    expect(JSON.stringify(response)).not.toContain("chunk-denied");
   });
 
   it("does not apply document ACL filters before the metadata catalog is configured", async () => {

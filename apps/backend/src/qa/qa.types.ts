@@ -42,6 +42,7 @@ export type QaConfig = {
 
 export type QaDraftInput = {
   query: string;
+  actorUserId: string;
   chunks: KnowledgeChunk[];
 };
 

@@ -2,6 +2,11 @@ import type { KnowledgeDocumentService } from "../knowledge/knowledge-document.s
 import type { CrmClient, CrmCustomerContext } from "../crm/crm.types";
 import { createPrefixedId } from "../ids";
 import type { LlmClientPort } from "../llm/llm.types";
+import {
+  modelElapsedMs,
+  modelErrorCode,
+  recordLlmGeneration
+} from "../llm/llm-generation-audit";
 import type { QaCitation } from "../qa/qa.types";
 import type { KnowledgeChunk } from "../ragflow/knowledge-chunk";
 import type { RagflowClient } from "../ragflow/ragflow.client";
@@ -20,7 +25,8 @@ export class CustomerAnalysisService {
     private readonly auditLog: CustomerAnalysisAuditLogService,
     private readonly config: CustomerAnalysisConfig,
     private readonly llmClient?: LlmClientPort,
-    private readonly documentService?: KnowledgeDocumentService
+    private readonly documentService?: KnowledgeDocumentService,
+    private readonly generationAudit?: AuditLogService
   ) {}
 
   async analyze(request: CustomerAnalysisRequest): Promise<CustomerAnalysisResult> {
@@ -63,7 +69,7 @@ export class CustomerAnalysisService {
       evidence
     };
 
-    const narrative = await this.buildNarrative(customer, result);
+    const narrative = await this.buildNarrative(customer, result, userId);
     result.narrativeSummary = narrative.summary;
     result.narrativeSource = narrative.source;
 
@@ -83,10 +89,19 @@ export class CustomerAnalysisService {
   // blocks on the provider.
   private async buildNarrative(
     customer: CrmCustomerContext,
-    result: CustomerAnalysisResult
+    result: CustomerAnalysisResult,
+    actorUserId: string
   ): Promise<{ summary: string; source: "llm" | "rule_based" }> {
     const ruleBased = buildRuleBasedNarrative(result);
+    const startedAt = Date.now();
     if (!this.llmClient) {
+      recordLlmGeneration(this.generationAudit, {
+        actorUserId,
+        feature: "customer_analysis",
+        elapsedMs: modelElapsedMs(startedAt, Date.now()),
+        result: "failure",
+        fallbackUsed: true
+      });
       return { summary: ruleBased, source: "rule_based" };
     }
 
@@ -106,12 +121,40 @@ export class CustomerAnalysisService {
         temperature: 0.3,
         maxTokens: 400
       });
-      if (completion.mode !== "real") {
+      if (completion.mode !== "real" || !completion.content.trim()) {
         // Mock completions echo the prompt; keep that out of user-visible output.
+        recordLlmGeneration(this.generationAudit, {
+          actorUserId,
+          feature: "customer_analysis",
+          provider: completion.provider,
+          model: completion.model,
+          elapsedMs: modelElapsedMs(startedAt, Date.now()),
+          result: "failure",
+          fallbackUsed: true,
+          ...(completion.mode === "real" ? { errorCode: "MODEL_RESPONSE_INVALID" } : {})
+        });
         return { summary: ruleBased, source: "rule_based" };
       }
-      return { summary: completion.content, source: "llm" };
-    } catch {
+      recordLlmGeneration(this.generationAudit, {
+        actorUserId,
+        feature: "customer_analysis",
+        provider: completion.provider,
+        model: completion.model,
+        elapsedMs: modelElapsedMs(startedAt, Date.now()),
+        result: "success",
+        fallbackUsed: false
+      });
+      return { summary: completion.content.trim(), source: "llm" };
+    } catch (error) {
+      const errorCode = modelErrorCode(error);
+      recordLlmGeneration(this.generationAudit, {
+        actorUserId,
+        feature: "customer_analysis",
+        elapsedMs: modelElapsedMs(startedAt, Date.now()),
+        result: "failure",
+        fallbackUsed: true,
+        errorCode
+      });
       return { summary: ruleBased, source: "rule_based" };
     }
   }
@@ -203,3 +246,4 @@ function toCitation(chunk: KnowledgeChunk): QaCitation {
 function createAnalysisId(): string {
   return createPrefixedId("ca");
 }
+import type { AuditLogService } from "../audit/audit-log.service";

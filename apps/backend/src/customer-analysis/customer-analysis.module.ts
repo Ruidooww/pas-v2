@@ -1,4 +1,7 @@
 import { Module } from "@nestjs/common";
+import { AuditModule } from "../audit/audit.module";
+import type { AuditLogService } from "../audit/audit-log.service";
+import { AUDIT_LOG } from "../audit/audit.tokens";
 import { CrmModule } from "../crm/crm.module";
 import { KnowledgeModule } from "../knowledge/knowledge.module";
 import type { KnowledgeDocumentService } from "../knowledge/knowledge-document.service";
@@ -24,7 +27,7 @@ import type { CustomerAnalysisConfig } from "./customer-analysis.types";
 
 @Module({
   controllers: [CustomerAnalysisController],
-  imports: [CrmModule, LlmModule, RagflowModule, KnowledgeModule],
+  imports: [CrmModule, LlmModule, RagflowModule, KnowledgeModule, AuditModule],
   providers: [
     {
       provide: CUSTOMER_ANALYSIS_CONFIG,
@@ -42,16 +45,26 @@ import type { CustomerAnalysisConfig } from "./customer-analysis.types";
         auditLog: CustomerAnalysisAuditLogService,
         config: CustomerAnalysisConfig,
         llmClient: LlmClient,
-        documents: KnowledgeDocumentService
+        documents: KnowledgeDocumentService,
+        generationAudit: AuditLogService
       ): CustomerAnalysisService =>
-        new CustomerAnalysisService(crmClient, ragflowClient, auditLog, config, llmClient, documents),
+        new CustomerAnalysisService(
+          crmClient,
+          ragflowClient,
+          auditLog,
+          config,
+          llmClient,
+          documents,
+          generationAudit
+        ),
       inject: [
         CRM_CLIENT,
         RAGFLOW_CLIENT,
         CUSTOMER_ANALYSIS_AUDIT_LOG,
         CUSTOMER_ANALYSIS_CONFIG,
         LLM_CLIENT,
-        KNOWLEDGE_DOCUMENT_SERVICE
+        KNOWLEDGE_DOCUMENT_SERVICE,
+        AUDIT_LOG
       ]
     }
   ],
