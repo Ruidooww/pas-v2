@@ -134,6 +134,7 @@ export function MenuConfigPage() {
                   />
                   <Select
                     aria-label={`${row.label}角色`}
+                    disabled={isAdminOnlyMenu(row.key)}
                     mode="multiple"
                     options={ROLE_OPTIONS}
                     value={row.roles}
@@ -202,7 +203,7 @@ export function MenuConfigPage() {
       visible: patch.visible ?? row.visible,
       order: patch.order ?? row.order,
       alias: alias || undefined,
-      roles: patch.roles ?? row.roles,
+      roles: isAdminOnlyMenu(row.key) ? ["admin"] : patch.roles ?? row.roles,
       isDefault: patch.isDefault ?? row.isDefault
     };
 
@@ -267,10 +268,14 @@ function toRow(
     ...child,
     alias: draft.alias ?? override?.alias ?? "",
     visible: draft.visible ?? override?.visible ?? true,
-    roles: draft.roles ?? override?.roles ?? child.roles,
+    roles: isAdminOnlyMenu(child.key) ? ["admin"] : draft.roles ?? override?.roles ?? child.roles,
     order: draft.order ?? override?.order ?? child.order,
     isDefault: draft.isDefault ?? override?.isDefault ?? false
   };
+}
+
+function isAdminOnlyMenu(key: SecondaryMenuKey): boolean {
+  return key === "ai_model_access";
 }
 
 function findOverride(

@@ -44,6 +44,18 @@ describe("MenuConfigPage", () => {
       expect.objectContaining({ method: "POST" })
     );
   });
+
+  it("locks AI model access to the admin role even for hostile saved state", async () => {
+    vi.stubGlobal("fetch", vi.fn(mockMenuConfigFetch));
+
+    render(<MenuConfigPage />);
+    fireEvent.click(await screen.findByRole("button", { name: "系统设置" }));
+
+    const roleSelect = await screen.findByLabelText("AI 模型接入角色");
+    expect(roleSelect).toBeDisabled();
+    expect(screen.getAllByText("admin").length).toBeGreaterThan(0);
+    expect(screen.queryByText("sales")).toBeNull();
+  });
 });
 
 function mockMenuConfigFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
@@ -99,10 +111,21 @@ function createMenuConfiguration(): MenuConfiguration {
         icon: "system",
         order: 60,
         children: [
-          { key: "platform_governance", label: "平台接入", route: "/platform/governance", roles: ["admin"], order: 10 }
+          { key: "ai_model_access", label: "AI 模型接入", route: "/system/ai-models", roles: ["admin"], order: 60 },
+          { key: "platform_governance", label: "平台接入", route: "/platform/governance", roles: ["admin"], order: 70 }
         ]
       }
     ],
-    overrides: []
+    overrides: [
+      {
+        primaryKey: "system",
+        secondaryKey: "ai_model_access",
+        visible: true,
+        order: 60,
+        roles: ["sales", "technical", "admin"],
+        updatedAt: "2026-07-11T00:00:00.000Z",
+        updatedBy: "admin-1"
+      }
+    ]
   };
 }

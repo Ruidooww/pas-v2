@@ -22,6 +22,15 @@ const salesUser: AuthenticatedUser = {
   projectGroupIds: []
 };
 
+const technicalUser: AuthenticatedUser = {
+  ...salesUser,
+  userId: "technical-1",
+  username: "technical@example.com",
+  displayName: "Technical",
+  role: "technical",
+  organizationUnitId: "org-technical-presales"
+};
+
 describe("MenuService", () => {
   it("returns role-filtered effective menus for sales users", () => {
     const service = createService();
@@ -35,6 +44,73 @@ describe("MenuService", () => {
       "opportunities",
       "meeting_minutes"
     ]);
+  });
+
+  it("places AI model access before platform governance for admins only", () => {
+    const service = createService();
+
+    const adminSystem = service.getEffectiveMenu(adminUser).find((item) => item.key === "system");
+
+    expect(adminSystem?.children.map((item) => item.key)).toEqual([
+      "account_management",
+      "audit_logs",
+      "data_attachments",
+      "secondary_menu_config",
+      "system_settings",
+      "ai_model_access",
+      "platform_governance"
+    ]);
+    expect(service.getEffectiveMenu(salesUser).flatMap((item) => item.children)).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ key: "ai_model_access" })])
+    );
+    expect(service.getEffectiveMenu(technicalUser).flatMap((item) => item.children)).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ key: "ai_model_access" })])
+    );
+  });
+
+  it("rejects role overrides that broaden AI model access", () => {
+    const service = createService();
+
+    expect(() =>
+      service.updateOverride(
+        {
+          primaryKey: "system",
+          secondaryKey: "ai_model_access",
+          roles: ["technical", "admin"]
+        },
+        adminUser
+      )
+    ).toThrow(BadRequestException);
+  });
+
+  it("clamps hostile persisted AI model role overrides to admin", () => {
+    const store = new MenuStoreService();
+    store.seed({
+      stateId: "pas-menu-state",
+      overrides: [
+        {
+          primaryKey: "system",
+          secondaryKey: "ai_model_access",
+          visible: true,
+          order: 1,
+          roles: ["sales", "technical", "admin"],
+          updatedAt: "2026-07-11T00:00:00.000Z",
+          updatedBy: "admin-1"
+        }
+      ],
+      updatedAt: "2026-07-11T00:00:00.000Z"
+    });
+    const service = new MenuService(store);
+
+    expect(service.getEffectiveMenu(salesUser).flatMap((item) => item.children).map((item) => item.key)).not.toContain(
+      "ai_model_access"
+    );
+    expect(
+      service
+        .getEffectiveMenu(adminUser)
+        .flatMap((item) => item.children)
+        .find((item) => item.key === "ai_model_access")?.roles
+    ).toEqual(["admin"]);
   });
 
   it("allows admin to hide and alias a second-level menu item", () => {

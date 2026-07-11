@@ -31,6 +31,7 @@ export type SecondaryMenuKey =
   | "audit_logs"
   | "data_attachments"
   | "secondary_menu_config"
+  | "ai_model_access"
   | "system_settings";
 
 export type SecondaryMenuDefinition = {

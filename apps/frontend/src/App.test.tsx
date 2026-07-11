@@ -25,6 +25,14 @@ const salesUser: PublicUser = {
 };
 
 describe("App", () => {
+  it("keeps AI model access admin-only in the fallback menu", () => {
+    const adminKeys = fallbackMenuFor(adminUser).flatMap((primary) => primary.children.map((child) => child.key));
+    const salesKeys = fallbackMenuFor(salesUser).flatMap((primary) => primary.children.map((child) => child.key));
+
+    expect(adminKeys).toContain("ai_model_access");
+    expect(salesKeys).not.toContain("ai_model_access");
+  });
+
   afterEach(() => {
     vi.restoreAllMocks();
     vi.unstubAllGlobals();

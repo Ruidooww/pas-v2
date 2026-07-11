@@ -111,7 +111,8 @@ const DEFAULT_MENU: PrimaryMenuDefinition[] = [
       { key: "data_attachments", label: "数据与附件", route: "/system/data-attachments", roles: ["admin"], order: 30 },
       { key: "secondary_menu_config", label: "菜单配置", route: "/system/secondary-menu", roles: ["admin"], order: 40 },
       { key: "system_settings", label: "运行配置", route: "/system/settings", roles: ["admin"], order: 50 },
-      { key: "platform_governance", label: "平台接入", route: "/platform/governance", roles: ["admin"], order: 60 }
+      { key: "ai_model_access", label: "AI 模型接入", route: "/system/ai-models", roles: ["admin"], order: 60 },
+      { key: "platform_governance", label: "平台接入", route: "/platform/governance", roles: ["admin"], order: 70 }
     ]
   }
 ];

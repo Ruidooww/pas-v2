@@ -18,6 +18,7 @@ import type {
 type MenuAuditLog = Pick<AuditLogService, "record">;
 
 const VALID_ROLES: UserRole[] = ["sales", "technical", "admin"];
+const ADMIN_ONLY_SECONDARY_KEYS = new Set<SecondaryMenuKey>(["ai_model_access"]);
 
 export class MenuService {
   constructor(
@@ -45,6 +46,7 @@ export class MenuService {
     const primary = findPrimary(request.primaryKey);
     const secondary = findSecondary(primary, request.secondaryKey);
     const roles = normalizeRoles(request.roles, secondary.roles);
+    assertProtectedRoles(secondary.key, roles);
     const now = new Date().toISOString();
 
     this.store.update((draft) => {
@@ -152,7 +154,7 @@ function mergeChild(
   return {
     ...child,
     label: override?.alias || child.label,
-    roles: override?.roles ?? child.roles,
+    roles: ADMIN_ONLY_SECONDARY_KEYS.has(child.key) ? ["admin"] : override?.roles ?? child.roles,
     order: override?.order ?? child.order,
     visible: true,
     isDefault: override?.isDefault ?? false
@@ -188,6 +190,12 @@ function normalizeRoles(roles: UserRole[] | undefined, fallback: UserRole[]): Us
     throw new BadRequestException("roles must contain valid PAS roles");
   }
   return uniqueRoles;
+}
+
+function assertProtectedRoles(key: SecondaryMenuKey, roles: UserRole[]): void {
+  if (ADMIN_ONLY_SECONDARY_KEYS.has(key) && (roles.length !== 1 || roles[0] !== "admin")) {
+    throw new BadRequestException("this menu is restricted to the admin role");
+  }
 }
 
 function normalizeAlias(nextAlias: string | undefined, currentAlias: string | undefined): string | undefined {
