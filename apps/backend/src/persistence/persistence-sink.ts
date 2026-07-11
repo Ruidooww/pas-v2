@@ -1,6 +1,8 @@
 import { Logger } from "@nestjs/common";
 import type { OnModuleDestroy, OnModuleInit } from "@nestjs/common";
 import type { PrismaClient } from "@prisma/client";
+import { AiModelError } from "../ai-model/ai-model.errors";
+import type { AiModelProvider, ModelTestStatus, PersistedAiModelConfiguration } from "../ai-model/ai-model.types";
 import type { AuditEvent } from "../audit/audit.types";
 import type { UserRecord } from "../auth/auth.types";
 import type { BusinessFlowRecord } from "../business-flow/business-flow.types";
@@ -370,6 +372,56 @@ export class PersistenceSink implements OnModuleInit, OnModuleDestroy {
     if (!this.client) return undefined;
     const row = await this.client.organizationStateSnapshot.findFirst({ orderBy: { updatedAt: "desc" } });
     return row ? (row.data as unknown as OrganizationState) : undefined;
+  }
+
+  async loadAiModelConfiguration(): Promise<PersistedAiModelConfiguration | undefined> {
+    if (!this.client) return undefined;
+    const row = await this.client.aiModelConfiguration.findUnique({ where: { id: "generation-default" } });
+    if (!row) return undefined;
+
+    return {
+      ...row,
+      id: "generation-default",
+      provider: row.provider as AiModelProvider,
+      lastTestStatus: row.lastTestStatus as ModelTestStatus,
+      lastTestedAt: row.lastTestedAt.toISOString(),
+      createdAt: row.createdAt.toISOString(),
+      updatedAt: row.updatedAt.toISOString()
+    };
+  }
+
+  async saveAiModelConfiguration(configuration: PersistedAiModelConfiguration): Promise<void> {
+    const client = this.client;
+    if (!client) {
+      throw new AiModelError("MODEL_PERSISTENCE_UNAVAILABLE", "PostgreSQL persistence is unavailable");
+    }
+
+    const create = {
+      ...configuration,
+      lastTestedAt: new Date(configuration.lastTestedAt),
+      createdAt: new Date(configuration.createdAt),
+      updatedAt: new Date(configuration.updatedAt)
+    };
+    const update = {
+      provider: configuration.provider,
+      baseUrl: configuration.baseUrl,
+      model: configuration.model,
+      encryptedApiKey: configuration.encryptedApiKey,
+      apiKeyIv: configuration.apiKeyIv,
+      apiKeyAuthTag: configuration.apiKeyAuthTag,
+      timeoutMs: configuration.timeoutMs,
+      enabled: configuration.enabled,
+      lastTestStatus: configuration.lastTestStatus,
+      lastTestedAt: new Date(configuration.lastTestedAt),
+      updatedBy: configuration.updatedBy,
+      updatedAt: new Date(configuration.updatedAt)
+    };
+
+    await client.aiModelConfiguration.upsert({
+      where: { id: "generation-default" },
+      create,
+      update
+    });
   }
 
   async onModuleDestroy(): Promise<void> {

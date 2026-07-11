@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { AuditEvent } from "../audit/audit.types";
+import type { PersistedAiModelConfiguration } from "../ai-model/ai-model.types";
 import type { BusinessFlowRecord } from "../business-flow/business-flow.types";
 import type { RegressionRun } from "../feedback/feedback.types";
 import type { KnowledgeBlock, KnowledgeDocument } from "../knowledge/knowledge.types";
@@ -372,6 +373,67 @@ describe("PersistenceSink", () => {
     await expect(sink.loadOrganizationState()).resolves.toEqual(state);
     expect(findFirst).toHaveBeenCalledWith({ orderBy: { updatedAt: "desc" } });
   });
+
+  it("loads the singleton AI model configuration", async () => {
+    const configuration = createAiModelConfiguration();
+    const findUnique = vi.fn().mockResolvedValue({
+      ...configuration,
+      lastTestedAt: new Date(configuration.lastTestedAt),
+      createdAt: new Date(configuration.createdAt),
+      updatedAt: new Date(configuration.updatedAt)
+    });
+    const sink = new PersistenceSink("");
+    Object.defineProperty(sink, "client", {
+      value: { aiModelConfiguration: { findUnique } }
+    });
+
+    await expect(sink.loadAiModelConfiguration()).resolves.toEqual(configuration);
+    expect(findUnique).toHaveBeenCalledWith({ where: { id: "generation-default" } });
+  });
+
+  it("saves encrypted AI model configuration with one awaited upsert", async () => {
+    const configuration = createAiModelConfiguration();
+    const upsert = vi.fn().mockResolvedValue(configuration);
+    const sink = new PersistenceSink("");
+    Object.defineProperty(sink, "client", {
+      value: { aiModelConfiguration: { upsert } }
+    });
+
+    await expect(sink.saveAiModelConfiguration(configuration)).resolves.toBeUndefined();
+
+    expect(upsert).toHaveBeenCalledWith({
+      where: { id: "generation-default" },
+      create: {
+        ...configuration,
+        lastTestedAt: new Date(configuration.lastTestedAt),
+        createdAt: new Date(configuration.createdAt),
+        updatedAt: new Date(configuration.updatedAt)
+      },
+      update: {
+        provider: configuration.provider,
+        baseUrl: configuration.baseUrl,
+        model: configuration.model,
+        encryptedApiKey: configuration.encryptedApiKey,
+        apiKeyIv: configuration.apiKeyIv,
+        apiKeyAuthTag: configuration.apiKeyAuthTag,
+        timeoutMs: configuration.timeoutMs,
+        enabled: configuration.enabled,
+        lastTestStatus: configuration.lastTestStatus,
+        lastTestedAt: new Date(configuration.lastTestedAt),
+        updatedBy: configuration.updatedBy,
+        updatedAt: new Date(configuration.updatedAt)
+      }
+    });
+    expect(JSON.stringify(upsert.mock.calls)).not.toContain("plain-api-key");
+  });
+
+  it("rejects AI model configuration writes when PostgreSQL persistence is disabled", async () => {
+    const sink = new PersistenceSink("");
+
+    await expect(sink.saveAiModelConfiguration(createAiModelConfiguration())).rejects.toMatchObject({
+      code: "MODEL_PERSISTENCE_UNAVAILABLE"
+    });
+  });
 });
 
 function createAuditEvent(auditId: string): AuditEvent {
@@ -506,5 +568,24 @@ function createRegressionRun(): RegressionRun {
     gateStatus: "passed",
     createdBy: "admin-1",
     createdAt: "2026-07-05T00:00:00.000Z"
+  };
+}
+
+function createAiModelConfiguration(): PersistedAiModelConfiguration {
+  return {
+    id: "generation-default",
+    provider: "bailian",
+    baseUrl: "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    model: "qwen-plus",
+    encryptedApiKey: "encrypted-value",
+    apiKeyIv: "iv-value",
+    apiKeyAuthTag: "tag-value",
+    timeoutMs: 30_000,
+    enabled: true,
+    lastTestStatus: "passed",
+    lastTestedAt: "2026-07-11T00:00:00.000Z",
+    updatedBy: "admin-1",
+    createdAt: "2026-07-11T00:00:00.000Z",
+    updatedAt: "2026-07-11T00:00:00.000Z"
   };
 }
