@@ -1,0 +1,3 @@
+export const AI_MODEL_CONFIGURATION = Symbol("AI_MODEL_CONFIGURATION");
+export const AI_MODEL_RUNTIME = Symbol("AI_MODEL_RUNTIME");
+export const AI_MODEL_TRANSPORT = Symbol("AI_MODEL_TRANSPORT");

@@ -1,80 +1,54 @@
-import type { LlmConfig } from "./llm.config";
+import { AiModelError } from "../ai-model/ai-model.errors";
+import type {
+  ActiveAiModelConfig,
+  AiModelRuntimePort,
+  OpenAiCompatibleTransportPort
+} from "../ai-model/ai-model.types";
 import { LlmRequestError } from "./llm.errors";
 import type { LlmCompleteRequest, LlmCompletion } from "./llm.types";
 
-type FetchResponse = {
-  ok: boolean;
-  status: number;
-  json?: () => Promise<unknown>;
-};
-
-type Fetcher = (url: string, init?: RequestInit) => Promise<FetchResponse>;
-
-type ChatCompletionResponse = {
-  choices?: Array<{
-    message?: {
-      content?: string;
-    };
-  }>;
-  model?: string;
-};
-
 export class LlmClient {
   constructor(
-    private readonly config: LlmConfig,
-    private readonly fetcher: Fetcher = fetch
+    private readonly runtime: AiModelRuntimePort,
+    private readonly transport: OpenAiCompatibleTransportPort
   ) {}
 
   async complete(request: LlmCompleteRequest): Promise<LlmCompletion> {
-    if (this.config.mode === "mock") {
+    const snapshot = this.runtime.getSnapshot();
+    if (snapshot.status !== "running") {
+      const model = snapshot.status === "error" ? snapshot.model || "mock" : "mock";
+      const provider = snapshot.status === "error" ? snapshot.provider : undefined;
       return {
         content: buildMockCompletion(request),
-        model: "mock",
-        mode: "mock"
+        model,
+        mode: "mock",
+        ...(provider ? { provider } : {}),
+        source: snapshot.source
       };
     }
 
-    const messages: Array<{ role: string; content: string }> = [];
-    if (request.system) {
-      messages.push({ role: "system", content: request.system });
-    }
-    messages.push({ role: "user", content: request.prompt });
-
-    let response: FetchResponse;
-    try {
-      response = await this.fetcher(`${this.config.baseUrl}/chat/completions`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${this.config.apiKey}`
-        },
-        body: JSON.stringify({
-          model: this.config.model,
-          messages,
-          temperature: request.temperature ?? 0.3,
-          max_tokens: request.maxTokens ?? 800
-        }),
-        signal: AbortSignal.timeout(this.config.timeoutMs)
-      });
-    } catch (error) {
-      throw new LlmRequestError(error instanceof Error ? error.message : "LLM request failed");
-    }
-
-    if (!response.ok) {
-      throw new LlmRequestError(`LLM provider returned HTTP ${response.status}`, response.status);
-    }
-
-    const body = (await response.json?.()) as ChatCompletionResponse | undefined;
-    const content = body?.choices?.[0]?.message?.content?.trim();
-    if (!content) {
-      throw new LlmRequestError("LLM provider returned an empty completion");
-    }
-
-    return {
-      content,
-      model: body?.model || this.config.model,
-      mode: "real"
+    const config: ActiveAiModelConfig = {
+      provider: snapshot.provider,
+      baseUrl: snapshot.baseUrl,
+      apiKey: snapshot.apiKey,
+      model: snapshot.model,
+      timeoutMs: snapshot.timeoutMs
     };
+
+    try {
+      const completion = await this.transport.complete(config, request);
+      return {
+        ...completion,
+        mode: "real",
+        provider: snapshot.provider,
+        source: snapshot.source
+      };
+    } catch (error) {
+      if (error instanceof AiModelError) {
+        throw new LlmRequestError(error.code, error.message, error.httpStatus);
+      }
+      throw new LlmRequestError("MODEL_PROVIDER_UNAVAILABLE", "Model provider is unavailable");
+    }
   }
 }
 

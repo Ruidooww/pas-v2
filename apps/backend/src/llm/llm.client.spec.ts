@@ -1,15 +1,22 @@
 import { describe, expect, it, vi } from "vitest";
+import type {
+  AiModelRuntimePort,
+  EffectiveAiModelSnapshot,
+  OpenAiCompatibleTransportPort
+} from "../ai-model/ai-model.types";
+import { AiModelError } from "../ai-model/ai-model.errors";
 import { LlmClient } from "./llm.client";
-import type { LlmConfig } from "./llm.config";
 import { createLlmConfig } from "./llm.config";
 import { LlmRequestError } from "./llm.errors";
 
-const realConfig: LlmConfig = {
-  mode: "real",
-  baseUrl: "http://llm.local/v1",
+const realSnapshot: EffectiveAiModelSnapshot = {
+  status: "running",
+  source: "database",
+  provider: "openai",
+  baseUrl: "https://api.openai.com/v1",
   apiKey: "test-key",
-  model: "qwen-max",
-  timeoutMs: 5000
+  model: "gpt-test",
+  timeoutMs: 5_000
 };
 
 describe("createLlmConfig", () => {
@@ -25,46 +32,101 @@ describe("createLlmConfig", () => {
 });
 
 describe("LlmClient", () => {
-  it("returns a deterministic completion in mock mode without network calls", async () => {
-    const fetcher = vi.fn();
-    const client = new LlmClient({ ...realConfig, mode: "mock" }, fetcher);
+  it("returns a deterministic completion for a mock snapshot without transport calls", async () => {
+    const transport = createTransport();
+    const client = new LlmClient(createRuntime({ status: "not_configured", source: "mock", timeoutMs: 30_000 }), transport);
+
     const completion = await client.complete({ prompt: "总结客户情况" });
+
     expect(completion.mode).toBe("mock");
+    expect(completion.source).toBe("mock");
     expect(completion.content).toContain("[mock-llm]");
-    expect(fetcher).not.toHaveBeenCalled();
+    expect(transport.complete).not.toHaveBeenCalled();
   });
 
-  it("calls the chat completions endpoint in real mode", async () => {
-    const fetcher = vi.fn().mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: async () => ({
-        choices: [{ message: { content: "客户综述内容" } }],
-        model: "qwen-max"
-      })
-    });
-    const client = new LlmClient(realConfig, fetcher);
+  it("delegates a running snapshot to the shared transport", async () => {
+    const transport = createTransport({ content: "客户综述内容", model: "gpt-test-1" });
+    const client = new LlmClient(createRuntime(realSnapshot), transport);
+
     const completion = await client.complete({ system: "你是售前助手", prompt: "总结" });
+
     expect(completion.content).toBe("客户综述内容");
     expect(completion.mode).toBe("real");
-    const [url, init] = fetcher.mock.calls[0] as [string, RequestInit];
-    expect(url).toBe("http://llm.local/v1/chat/completions");
-    expect(init.headers).toMatchObject({ Authorization: "Bearer test-key" });
+    expect(completion).toMatchObject({ provider: "openai", source: "database", model: "gpt-test-1" });
+    expect(transport.complete).toHaveBeenCalledWith(
+      {
+        provider: "openai",
+        baseUrl: "https://api.openai.com/v1",
+        apiKey: "test-key",
+        model: "gpt-test",
+        timeoutMs: 5_000
+      },
+      { system: "你是售前助手", prompt: "总结" }
+    );
   });
 
-  it("throws LlmRequestError on provider http failure", async () => {
-    const fetcher = vi.fn().mockResolvedValue({ ok: false, status: 429 });
-    const client = new LlmClient(realConfig, fetcher);
-    await expect(client.complete({ prompt: "x" })).rejects.toBeInstanceOf(LlmRequestError);
-  });
+  it("reads the runtime snapshot again for every completion", async () => {
+    let snapshot: EffectiveAiModelSnapshot = { status: "not_configured", source: "mock", timeoutMs: 30_000 };
+    const runtime: AiModelRuntimePort = { getSnapshot: () => snapshot };
+    const transport = createTransport({ content: "hot reloaded", model: "gpt-test" });
+    const client = new LlmClient(runtime, transport);
 
-  it("throws LlmRequestError on empty completion", async () => {
-    const fetcher = vi.fn().mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: async () => ({ choices: [] })
+    await expect(client.complete({ prompt: "first" })).resolves.toMatchObject({ mode: "mock" });
+    snapshot = realSnapshot;
+    await expect(client.complete({ prompt: "second" })).resolves.toMatchObject({
+      mode: "real",
+      content: "hot reloaded"
     });
-    const client = new LlmClient(realConfig, fetcher);
-    await expect(client.complete({ prompt: "x" })).rejects.toBeInstanceOf(LlmRequestError);
+    expect(transport.complete).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps an error snapshot on the deterministic path", async () => {
+    const transport = createTransport();
+    const client = new LlmClient(
+      createRuntime({
+        status: "error",
+        source: "database",
+        provider: "bailian",
+        model: "qwen-db",
+        timeoutMs: 30_000,
+        errorCode: "MODEL_CONFIG_ENCRYPTION_UNAVAILABLE"
+      }),
+      transport
+    );
+
+    await expect(client.complete({ prompt: "x" })).resolves.toMatchObject({ mode: "mock", source: "database" });
+    expect(transport.complete).not.toHaveBeenCalled();
+  });
+
+  it("wraps transport errors as sanitized LlmRequestError values", async () => {
+    const transport = createTransport();
+    vi.mocked(transport.complete).mockRejectedValue(
+      new AiModelError("MODEL_RATE_LIMITED", "Model provider rate limited the request")
+    );
+    const client = new LlmClient(createRuntime(realSnapshot), transport);
+
+    const error = await captureError(() => client.complete({ prompt: "x" }));
+
+    expect(error).toBeInstanceOf(LlmRequestError);
+    expect(error).toMatchObject({ code: "MODEL_RATE_LIMITED" });
   });
 });
+
+function createRuntime(snapshot: EffectiveAiModelSnapshot): AiModelRuntimePort {
+  return { getSnapshot: () => snapshot };
+}
+
+function createTransport(
+  completion: { content: string; model: string } = { content: "unused", model: "unused" }
+): OpenAiCompatibleTransportPort {
+  return { complete: vi.fn().mockResolvedValue(completion) };
+}
+
+async function captureError(action: () => Promise<unknown>): Promise<unknown> {
+  try {
+    await action();
+    throw new Error("Expected action to reject");
+  } catch (error) {
+    return error;
+  }
+}

@@ -247,6 +247,7 @@ git commit -m "feat: secure persisted AI model configuration"
 - Create: `apps/backend/src/ai-model/ai-model-configuration.service.ts`
 - Create: `apps/backend/src/ai-model/ai-model-configuration.service.spec.ts`
 - Create: `apps/backend/src/ai-model/ai-model.tokens.ts`
+- Create: `apps/backend/src/ai-model/ai-model.module.ts`
 - Modify: `apps/backend/src/llm/llm.client.ts`
 - Modify: `apps/backend/src/llm/llm.client.spec.ts`
 - Modify: `apps/backend/src/llm/llm.config.ts`
@@ -331,9 +332,9 @@ disablePersistedConfiguration(actorUserId: string): Promise<void>;
 
 Persist first, then replace the runtime snapshot. If persistence throws, retain the previous snapshot.
 
-- [ ] **Step 5: Refactor `LlmClient` to consume the snapshot per request**
+- [ ] **Step 5: Wire the base AI-model module and refactor `LlmClient`**
 
-`LlmClient` delegates real calls to the transport. For `mock` or `error` snapshots it returns `mode: "mock"` so existing feature fallbacks remain in control. Add `provider` and `source` to `LlmCompletion` without returning secrets.
+Create the base `AiModelModule` with `PersistenceModule`, the async hydrated configuration service, and the shared transport; export both AI-model tokens. `LlmModule` imports it and constructs `LlmClient` from those tokens. `LlmClient` delegates real calls to the transport. For `mock` or `error` snapshots it returns `mode: "mock"` so existing feature fallbacks remain in control. Add `provider` and `source` to `LlmCompletion` without returning secrets.
 
 - [ ] **Step 6: Verify GREEN and type safety**
 
@@ -347,7 +348,7 @@ Expected: focused tests and backend typecheck pass.
 - [ ] **Step 7: Commit the runtime**
 
 ```powershell
-git add apps/backend/src/ai-model/openai-compatible.transport.ts apps/backend/src/ai-model/openai-compatible.transport.spec.ts apps/backend/src/ai-model/ai-model-configuration.service.ts apps/backend/src/ai-model/ai-model-configuration.service.spec.ts apps/backend/src/ai-model/ai-model.tokens.ts apps/backend/src/llm/llm.client.ts apps/backend/src/llm/llm.client.spec.ts apps/backend/src/llm/llm.config.ts apps/backend/src/llm/llm.errors.ts apps/backend/src/llm/llm.module.ts apps/backend/src/llm/llm.tokens.ts apps/backend/src/llm/llm.types.ts
+git add docs/superpowers/plans/2026-07-11-ai-model-access.md apps/backend/src/ai-model/openai-compatible.transport.ts apps/backend/src/ai-model/openai-compatible.transport.spec.ts apps/backend/src/ai-model/ai-model-configuration.service.ts apps/backend/src/ai-model/ai-model-configuration.service.spec.ts apps/backend/src/ai-model/ai-model.tokens.ts apps/backend/src/ai-model/ai-model.module.ts apps/backend/src/llm/llm.client.ts apps/backend/src/llm/llm.client.spec.ts apps/backend/src/llm/llm.config.ts apps/backend/src/llm/llm.errors.ts apps/backend/src/llm/llm.module.ts apps/backend/src/llm/llm.tokens.ts apps/backend/src/llm/llm.types.ts
 git commit -m "feat: add dynamic AI model runtime"
 ```
 
@@ -360,7 +361,7 @@ git commit -m "feat: add dynamic AI model runtime"
 - Create: `apps/backend/src/ai-model/ai-model-management.service.spec.ts`
 - Create: `apps/backend/src/ai-model/ai-model.controller.ts`
 - Create: `apps/backend/src/ai-model/ai-model.controller.spec.ts`
-- Create: `apps/backend/src/ai-model/ai-model.module.ts`
+- Modify: `apps/backend/src/ai-model/ai-model.module.ts`
 - Modify: `apps/backend/src/app.module.ts`
 - Modify: `apps/backend/src/audit/audit.types.ts`
 - Modify: `apps/backend/src/audit/audit-log.service.spec.ts`
