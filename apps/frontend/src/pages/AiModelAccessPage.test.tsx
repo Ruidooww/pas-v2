@@ -41,7 +41,7 @@ describe("AiModelAccessPage", () => {
     expect(document.body.textContent).not.toContain("encrypted");
   });
 
-  it("prefills canonical provider endpoints and requires a custom URL", async () => {
+  it("prefills canonical provider endpoints", async () => {
     render(<AiModelAccessPage />);
     await waitFor(() => expect(screen.getByLabelText("模型 ID")).toHaveValue("qwen-plus"));
 
@@ -49,6 +49,11 @@ describe("AiModelAccessPage", () => {
     await waitFor(() =>
       expect(screen.getByLabelText("Base URL")).toHaveValue("https://api.deepseek.com")
     );
+  });
+
+  it("requires a URL for the custom provider", async () => {
+    render(<AiModelAccessPage />);
+    await waitFor(() => expect(screen.getByLabelText("模型 ID")).toHaveValue("qwen-plus"));
 
     await chooseOption("服务商", "自定义");
     await waitFor(() => expect(screen.getByLabelText("Base URL")).toHaveValue(""));
