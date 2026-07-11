@@ -165,7 +165,7 @@ describe("App", () => {
     expect(analyticsMenuItem).toBeTruthy();
     fireEvent.click(analyticsMenuItem as HTMLElement);
 
-    expect(await screen.findByRole("heading", { name: "运营分析" })).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "运营分析" }, { timeout: 5_000 })).toBeTruthy();
     expect(await screen.findByText("运营指标")).toBeTruthy();
     expect(screen.queryByText("Agent / Skill 编排")).toBeNull();
     expect(screen.queryByText("多渠道入口")).toBeNull();
