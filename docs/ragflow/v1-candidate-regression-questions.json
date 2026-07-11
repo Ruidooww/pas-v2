@@ -1,0 +1,702 @@
+[
+  {
+    "question_id": "V1-Q001",
+    "category": "产品概述与定位",
+    "question": "客户已经部署防火墙、杀毒软件和网盘权限，为什么还需要评估 IP-Guard？",
+    "expected_evidence": "回答应区分边界防护、恶意代码防护、协作权限与终端数据防泄漏的职责，说明 IP-Guard 的透明加密、外发管控和行为审计价值，避免宣称替代其他安全产品。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q002",
+    "category": "产品概述与定位",
+    "question": "第一次向业务负责人介绍 IP-Guard 时，怎样从泄密风险而不是功能清单切入？",
+    "expected_evidence": "回答应从敏感资料位置、人员与外发通道、现有审批和追溯缺口展开，再映射到可验证能力与试点目标。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q003",
+    "category": "产品概述与定位",
+    "question": "哪些客户需求适合由 IP-Guard 解决，哪些需求需要配合身份、网络或管理制度？",
+    "expected_evidence": "回答应明确终端文件保护、设备与外发控制、行为审计等适用范围，并把身份治理、网络边界、物理拍照和人员制度列为协同或边界项。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q004",
+    "category": "产品概述与定位",
+    "question": "如何判断客户更需要透明加密、外发审批，还是先建设终端审计？",
+    "expected_evidence": "回答应依据敏感数据类型、主要泄密路径、协作方式、业务影响和审计现状给出需求分层，而不是默认推荐全部模块。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q005",
+    "category": "产品概述与定位",
+    "question": "IP-Guard 试点的业务价值应该用哪些可核验指标表达？",
+    "expected_evidence": "回答应给出策略命中、外发审批、异常行为发现、追溯效率和业务影响等可度量指标，并避免承诺绝对防泄密或固定收益。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q006",
+    "category": "透明加密",
+    "question": "授权员工编辑受保护文档时，透明加密链路应如何做到日常操作无感？",
+    "expected_evidence": "回答应说明授权环境中的打开、编辑、保存和自动保护过程，并指出具体应用、文件类型和策略范围需以产品资料及试点验证为准。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q007",
+    "category": "透明加密",
+    "question": "受保护文件被复制到未授权电脑后，预期会出现什么访问结果？",
+    "expected_evidence": "回答应说明文件离开授权环境后仍受保护，未授权读取应被限制；外发解密或受控访问必须经过明确流程并保留证据。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q008",
+    "category": "透明加密",
+    "question": "新建文件是否都会自动加密，怎样确认实际生效范围？",
+    "expected_evidence": "回答应说明自动加密由应用、文件类型、目录、用户或策略范围决定，必须通过当前版本文档、策略配置和试点样例验证，不可笼统承诺全部文件。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q009",
+    "category": "透明加密",
+    "question": "跨部门共同编辑研发文档时，怎样兼顾加密保护和协作权限？",
+    "expected_evidence": "回答应覆盖授权主体、组织或项目范围、最小权限、权限变更和访问审计，并说明未授权部门不能因文件复制而获得读取能力。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q010",
+    "category": "透明加密",
+    "question": "员工离线办公时，透明加密是否还能使用，需要验证哪些条件？",
+    "expected_evidence": "回答应说明离线授权、策略缓存、有效期和恢复联网后的同步属于版本及策略相关能力，必须给出验证项，不能无依据保证永久离线可用。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q011",
+    "category": "透明加密",
+    "question": "CAD 图纸、源代码或大型文档启用透明加密前，性能试点应测什么？",
+    "expected_evidence": "回答应包括常用应用兼容性、打开保存耗时、编译或制图流程、并发与终端规格、异常恢复和业务基线对比。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q012",
+    "category": "透明加密",
+    "question": "临时解密或紧急例外如何避免成为长期绕过通道？",
+    "expected_evidence": "回答应要求申请理由、审批人、有效期、适用文件或人员、操作留痕和定期复核，并强调例外默认应可撤销。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q013",
+    "category": "权限控制",
+    "question": "如何按部门、岗位和项目成员为敏感文档设计分层权限？",
+    "expected_evidence": "回答应体现组织、角色、用户或项目成员范围以及最小权限原则，并要求通过实际权限模型验证继承和例外。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q014",
+    "category": "权限控制",
+    "question": "销售、技术和管理员三类账号的权限边界应该如何验证？",
+    "expected_evidence": "回答应分别验证销售只读可见内容、技术部知识维护能力和管理员治理能力，并覆盖越权写入与不可见文档读取的拒绝结果。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q015",
+    "category": "权限控制",
+    "question": "同一用户命中多条终端策略时，怎样确认最终生效结果？",
+    "expected_evidence": "回答应要求依据当前版本的策略优先级、冲突处理规则和客户端实际策略结果进行验证，不得猜测优先级。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q016",
+    "category": "权限控制",
+    "question": "项目结束后，临时文档权限怎样自动或人工收回？",
+    "expected_evidence": "回答应覆盖项目成员移除、授权有效期、权限复核、缓存或会话刷新以及撤权后的读取验证。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q017",
+    "category": "权限控制",
+    "question": "怎样避免一个管理员同时拥有配置、审批和审计的全部高风险权限？",
+    "expected_evidence": "回答应建议职责分离、最小管理员权限、关键操作复核和审计留痕，并说明具体角色能力以现有产品和组织流程为准。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q018",
+    "category": "权限控制",
+    "question": "修改用户、角色或文档权限后，验收时需要保留哪些变更证据？",
+    "expected_evidence": "回答应包含操作者、对象、变更前后值、时间、结果、失败原因和相关审批信息，并验证新旧权限即时或按设计生效。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q019",
+    "category": "外发管控",
+    "question": "研发图纸发给供应商时，怎样设计受控外发而不是直接解密？",
+    "expected_evidence": "回答应覆盖申请、审批、接收对象、有效期、打开或传播限制、撤销能力和全链路留痕；具体功能需以当前版本验证。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q020",
+    "category": "外发管控",
+    "question": "邮件发送敏感附件时，验收应同时检查哪些阻断和审计证据？",
+    "expected_evidence": "回答应检查附件识别、策略动作、申请或审批、发送结果、用户与时间、文件标识以及失败或例外记录。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q021",
+    "category": "外发管控",
+    "question": "浏览器上传、即时通信和网盘同步能否统一管控，回答时应注意什么？",
+    "expected_evidence": "回答应说明通道覆盖取决于客户端、应用和产品版本，列出需实测的目标应用与动作，不能把未验证通道描述为已支持。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q022",
+    "category": "外发管控",
+    "question": "一条外发审批记录怎样才能证明文件确实按批准范围流转？",
+    "expected_evidence": "回答应关联申请人、审批人、文件或内容指纹、接收方、通道、时间、策略结果和后续审计，而不是只有审批状态。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q023",
+    "category": "外发管控",
+    "question": "短时间批量复制或发送大量文件时，系统应提供什么调查线索？",
+    "expected_evidence": "回答应覆盖频次、数量、文件范围、目标通道、用户终端、策略命中、告警和时间线，并避免承诺未验证的自动判定。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q024",
+    "category": "外发管控",
+    "question": "加密文件被带到外部网络后，合规外发与非法传播应如何区分？",
+    "expected_evidence": "回答应以授权流程、接收对象、有效期、受控打开条件和审计记录区分，未经授权的复制不应自动获得明文访问。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q025",
+    "category": "外发管控",
+    "question": "客户提出一个当前资料未覆盖的外发通道时，售前回答应该怎么处理？",
+    "expected_evidence": "回答应明确标记待验证，收集应用版本和操作路径，安排兼容性测试或厂商确认，不得把相似通道能力直接推断为支持。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q026",
+    "category": "移动存储",
+    "question": "如何只允许公司登记的 U 盘使用，同时拒绝未知移动存储设备？",
+    "expected_evidence": "回答应说明设备识别、白名单或授权范围、策略下发和命中日志，并要求用登记与未登记设备分别验收。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q027",
+    "category": "移动存储",
+    "question": "能否允许从 U 盘读取但禁止写入，应该怎样验证？",
+    "expected_evidence": "回答应把读写动作分开验证，记录设备、用户、文件和策略结果；具体粒度需以版本及策略能力为准。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q028",
+    "category": "移动存储",
+    "question": "把敏感文件写入授权 U 盘时，怎样保证文件离开终端后仍受控？",
+    "expected_evidence": "回答应覆盖加密或受控介质策略、授权终端与接收环境、读取验证和审计，不应只验证复制动作成功。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q029",
+    "category": "移动存储",
+    "question": "移动硬盘外发事件需要保留哪些追溯字段？",
+    "expected_evidence": "回答应至少包含用户、终端、设备标识、文件标识、动作、时间、策略结果和审批或例外信息。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q030",
+    "category": "移动存储",
+    "question": "生产现场临时使用维护 U 盘时，怎样设计安全例外？",
+    "expected_evidence": "回答应要求限定设备、人员、终端、时段和用途，经过审批并留痕，到期撤销后再次验证默认策略恢复。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q031",
+    "category": "打印与截图",
+    "question": "打印敏感文档的验收证据应能回答哪些追溯问题？",
+    "expected_evidence": "回答应能关联打印人、终端、文档、打印机、时间、份数或页数、策略结果和审批信息，字段以产品实际日志为准。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q032",
+    "category": "打印与截图",
+    "question": "打印水印怎样帮助责任追溯，又有哪些局限？",
+    "expected_evidence": "回答应说明水印可携带用户、时间或组织标识并形成震慑和追溯线索，同时明确水印不等同于阻止拍照或证明唯一责任。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q033",
+    "category": "打印与截图",
+    "question": "客户要求禁止所有截屏时，为什么必须先做应用和场景测试？",
+    "expected_evidence": "回答应说明截屏控制受操作系统、应用、远程桌面和版本能力影响，必须按目标场景验证，不得承诺覆盖所有截屏方式。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q034",
+    "category": "打印与截图",
+    "question": "员工用手机拍摄屏幕的风险，IP-Guard 应如何参与整体控制？",
+    "expected_evidence": "回答应明确物理拍照不能只靠终端软件完全阻止，可结合水印、屏幕标识、区域管理、制度和审计线索降低风险。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q035",
+    "category": "行为审计",
+    "question": "调查一个文件从创建到外发的完整链路时，需要关联哪些操作？",
+    "expected_evidence": "回答应覆盖创建、打开、修改、复制、重命名、移动、设备写入、打印和外发等可用日志，并按用户、终端、文件和时间串联。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q036",
+    "category": "行为审计",
+    "question": "疑似泄密发生后，怎样用审计记录建立可复核时间线？",
+    "expected_evidence": "回答应说明事件范围确定、日志筛选、文件与终端关联、策略和审批对照、证据导出及人工复核，不能仅凭单条日志下结论。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q037",
+    "category": "行为审计",
+    "question": "管理层想看高风险外发趋势，报表至少应支持哪些筛选维度？",
+    "expected_evidence": "回答应包含时间、部门或用户、终端、文件类型、通道、策略结果和风险事件等维度，实际报表能力需以系统验证为准。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q038",
+    "category": "行为审计",
+    "question": "终端行为审计如何兼顾安全调查和员工隐私边界？",
+    "expected_evidence": "回答应采用目的限定、最小采集、授权访问、保留期限、审计员留痕和制度告知，不应建议无边界采集。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q039",
+    "category": "行为审计",
+    "question": "审计日志保留与防篡改能力应怎样纳入验收？",
+    "expected_evidence": "回答应核对日志来源、完整性、权限、保留周期、时间同步、导出和备份恢复；未确认的防篡改机制不得虚构。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q040",
+    "category": "终端部署与运维",
+    "question": "规划 IP-Guard 部署架构时，售前需要确认哪些组件和网络关系？",
+    "expected_evidence": "回答应基于当前产品资料确认管理端、客户端、数据库或其他实际组件、网络端口、访问方向和高可用需求，不得套用未经确认的架构。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q041",
+    "category": "终端部署与运维",
+    "question": "部署前应向客户收集哪些终端、账号和网络环境数据？",
+    "expected_evidence": "回答应包括终端数量与系统、关键应用、网络区域、身份与组织来源、代理或安全软件、带宽、管理员权限和变更窗口。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q042",
+    "category": "终端部署与运维",
+    "question": "如何从小范围试点逐步扩展到全公司终端？",
+    "expected_evidence": "回答应给出基线采集、代表性试点、策略观察、问题闭环、分批扩容、回滚和阶段验收，不应直接全量强制。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q043",
+    "category": "终端部署与运维",
+    "question": "客户端或服务端升级前，回滚方案应验证哪些内容？",
+    "expected_evidence": "回答应覆盖版本兼容、配置和数据备份、灰度范围、回滚触发条件、旧版本恢复、策略一致性和业务验证。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q044",
+    "category": "终端部署与运维",
+    "question": "员工尝试停止服务或卸载客户端时，应怎样验证防护与运维流程？",
+    "expected_evidence": "回答应验证普通用户与授权管理员的不同结果、告警或日志、维护授权和恢复流程；具体防篡改能力以版本实测为准。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q045",
+    "category": "终端部署与运维",
+    "question": "大规模部署前，容量和终端性能评估要建立哪些基线？",
+    "expected_evidence": "回答应比较 CPU、内存、磁盘、网络、策略下发、日志量、管理端并发和关键应用耗时，并定义可接受阈值与扩容方案。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q046",
+    "category": "实施与验收",
+    "question": "项目启动时怎样盘点敏感数据、业务流程和现有控制措施？",
+    "expected_evidence": "回答应覆盖数据类型与位置、人员角色、外发和设备通道、关键应用、现有审批、事件历史和责任人，形成可追踪基线。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q047",
+    "category": "实施与验收",
+    "question": "策略设计评审会议需要业务、IT 和安全团队确认什么？",
+    "expected_evidence": "回答应确认保护对象、权限范围、外发与例外流程、审计用途、业务影响、负责人、变更与回滚方案。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q048",
+    "category": "实施与验收",
+    "question": "试点终端和用户应如何选择，才能代表真实风险与业务？",
+    "expected_evidence": "回答应覆盖不同部门、岗位、终端规格、应用、网络和高低风险流程，同时控制试点范围并获得明确授权。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q049",
+    "category": "实施与验收",
+    "question": "V1 验收报告应包含哪些可以复现的技术证据？",
+    "expected_evidence": "回答应包含测试版本和环境、用例、操作步骤、期望与实际结果、日志或引用、问题单、复测结果、审核人与时间。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q050",
+    "category": "实施与验收",
+    "question": "正常业务被误拦截时，项目组怎样处理才不削弱安全基线？",
+    "expected_evidence": "回答应先定位命中策略与业务必要性，再采用受控例外、审批、限时授权和复测，禁止直接长期关闭整体策略。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q051",
+    "category": "实施与验收",
+    "question": "正式移交前，管理员培训和运维手册至少要覆盖什么？",
+    "expected_evidence": "回答应覆盖账号与权限、策略发布、审批与例外、日志调查、备份恢复、升级回滚、故障升级和变更审计。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q052",
+    "category": "行业场景",
+    "question": "制造企业保护设计图纸和工艺文件时，方案重点应如何排序？",
+    "expected_evidence": "回答应从研发使用无感、部门与项目权限、供应商外发、移动介质、打印水印、审计追溯和试点兼容性排序。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q053",
+    "category": "行业场景",
+    "question": "制造企业频繁与供应商交换图纸，怎样避免安全措施阻断交付？",
+    "expected_evidence": "回答应设计分级文件、受控外发、固定接收方、有效期、审批时效、紧急例外和交付验证，并保留证据。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q054",
+    "category": "行业场景",
+    "question": "软件研发团队保护源代码和设计文档时，需要重点验证哪些流程？",
+    "expected_evidence": "回答应覆盖 IDE、编译与版本管理兼容性、项目权限、复制外发、远程协作、移动存储和性能基线。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q055",
+    "category": "行业场景",
+    "question": "研发人员远程办公和跨项目协作时，如何避免权限范围互相串用？",
+    "expected_evidence": "回答应区分组织与项目成员、终端和网络条件、离线授权、项目结束撤权、审计和异常处理。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q056",
+    "category": "行业场景",
+    "question": "金融企业保护合同、报表和客户资料时，方案证据应关注什么？",
+    "expected_evidence": "回答应覆盖访问最小化、外发审批、打印与设备控制、操作审计、职责分离和证据保留，不得无依据承诺满足全部监管要求。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q057",
+    "category": "行业场景",
+    "question": "金融客户询问合规效果时，怎样区分技术能力、管理制度和认证结论？",
+    "expected_evidence": "回答应把访问控制、审计、审批和追溯作为技术支撑，把制度与监管解释留给客户责任方，禁止直接承诺认证或合规通过。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q058",
+    "category": "行业场景",
+    "question": "咨询公司同时服务多个客户时，怎样防止项目资料交叉可见？",
+    "expected_evidence": "回答应使用项目成员或组织范围、命名和标签、最小权限、项目结束撤权、外发审批与审计来隔离，管理员操作也需留痕。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q059",
+    "category": "行业场景",
+    "question": "顾问携带笔记本出差并交换客户材料时，方案应包含哪些控制和例外？",
+    "expected_evidence": "回答应覆盖本地加密、离线条件、移动存储、受控外发、打印或截图边界、紧急授权和设备遗失后的响应流程。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q060",
+    "category": "竞品与能力边界",
+    "question": "客户认为杀毒软件和防火墙已经足够，应该怎样客观说明差异？",
+    "expected_evidence": "回答应按威胁对象和控制位置区分恶意代码、网络边界与终端数据使用和外发风险，说明互补关系而非贬低或替代。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q061",
+    "category": "竞品与能力边界",
+    "question": "IP-Guard 与只提供文件加解密的软件相比，评估维度有哪些？",
+    "expected_evidence": "回答应比较策略范围、权限、外发流程、设备与打印控制、行为审计、运维和业务兼容性，同时提醒具体差异需基于双方当前版本。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q062",
+    "category": "竞品与能力边界",
+    "question": "客户要求评价某个竞品时，怎样避免无证据的优劣结论？",
+    "expected_evidence": "回答应建立统一需求和测试矩阵，以公开资料和实测结果比较，明确未知项，不使用无法验证的攻击性表述。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q063",
+    "category": "竞品与能力边界",
+    "question": "为什么不能向客户承诺部署后绝不会发生数据泄漏？",
+    "expected_evidence": "回答应说明终端软件只能降低特定路径风险，仍存在物理拍照、社会工程、权限滥用、配置错误和新通道等残余风险。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q064",
+    "category": "竞品与能力边界",
+    "question": "面对手机拍照、口头泄密和社会工程，方案边界应怎样写？",
+    "expected_evidence": "回答应明确这些风险不能只靠 IP-Guard 解决，可结合水印、区域控制、制度、培训、身份和事件响应形成纵深防护。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q065",
+    "category": "竞品与能力边界",
+    "question": "客户问部署 IP-Guard 是否等于通过数据安全合规检查，应怎样回答？",
+    "expected_evidence": "回答应说明产品能力可为访问控制、审计和外发治理提供证据，但合规结论取决于适用法规、制度、配置、运行和独立评估。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q066",
+    "category": "方案与导出证据",
+    "question": "自动生成的推荐能力怎样证明来自知识库而不是模型猜测？",
+    "expected_evidence": "回答应要求每个关键能力关联可见、已解析且启用文档的 citation，并包含可定位的文档、片段或 chunk 标识。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q067",
+    "category": "方案与导出证据",
+    "question": "方案草稿出现知识库没有支持的产品参数时，系统和审核人应怎么处理？",
+    "expected_evidence": "回答应标记为未证实或假设，删除或补充权威证据后重新生成，禁止把模型文本直接作为产品事实。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q068",
+    "category": "方案与导出证据",
+    "question": "客户画像信息和 RAGFlow 产品证据在方案中应如何区分来源？",
+    "expected_evidence": "回答应把客户名称、需求和上下文标为 CRM 或人工输入，把产品能力标为 RAGFlow citation，并保留来源追踪。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q069",
+    "category": "方案与导出证据",
+    "question": "方案中的前提条件和待确认项为什么必须单独列出？",
+    "expected_evidence": "回答应说明假设不能伪装成已确认事实，需记录责任人、验证方式和确认状态，并在交付前由人工复核。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q070",
+    "category": "方案与导出证据",
+    "question": "导出的 DOCX、PPTX 和 XLSX 怎样保留引用证据链？",
+    "expected_evidence": "回答应要求输出包含引用标题、来源、位置、chunkId 或 documentId，以及审核提示；三种格式都必须通过实际模板验证。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q071",
+    "category": "方案与导出证据",
+    "question": "为什么自动生成方案必须保留人工审核提示？",
+    "expected_evidence": "回答应说明草稿可能包含检索不足、上下文缺失或表达偏差，只有经过责任人核对能力、引用、假设和客户信息后才能对外。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q072",
+    "category": "方案与导出证据",
+    "question": "检索无命中或引用很弱时，方案生成应该继续还是阻断？",
+    "expected_evidence": "回答应返回无命中或弱证据状态，要求补充知识、缩小问题或人工确认；不得生成无引用的确定性产品结论。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q073",
+    "category": "文档可见性与角色边界",
+    "question": "`public` 文档在检索时应对哪些已认证角色可见？",
+    "expected_evidence": "回答应说明 public 范围对已认证且通过接口权限的销售、技术和管理员可见，同时仍需满足 enabled 和 parseStatus=done。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q074",
+    "category": "文档可见性与角色边界",
+    "question": "`roles` 可见性怎样限制销售、技术或管理员读取？",
+    "expected_evidence": "回答应要求当前用户角色明确出现在文档 roles 列表中；未命中角色不得返回文档或 citation，维护者权限按系统规则另行判断。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q075",
+    "category": "文档可见性与角色边界",
+    "question": "`users` 可见性如何验证只有指定账号能读取？",
+    "expected_evidence": "回答应使用指定与未指定账号分别检索和读取，未指定账号应被拒绝且响应不得泄露文档标识。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q076",
+    "category": "文档可见性与角色边界",
+    "question": "文档授权给 Technical Department 时，三个下属团队能否继承可见？",
+    "expected_evidence": "回答应根据组织后代关系验证售前、技术和售后团队用户均命中该组织范围，组织停用时必须重新评估。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q077",
+    "category": "文档可见性与角色边界",
+    "question": "`project_groups` 文档授权如何随项目成员变化生效？",
+    "expected_evidence": "回答应要求用户属于活动项目组才能命中，成员移除或项目组停用后授权立即撤销，并验证检索 citation 不再包含该文档。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q078",
+    "category": "文档可见性与角色边界",
+    "question": "一个文档能否同时配置五种可见性范围，当前模型应怎样回答？",
+    "expected_evidence": "回答应明确当前文档使用单一 scope：public、roles、users、organization_units 或 project_groups 之一；切换 scope 时按新范围重新验证。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q079",
+    "category": "文档可见性与角色边界",
+    "question": "新建知识文档未显式填写可见性时，默认授权给谁？",
+    "expected_evidence": "回答应指出默认是 Technical Department 的 organization_units 范围，并说明既有 public 文档在迁移时保持 public。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q080",
+    "category": "文档可见性与角色边界",
+    "question": "销售用户尝试修改知识文档标签或可见性时，接口应返回什么边界结果？",
+    "expected_evidence": "回答应验证销售写操作被 `403` 拒绝并记录审计事件，同时不得改变原文档元数据。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q081",
+    "category": "文档可见性与角色边界",
+    "question": "技术部三个团队中的活动技术账号可以维护哪些知识文档？",
+    "expected_evidence": "回答应说明整个活动 Technical Department 子树中的 technical 用户可维护完整知识目录，不仅限于售前团队。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q082",
+    "category": "文档可见性与角色边界",
+    "question": "管理员读取和维护知识文档时，与普通可见性规则是什么关系？",
+    "expected_evidence": "回答应说明管理员具有维护能力；具体读取路径仍应记录审计并不得绕过 enabled、parseStatus 等检索质量条件。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q083",
+    "category": "文档可见性与角色边界",
+    "question": "无权用户直接请求一个不可见 documentId 时，系统如何做到 fail closed？",
+    "expected_evidence": "回答应返回通用拒绝，不在错误消息或响应中暴露文档标题、内容或可利用的存在性信息，并记录拒绝审计。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q084",
+    "category": "文档可见性与角色边界",
+    "question": "文档已停用或解析未完成时，为什么即使用户有可见权限也不能进入 QA citations？",
+    "expected_evidence": "回答应说明检索候选必须同时满足 enabled=true、parseStatus=done 和用户可见性，任何一项不满足都应被过滤。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q085",
+    "category": "模板与交付检查",
+    "question": "导出方案时，系统应如何为 DOCX、PPTX 和 XLSX 选择活动模板？",
+    "expected_evidence": "回答应按 proposal 类别和目标格式选择活动模板元数据，使用明确版本和文件名；存在多个候选时应遵循实现中的确定性排序。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q086",
+    "category": "模板与交付检查",
+    "question": "模板元数据指向根目录外文件或不存在文件时，系统应怎样处理？",
+    "expected_evidence": "回答应拒绝越出模板根目录的路径，并把不存在文件识别为模板缺失，不得读取任意服务器文件。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q087",
+    "category": "模板与交付检查",
+    "question": "缺少某一种导出模板时，导出任务应留下什么可操作结果？",
+    "expected_evidence": "回答应将对应格式标记失败并返回 TEMPLATE_MISSING 等明确原因，其他格式按各自结果记录，正式门禁不得静默忽略必需模板。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q088",
+    "category": "模板与交付检查",
+    "question": "方案包缺少客户名称、标题或章节时，为什么不能继续套模板？",
+    "expected_evidence": "回答应在渲染前执行必填字段检查，指出具体缺失字段并标记该格式失败，避免生成空白或误导性交付件。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q089",
+    "category": "模板与交付检查",
+    "question": "怎样验证导出文件不是空壳，并能追溯所用模板？",
+    "expected_evidence": "回答应检查非空文件、可打开性、关键字段、引用和审核提示，并记录 templateId、templateVersion、文件名、大小和交付检查结果。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q090",
+    "category": "反馈到知识修正",
+    "question": "用户发现 QA 引用与答案不一致时，反馈记录至少要关联什么？",
+    "expected_evidence": "回答应关联对象类型与 objectId、评分、citation 或检索问题类型、具体说明、提交人、时间和当前处理状态。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q091",
+    "category": "反馈到知识修正",
+    "question": "技术部怎样把一条 citation 问题从 open 推进到 resolved？",
+    "expected_evidence": "回答应包含分诊、责任人、问题定位、知识或检索修正、复测证据、处理说明和状态变更审计。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q092",
+    "category": "反馈到知识修正",
+    "question": "知识文档修正后，为什么必须重新执行原问题和回归题？",
+    "expected_evidence": "回答应验证新引用支持答案、旧错误不再出现、权限过滤未回归，并把复测结果关联到反馈和回归记录。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q093",
+    "category": "反馈到知识修正",
+    "question": "反馈被判定为无效或重复时，系统应怎样保留决策证据？",
+    "expected_evidence": "回答应使用 rejected 等明确状态，记录处理人、时间和理由，保留原反馈而不是删除，以便后续审计。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q094",
+    "category": "技术部层级与撤权",
+    "question": "创建 technical 账号时，组织单元为什么必须位于活动 Technical Department 子树？",
+    "expected_evidence": "回答应说明角色与组织成员关系必须一致，位于销售部门、停用单元或不存在单元的 technical 账号应被拒绝。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q095",
+    "category": "技术部层级与撤权",
+    "question": "售前、技术和售后三个团队维护知识库时，权限模型是否有差别？",
+    "expected_evidence": "回答应说明三个活动子团队均属于整个技术部维护范围，具有一致的知识维护入口；具体业务分工可由流程而非顶层角色区分。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q096",
+    "category": "技术部层级与撤权",
+    "question": "承载 technical 角色的组织单元被停用后，现有会话应发生什么？",
+    "expected_evidence": "回答应说明受影响用户不再满足活动角色成员关系，会话应失效或被拒绝，不能继续使用原角色权限。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q097",
+    "category": "技术部层级与撤权",
+    "question": "项目组被停用后，为什么不应同时撤销用户的 technical 角色？",
+    "expected_evidence": "回答应区分角色组织成员关系和附加项目授权：停用项目组只撤销该组文档授权，不改变仍有效的技术部角色成员关系。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q098",
+    "category": "技术部层级与撤权",
+    "question": "历史 `presales` 角色数据迁移到新模型时，应怎样归一化？",
+    "expected_evidence": "回答应把旧 presales 角色归一化为 technical，并落在 Presales Team；迁移后验证账号、会话和文档权限，不能继续产生顶层 presales 角色。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q099",
+    "category": "技术部层级与撤权",
+    "question": "给销售用户加入活动项目组后，怎样证明只增加了该项目文档读取权？",
+    "expected_evidence": "回答应对项目文档、其他私有文档和写操作分别验证：仅项目授权读取新增，销售写入仍被拒绝，其他不可见文档仍不可读。",
+    "review_status": "pending"
+  },
+  {
+    "question_id": "V1-Q100",
+    "category": "技术部层级与撤权",
+    "question": "组织单元或项目组失效后，检索层怎样避免继续返回旧授权 citation？",
+    "expected_evidence": "回答应在每次授权评估中检查活动状态和当前成员关系，过滤失效范围，并用撤权前后同一问题复测无引用泄漏。",
+    "review_status": "pending"
+  }
+]

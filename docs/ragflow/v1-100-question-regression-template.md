@@ -2,6 +2,19 @@
 
 V1 launch evidence must use an approved 100-question set. Do not submit the existing V0 50-question file as V1 launch evidence.
 
+## Current Candidate And Technical Run Status
+
+As of `2026-07-11`:
+
+- `docs/ragflow/v1-candidate-regression-questions.json` contains 100 unique candidate questions across 16 categories, with IDs `V1-Q001` through `V1-Q100` and no exact question overlap with the V0 50-question set.
+- Every candidate remains `review_status=pending`. This file is not an approved V1 launch set.
+- A real-mode technical precheck ran all 100 candidates against the configured external RAGFlow at commit `a807a16`. It returned `answered=100`, `no_hit=0`, `error=0`, with five citations per question and 500 citations in total. Average runtime was 1450 ms and P95 was 2305 ms.
+- Independent semantic review found obvious expected-evidence mismatches in `V1-Q003`, `V1-Q076`, `V1-Q077`, `V1-Q099`, and `V1-Q100`: retrieval returned unrelated product, bug, or operational content. This run proves request-path completion only; it is not an answer-quality pass, and full human review may find additional failures.
+- The local ignored artifacts are `temp/regression/PAS-V1-100题技术运行-2026-07-11.json` and `temp/regression/PAS-V1-100题审核底稿-2026-07-11.md`.
+- The reviewer is still `待指定`; all 100 `human_review_result` values remain `pending` and all `reviewed_at` values remain `null`. Technical completion does not establish answer correctness or launch approval.
+
+Before gate submission, correct the RAGFlow retrieval scope or add approved PAS operational knowledge for the known mismatches, rerun the affected coverage, assign a reviewer, approve the question set, evaluate every answer and citation against `expected_evidence`, record pass/fail decisions and timestamps, and submit exactly 100 approved cases through the gate API.
+
 ## API Contract
 
 Submit a V1 gate run with `requiredCaseCount: 100`:

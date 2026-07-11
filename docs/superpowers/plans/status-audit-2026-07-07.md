@@ -1,4 +1,4 @@
-# PAS Plan Status Audit - 2026-07-10
+# PAS Plan Status Audit - 2026-07-11
 
 This audit is the current dispatch source for PAS V0-V3 code-layer work. The
 older files in `docs/superpowers/plans/` remain useful as implementation notes,
@@ -59,6 +59,16 @@ Do not use historical checkbox state alone to decide what still needs coding.
   `answered=50`, `no_hit=0`, `error=0`, with five citations per question and
   250 citations in total. The local ignored JSON and reviewer worksheet retain
   every answer, citation, reviewer assignment, and pending human-review field.
+- The tracked V1 candidate set now contains 100 unique pending questions across
+  16 categories, with no exact question overlap with the V0 set. A real-mode
+  technical run at commit `a807a16` returned `answered=100`, `no_hit=0`,
+  `error=0`, with five citations per question and 500 citations in total;
+  average runtime was 1450 ms and P95 was 2305 ms. Independent semantic review
+  found obvious expected-evidence mismatches in `V1-Q003`, `V1-Q076`,
+  `V1-Q077`, `V1-Q099`, and `V1-Q100`, so this is request-path evidence rather
+  than an answer-quality pass. The local ignored JSON and reviewer worksheet
+  preserve every answer and citation, but the reviewer is still unassigned and
+  all human-review fields remain pending.
 - Both HYYN application images were rebuilt from the M9 worktree. All four
   HYYN containers were healthy; `/api/health` and `/api/ragflow/health`
   returned `ok` through the frontend entry point.
@@ -134,7 +144,11 @@ and GitHub PR history instead of flipping old checkboxes in place.
 - Formal human-reviewed V0 50-question regression gate. The technical run and
   captured citations are available, but the reviewer must still record all 50
   decisions and timestamps before submitting the persisted regression run.
-- Final V1 100-question regression gate.
+- Formal human-reviewed V1 100-question regression gate. The tracked candidate
+  set and 100/100 request-path run are available, but the five known semantic
+  mismatches require retrieval remediation and rerun before a reviewer approves
+  the question set, records all 100 decisions and timestamps, and submits the
+  persisted regression run.
 - Real CRM integration remains paused until the user reopens it and provides
   API documentation, auth method, test account, and sample customer records.
 - The current export templates are accepted for the internal trial; replacement
@@ -157,12 +171,16 @@ and GitHub PR history instead of flipping old checkboxes in place.
    release-ready. Local trial secrets are persisted; production secrets remain
    an environment responsibility. The current export templates remain the
    trial baseline.
-2. Keep code work on the current fake-data boundary unless the user provides
+2. Correct the V1 RAGFlow retrieval scope or add approved PAS operational
+   knowledge for the five known mismatches, rerun the affected coverage, then
+   assign a reviewer to approve or revise all 100 questions and submit a
+   persisted passing 100-case regression run before claiming V1 launch approval.
+3. Keep code work on the current fake-data boundary unless the user provides
    real CRM, template, or source-data inputs.
-3. For UI changes, update both the frontend shell and
+4. For UI changes, update both the frontend shell and
    `scripts/smoke-local-menu.mjs` so every visible secondary menu keeps a
    backend-backed smoke check.
-4. Treat the 50/100-question sets as final quality gates, not as blockers for
+5. Treat the 50/100-question sets as final quality gates, not as blockers for
    normal code polishing.
-5. Before opening new V0-V3 implementation issues, check this audit first and
+6. Before opening new V0-V3 implementation issues, check this audit first and
    avoid re-dispatching already merged code layers.
