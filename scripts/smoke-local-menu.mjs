@@ -22,11 +22,12 @@ const EXPECTED_SECONDARY_KEYS = [
   "account_management",
   "audit_logs",
   "data_attachments",
+  "ai_model_access",
   "secondary_menu_config",
   "system_settings",
   "platform_governance"
 ];
-const FRONTEND_ROUTE_SMOKE_KEYS = ["customer_management", "proposal_tasks", "export_jobs"];
+const FRONTEND_ROUTE_SMOKE_KEYS = ["customer_management", "proposal_tasks", "export_jobs", "ai_model_access"];
 
 const args = parseArgs(process.argv.slice(2));
 const baseUrl = trimTrailingSlash(args.baseUrl ?? process.env.PAS_SMOKE_BASE_URL ?? "http://127.0.0.1:5174");
@@ -121,6 +122,12 @@ const menuChecks = {
     assert(Array.isArray(response), "audit events must be an array");
   },
   data_attachments: () => checkSystemOverview(),
+  ai_model_access: async () => {
+    const response = await getJson("/api/internal/ai-models/overview", authHeaders());
+    assert(Array.isArray(response.providers), "AI model provider presets must be an array");
+    assert(Boolean(response.generation), "AI model generation overview is missing");
+    assertNoSecretFields(response);
+  },
   secondary_menu_config: async () => {
     const response = await getJson("/api/internal/menu/configuration", authHeaders());
     assert(Array.isArray(response.defaults), "menu configuration defaults must be an array");
@@ -252,6 +259,27 @@ function assertSameSet(actual, expected, label) {
   const missing = expected.filter((item) => !actual.includes(item));
   const extra = actual.filter((item) => !expected.includes(item));
   assert(missing.length === 0 && extra.length === 0, `${label} mismatch missing=${missing.join(",")} extra=${extra.join(",")}`);
+}
+
+function assertNoSecretFields(value) {
+  const forbidden = new Set([
+    "apikey",
+    "apikeyauthtag",
+    "apikeyiv",
+    "ciphertext",
+    "encryptedapikey",
+    "encryptionkey"
+  ]);
+  visit(value);
+
+  function visit(current) {
+    if (!current || typeof current !== "object") return;
+    for (const [key, child] of Object.entries(current)) {
+      const normalizedKey = key.replace(/[^a-z0-9]/gi, "").toLowerCase();
+      assert(!forbidden.has(normalizedKey), `AI model overview leaked secret-shaped field ${key}`);
+      visit(child);
+    }
+  }
 }
 
 function assert(condition, message) {

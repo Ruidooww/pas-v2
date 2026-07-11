@@ -19,6 +19,11 @@ const requiredFrontendHeaders = [
   "Referrer-Policy",
   "Permissions-Policy"
 ];
+const requiredModelEnvironmentNames = [
+  "MODEL_CONFIG_ENCRYPTION_KEY",
+  "MODEL_ENDPOINT_ALLOWLIST",
+  "THROTTLE_MODEL_TEST_LIMIT_PER_MINUTE"
+];
 
 for (const relativePath of ["docker-compose.yml", ".env.example"]) {
   const content = readFileSync(path.join(projectRoot, relativePath), "utf8");
@@ -37,10 +42,20 @@ for (const header of requiredFrontendHeaders) {
   }
 }
 
+const preservesForwardedProtocol =
+  /map\s+\$http_x_forwarded_proto\s+\$pas_forwarded_proto\s*\{[\s\S]*?""\s+\$scheme;[\s\S]*?default\s+\$http_x_forwarded_proto;[\s\S]*?\}/i.test(
+    frontendNginxConfig
+  ) && /proxy_set_header\s+X-Forwarded-Proto\s+\$pas_forwarded_proto;/i.test(frontendNginxConfig);
+if (!preservesForwardedProtocol) {
+  console.error("Expected frontend nginx.conf to preserve upstream X-Forwarded-Proto and fall back to $scheme.");
+  process.exit(1);
+}
+
 const composeContent = readFileSync(path.join(projectRoot, "docker-compose.yml"), "utf8");
 const requiredBackendEnvironmentDefaults = [
   { name: "COOKIE_SECURE", value: "true" },
   { name: "THROTTLE_LOGIN_LIMIT_PER_MINUTE", value: "10" },
+  { name: "THROTTLE_MODEL_TEST_LIMIT_PER_MINUTE", value: "5" },
   { name: "THROTTLE_QA_LIMIT_PER_MINUTE", value: "30" },
   { name: "TRUST_PROXY_HOPS", value: "1" }
 ];
@@ -49,6 +64,21 @@ for (const { name, value } of requiredBackendEnvironmentDefaults) {
   const pattern = new RegExp(`${name}:\\s+\\$\\{${name}:-${value}\\}`);
   if (!pattern.test(composeContent)) {
     console.error(`Expected backend compose environment to default ${name}=${value}.`);
+    process.exit(1);
+  }
+}
+
+for (const name of requiredModelEnvironmentNames) {
+  if (!new RegExp(`${name}:\\s+\\$\\{${name}:-`).test(composeContent)) {
+    console.error(`Expected backend compose environment to propagate ${name}.`);
+    process.exit(1);
+  }
+}
+
+const envExample = readFileSync(path.join(projectRoot, ".env.example"), "utf8");
+for (const name of requiredModelEnvironmentNames) {
+  if (!new RegExp(`^${name}=`, "m").test(envExample)) {
+    console.error(`Expected .env.example to document ${name}.`);
     process.exit(1);
   }
 }

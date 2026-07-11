@@ -8,9 +8,35 @@ import test from "node:test";
 
 const scriptPath = join(dirname(fileURLToPath(import.meta.url)), "smoke-local-menu.mjs");
 
-const frontendRoutes = ["/customers", "/proposals/tasks", "/exports/jobs"];
+const frontendRoutes = ["/customers", "/proposals/tasks", "/exports/jobs", "/system/ai-models"];
 
 test("smoke script verifies frontend deep links for critical pages", async () => {
+  const fixture = await startSmokeServer();
+
+  try {
+    const result = await runSmoke(fixture.baseUrl);
+    assert.equal(result.code, 0, result.stderr || result.stdout);
+  } finally {
+    await fixture.close();
+  }
+
+  for (const route of frontendRoutes) {
+    assert(fixture.requests.includes(route), `expected smoke script to request frontend route ${route}`);
+  }
+});
+
+test("smoke script rejects secret fields in the AI model overview", async () => {
+  const fixture = await startSmokeServer({ leakModelSecret: true });
+  try {
+    const result = await runSmoke(fixture.baseUrl);
+    assert.notEqual(result.code, 0);
+    assert.match(result.stderr, /leaked secret-shaped field apiKey/);
+  } finally {
+    await fixture.close();
+  }
+});
+
+async function startSmokeServer({ leakModelSecret = false } = {}) {
   const requests = [];
   const server = createServer(async (request, response) => {
     const url = new URL(request.url ?? "/", "http://127.0.0.1");
@@ -22,26 +48,22 @@ test("smoke script verifies frontend deep links for critical pages", async () =>
     }
 
     const body = await readBody(request);
-    sendJson(response, responseFor(url, body));
+    sendJson(response, responseFor(url, body, leakModelSecret));
   });
 
   server.listen(0, "127.0.0.1");
   await once(server, "listening");
   const address = server.address();
   assert(address && typeof address === "object");
-
-  try {
-    const result = await runSmoke(`http://127.0.0.1:${address.port}`);
-    assert.equal(result.code, 0, result.stderr || result.stdout);
-  } finally {
-    server.close();
-    await once(server, "close");
-  }
-
-  for (const route of frontendRoutes) {
-    assert(requests.includes(route), `expected smoke script to request frontend route ${route}`);
-  }
-});
+  return {
+    baseUrl: `http://127.0.0.1:${address.port}`,
+    requests,
+    async close() {
+      server.close();
+      await once(server, "close");
+    }
+  };
+}
 
 function runSmoke(baseUrl) {
   const child = spawn(process.execPath, [scriptPath, "--base-url", baseUrl, "--username", "admin", "--password", "admin123"], {
@@ -80,7 +102,7 @@ function sendJson(response, payload) {
   response.end(JSON.stringify(payload));
 }
 
-function responseFor(url, body) {
+function responseFor(url, body, leakModelSecret) {
   switch (url.pathname) {
     case "/api/health":
       return { status: "ok" };
@@ -121,6 +143,23 @@ function responseFor(url, body) {
       return { settings: [], paths: [] };
     case "/api/internal/menu/configuration":
       return { defaults: [], overrides: [] };
+    case "/api/internal/ai-models/overview":
+      return {
+        providers: [
+          {
+            provider: "bailian",
+            label: "Bailian",
+            defaultBaseUrl: "https://dashscope.aliyuncs.com/compatible-mode/v1"
+          }
+        ],
+        generation: {
+          status: "not_configured",
+          source: "mock",
+          keyConfigured: false,
+          timeoutSeconds: 30
+        },
+        ...(leakModelSecret ? { apiKey: "must-not-leak" } : {})
+      };
     case "/api/internal/platform/overview":
       return { channels: [] };
     case "/api/internal/platform/security-report":
@@ -139,7 +178,15 @@ function createEffectiveMenu() {
     primary("knowledge_delivery", ["proposal_tasks", "qa", "export_jobs", "proposal_library", "documents", "knowledge_blocks", "templates"]),
     primary("business_loop", ["opportunities", "meeting_minutes", "contracts_after_sales", "customer_feedback"]),
     primary("analytics_ops", ["analytics"]),
-    primary("system", ["account_management", "audit_logs", "data_attachments", "secondary_menu_config", "system_settings", "platform_governance"])
+    primary("system", [
+      "account_management",
+      "audit_logs",
+      "data_attachments",
+      "ai_model_access",
+      "secondary_menu_config",
+      "system_settings",
+      "platform_governance"
+    ])
   ];
 }
 
@@ -154,6 +201,7 @@ function routeFor(key) {
   return {
     customer_management: "/customers",
     proposal_tasks: "/proposals/tasks",
-    export_jobs: "/exports/jobs"
+    export_jobs: "/exports/jobs",
+    ai_model_access: "/system/ai-models"
   }[key] ?? `/${key}`;
 }
