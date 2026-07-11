@@ -12,6 +12,7 @@ const pageModules = vi.hoisted(() => {
 });
 
 vi.mock("./pages/AccountsPage", () => pageModules.mock("AccountsPage"));
+vi.mock("./pages/AiModelAccessPage", () => pageModules.mock("AiModelAccessPage"));
 vi.mock("./pages/AuditLogsPage", () => pageModules.mock("AuditLogsPage"));
 vi.mock("./pages/BusinessFlowsPage", () => pageModules.mock("BusinessFlowsPage"));
 vi.mock("./pages/CustomerManagementPage", () => pageModules.mock("CustomerManagementPage"));

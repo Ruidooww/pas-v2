@@ -41,6 +41,40 @@ describe("api", () => {
     );
   });
 
+  it.each(["PUT", "DELETE"] as const)("supports %s requests with CSRF protection", async (method) => {
+    document.cookie = "pas.csrf=csrf-token; path=/";
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(200, { ok: true }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await api("/api/internal/ai-models/generation", {
+      method,
+      ...(method === "PUT" ? { body: { model: "qwen-plus" } } : {})
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/internal/ai-models/generation",
+      expect.objectContaining({
+        method,
+        headers: expect.objectContaining({ "x-csrf-token": "csrf-token" })
+      })
+    );
+  });
+
+  it("preserves stable client-safe error codes", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        jsonResponse(400, { code: "MODEL_API_KEY_REQUIRED", message: "MODEL_API_KEY_REQUIRED" })
+      )
+    );
+
+    await expect(api("/api/internal/ai-models/generation", { method: "PUT", body: {} })).rejects.toMatchObject({
+      name: "ApiError",
+      status: 400,
+      code: "MODEL_API_KEY_REQUIRED"
+    } satisfies Partial<ApiError>);
+  });
+
   it("uses a credential-safe message for login 401 responses", async () => {
     setToken("stale-token");
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonResponse(401, { message: "invalid credentials: user root not found" })));

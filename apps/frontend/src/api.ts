@@ -12,7 +12,8 @@ const SERVER_ERROR_MESSAGE = "服务暂时不可用，请稍后再试";
 export class ApiError extends Error {
   constructor(
     message: string,
-    readonly status: number
+    readonly status: number,
+    readonly code?: string
   ) {
     super(message);
     this.name = "ApiError";
@@ -32,7 +33,7 @@ export function clearToken(): void {
 }
 
 type ApiOptions = {
-  method?: "GET" | "POST" | "PATCH";
+  method?: "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
   body?: unknown;
 };
 
@@ -63,7 +64,8 @@ export async function api<T>(path: string, options: ApiOptions = {}): Promise<T>
     throw new ApiError(path === LOGIN_PATH ? LOGIN_FAILED_MESSAGE : SESSION_EXPIRED_MESSAGE, 401);
   }
   if (!response.ok) {
-    throw new ApiError(await readErrorMessage(response), response.status);
+    const error = await readError(response);
+    throw new ApiError(error.message, response.status, error.code);
   }
 
   return (await response.json()) as T;
@@ -85,21 +87,25 @@ async function fetchWithTimeout(path: string, init: RequestInit): Promise<Respon
   }
 }
 
-async function readErrorMessage(response: Response): Promise<string> {
+async function readError(response: Response): Promise<{ message: string; code?: string }> {
   if (response.status >= 500) {
-    return SERVER_ERROR_MESSAGE;
+    return { message: SERVER_ERROR_MESSAGE };
   }
 
   let message = `请求失败 (HTTP ${response.status})`;
+  let code: string | undefined;
   try {
-    const payload = (await response.json()) as { message?: string | string[] };
+    const payload = (await response.json()) as { code?: string; message?: string | string[] };
     if (payload.message) {
       message = Array.isArray(payload.message) ? payload.message.join("; ") : payload.message;
+    }
+    if (typeof payload.code === "string" && payload.code.trim()) {
+      code = payload.code.trim();
     }
   } catch {
     // keep default message
   }
-  return message;
+  return { message, ...(code ? { code } : {}) };
 }
 
 function isAbortError(error: unknown): boolean {

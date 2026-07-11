@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { App } from "./App";
-import { fallbackMenuFor } from "./navigation";
+import { fallbackMenuFor, routeToView } from "./navigation";
 import type { MenuConfiguration, PlatformOverview, PublicUser, WorkbenchOverview } from "./types";
 
 const adminUser: PublicUser = {
@@ -31,6 +31,10 @@ describe("App", () => {
 
     expect(adminKeys).toContain("ai_model_access");
     expect(salesKeys).not.toContain("ai_model_access");
+  });
+
+  it("maps the AI model route to its dedicated view", () => {
+    expect(routeToView("/system/ai-models")).toBe("aiModelAccess");
   });
 
   afterEach(() => {

@@ -39,6 +39,7 @@ export type View =
   | "accounts"
   | "auditLogs"
   | "dataAttachments"
+  | "aiModelAccess"
   | "systemSettings"
   | "menuConfig";
 
@@ -206,6 +207,7 @@ export function routeToView(route: string): View {
   if (route === "/system/accounts") return "accounts";
   if (route === "/system/audit-logs") return "auditLogs";
   if (route === "/system/data-attachments") return "dataAttachments";
+  if (route === "/system/ai-models") return "aiModelAccess";
   if (route === "/system/settings") return "systemSettings";
   if (route === "/system/secondary-menu") return "menuConfig";
   return "workbenchOverview";
@@ -251,6 +253,8 @@ export function viewToTitle(view: View): string {
       return "审计日志";
     case "dataAttachments":
       return "数据与附件";
+    case "aiModelAccess":
+      return "AI 模型接入";
     case "systemSettings":
       return "系统设置";
     case "menuConfig":

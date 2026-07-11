@@ -3,6 +3,9 @@ import { lazy } from "react";
 export const AccountsPage = lazy(() =>
   import("./pages/AccountsPage").then((module) => ({ default: module.AccountsPage }))
 );
+export const AiModelAccessPage = lazy(() =>
+  import("./pages/AiModelAccessPage").then((module) => ({ default: module.AiModelAccessPage }))
+);
 export const AuditLogsPage = lazy(() =>
   import("./pages/AuditLogsPage").then((module) => ({ default: module.AuditLogsPage }))
 );

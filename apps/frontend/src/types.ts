@@ -51,6 +51,7 @@ export type AuditEvent = {
   objectId: string;
   result: "success" | "failure";
   failureReason?: string;
+  metadata?: Record<string, string | number | boolean | null>;
   occurredAt: string;
 };
 
@@ -701,4 +702,88 @@ export type UpdateSecondaryMenuOverrideRequest = {
   alias?: string;
   roles?: PublicUser["role"][];
   isDefault?: boolean;
+};
+
+export type AiModelProvider = "bailian" | "deepseek" | "openai" | "custom";
+
+export type AiModelErrorCode =
+  | "MODEL_CONFIG_ENCRYPTION_UNAVAILABLE"
+  | "MODEL_CONFIGURATION_INVALID"
+  | "MODEL_API_KEY_REQUIRED"
+  | "MODEL_ENDPOINT_NOT_ALLOWED"
+  | "MODEL_PERSISTENCE_UNAVAILABLE"
+  | "MODEL_AUTHENTICATION_FAILED"
+  | "MODEL_ENDPOINT_OR_MODEL_NOT_FOUND"
+  | "MODEL_RATE_LIMITED"
+  | "MODEL_PROVIDER_UNAVAILABLE"
+  | "MODEL_REQUEST_TIMEOUT"
+  | "MODEL_RESPONSE_INVALID";
+
+export type AiModelCandidateRequest = {
+  provider: AiModelProvider;
+  baseUrl: string;
+  model: string;
+  apiKey?: string;
+  timeoutSeconds: number;
+};
+
+export type AiModelTestResult = {
+  ok: boolean;
+  provider: AiModelProvider;
+  model: string;
+  elapsedMs: number;
+  errorCode?: AiModelErrorCode;
+};
+
+export type AiModelGenerationOverview = {
+  status: "running" | "not_configured" | "error";
+  source: "database" | "environment" | "mock";
+  provider?: AiModelProvider;
+  baseUrl?: string;
+  model?: string;
+  keyConfigured: boolean;
+  timeoutSeconds: number;
+  errorCode?: AiModelErrorCode;
+  lastTestStatus?: "passed" | "failed";
+  lastTestedAt?: string;
+  updatedBy?: string;
+  updatedAt?: string;
+};
+
+export type SavedAiModelConfigurationOverview = {
+  enabled: boolean;
+  provider: AiModelProvider;
+  baseUrl: string;
+  model: string;
+  keyConfigured: boolean;
+  timeoutSeconds: number;
+  lastTestStatus: "passed" | "failed";
+  lastTestedAt: string;
+  updatedBy: string;
+  updatedAt: string;
+};
+
+export type AiModelOverview = {
+  providers: Array<{ provider: AiModelProvider; label: string; defaultBaseUrl: string }>;
+  generation: AiModelGenerationOverview;
+  savedConfiguration?: SavedAiModelConfigurationOverview;
+};
+
+export type RagflowModelOverview = {
+  status: "ok" | "error" | "disabled";
+  baseUrl: string;
+  dataset?: {
+    datasetId: string;
+    name?: string;
+    embeddingModel?: string;
+    rerankerModel?: string;
+    chatModel?: string;
+    language?: string;
+    chunkMethod?: string;
+    documentCount?: number;
+    chunkCount?: number;
+  };
+  unavailableFields: string[];
+  errorKind?: string;
+  refreshedAt: string;
 };

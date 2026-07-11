@@ -5,6 +5,7 @@ import { api, clearToken } from "./api";
 import { clearCustomerCache } from "./customer-api";
 import {
   AccountsPage,
+  AiModelAccessPage,
   AuditLogsPage,
   BusinessFlowsPage,
   CustomerManagementPage,
@@ -375,6 +376,8 @@ function renderActiveContent(view: View, user: PublicUser, activeSecondaryKey: S
       return <AuditLogsPage />;
     case "dataAttachments":
       return <DataAttachmentsPage />;
+    case "aiModelAccess":
+      return <AiModelAccessPage />;
     case "systemSettings":
       return <SystemSettingsPage />;
     case "menuConfig":
