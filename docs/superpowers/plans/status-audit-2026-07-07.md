@@ -1,4 +1,4 @@
-# PAS Plan Status Audit - 2026-07-11
+# PAS Plan Status Audit - 2026-07-12
 
 This audit is the current dispatch source for PAS V0-V3 code-layer work. The
 older files in `docs/superpowers/plans/` remain useful as implementation notes,
@@ -7,16 +7,17 @@ Do not use historical checkbox state alone to decide what still needs coding.
 
 ## Evidence Checked
 
-- The M9 implementation and internal-trial acceptance baseline before this
-  evidence update is `2c99eff docs: add internal trial acceptance evidence`.
-- `pnpm test` passed: backend `58` files / `272` tests and frontend `15`
-  files / `59` tests.
+- The current application-code baseline is
+  `7bbaa1c fix: harden AI model operations after review`. The later
+  release-evidence commit changes documentation only.
+- `pnpm test` passed: backend `67` files / `364` tests and frontend `16`
+  files / `73` tests.
 - `pnpm typecheck`, `pnpm build`, `pnpm compose:config`, and
   `pnpm test:smoke` passed.
 - Frontend authenticated pages now load through route-level chunks. The build
-  emits 33 JavaScript chunks; the entry chunk is `145.44 kB` before gzip
-  (`47.35 kB` after gzip), the largest shared chunk is `545.56 kB`, and the
-  previous 800 kB bundle warning is gone.
+  emits 37 JavaScript chunks; the entry chunk is `164.07 kB` before gzip, the
+  largest shared chunk is `527.72 kB`, and the previous 800 kB bundle warning
+  is gone.
 - M9 seeds `Company`, `Sales Department`, and `Technical Department`, with
   Presales, Technical, and After-sales child teams under the Technical
   Department. Runtime roles are now only `sales`, `technical`, and `admin`.
@@ -34,7 +35,7 @@ Do not use historical checkbox state alone to decide what still needs coding.
   feedback, knowledge blocks, knowledge documents, menu configuration,
   platform, proposal library, QA, system settings, workbench overview, and
   proposal tasks.
-- `scripts/smoke-local-menu.mjs` validates 6 primary menus and 23 visible
+- `scripts/smoke-local-menu.mjs` validates 6 primary menus and 24 visible
   secondary menus, including login, `/api/health`, `/api/me`, effective menu
   loading, and at least one backend endpoint for every visible secondary menu.
 - The latest real local browser smoke on `2026-07-07` passed against
@@ -79,9 +80,10 @@ Do not use historical checkbox state alone to decide what still needs coding.
   therefore still uses compatibility mode, so the post-remediation run does not
   prove live fail-closed filtering despite the ACL code and prior isolated M9
   permission smoke.
-- Both HYYN application images were rebuilt from the M9 worktree. All four
-  HYYN containers were healthy; `/api/health` and `/api/ragflow/health`
-  returned `ok` through the frontend entry point.
+- Both HYYN application images were rebuilt from the AI-model implementation
+  baseline. All four HYYN containers were healthy; `/api/health` and the
+  read-only RAGFlow model overview returned `ok` through the frontend entry
+  point.
 - The live Redis password is now persisted in the ignored local `.env`, and a
   fresh Compose/runtime comparison found no critical configuration mismatch.
   The localhost HTTP precheck intentionally uses `COOKIE_SECURE=false`; an
@@ -95,11 +97,25 @@ Do not use historical checkbox state alone to decide what still needs coding.
   authenticated navigation loaded the account and audit chunks, the loading
   fallback cleared, and neither viewport introduced document-level horizontal
   overflow.
+- AI model access is code-ready at `/system/ai-models`: the admin-only page and
+  APIs support encrypted singleton persistence, endpoint allowlisting,
+  OpenAI-compatible providers, sanitized audit metadata, HTTPS-only writes,
+  read-only RAGFlow state, and deterministic fallback for QA, customer
+  analysis, and proposal generation. Independent review closed all five
+  reported findings and returned `Ready to merge? Yes`.
+- Real model activation is not release-ready in the current local `.env`:
+  `LLM_CLIENT_MODE=mock`, while `MODEL_CONFIG_ENCRYPTION_KEY`,
+  `MODEL_ENDPOINT_ALLOWLIST`, and `LLM_API_KEY` are unset. The local entry point
+  remains HTTP with `COOKIE_SECURE=false` and is limited to loopback prechecks.
 - This is not formal go-live approval. The technical artifact now has 50 unique
   questions and per-question citations, and a Technical Department reviewer is
   assigned. The gate still lacks reviewer pass/fail decisions, review
   timestamps, and a persisted regression run with `gateStatus=passed` and
   `canGoLive=true`.
+- The captured V0 50-question artifact predates the AI-model application
+  baseline. After HTTPS, document-metadata enrollment, and real-model activation
+  are finalized, the 50 questions must be rerun before the reviewer signs the
+  final release gate.
 
 ## Scope Interpretation
 
@@ -128,6 +144,7 @@ long-range business capabilities.
 | V3 platform | Code-ready | Platform dashboard/service/controller/store code exists. User-facing menu now exposes the platform access surface under system settings. |
 | Navigation/UI shell | Code-ready | Primary menu groups, left secondary menus, horizontal tertiary tabs, lazy authenticated page chunks with a stable loading state, admin menu configuration, polished empty states, deprecated-list cleanup, and deprecated-Alert cleanup are implemented and smoke-covered. |
 | System/admin pages | Code-ready | Account permissions now include active role-compatible organization units and project groups. Organization management, audit logs, data/attachments, menu config, runtime config, and platform access have backend-backed pages or smoke endpoints. |
+| AI model access | Code-ready; real provider activation deferred | Admin-only configuration, encrypted persisted secrets, provider test/save/disable, runtime fallback, QA/customer-analysis/proposal integration, and read-only RAGFlow status are implemented. Persistent deployment secrets, HTTPS, endpoint allowlisting, and a real provider credential are still required. |
 
 ## Historical Plan Files
 
@@ -167,7 +184,10 @@ and GitHub PR history instead of flipping old checkboxes in place.
   API documentation, auth method, test account, and sample customer records.
 - The current export templates are accepted for the internal trial; replacement
   business templates will be provided later.
-- Production LLM/API keys and secret material in local or deployment env files.
+- Persistent `MODEL_CONFIG_ENCRYPTION_KEY`, exact
+  `MODEL_ENDPOINT_ALLOWLIST`, real provider credentials, and the approved model
+  name/base URL in the deployment environment. These values are intentionally
+  absent from source control.
 - Business-material inputs for higher-quality proposal and analysis content.
 - File/data ingestion. Current direction is to keep using fake data until the
   user explicitly reopens ingestion work.
@@ -180,23 +200,26 @@ and GitHub PR history instead of flipping old checkboxes in place.
 
 ## Next Dispatch Guidance
 
-1. Complete the Technical Department review of the captured V0 50-question
-   artifact and submit a passing regression run before treating the project as
-   release-ready. Local trial secrets are persisted; production secrets remain
-   an environment responsibility. The current export templates remain the
-   trial baseline.
-2. Assign a reviewer to approve or revise all 100 V1 questions, review the
+1. Publish the `7bbaa1c` application baseline, terminate HTTPS for the intranet
+   entry point, persist the model encryption key and endpoint allowlist, and
+   activate the approved real provider through the admin page.
+2. Review visibility for all 51 live RAGFlow documents, enroll the approved PAS
+   metadata mapping, and run same-user before/after organization and
+   project-group revocation checks before treating ACL answers as live
+   fail-closed evidence.
+3. Rerun the V0 50-question suite against the finalized HTTPS, ACL, and model
+   configuration. Complete the Technical Department review and submit a passing
+   regression run before treating the project as release-ready. The current
+   export templates remain the trial baseline.
+4. Assign a reviewer to approve or revise all 100 V1 questions, review the
    post-remediation answers and citations, and add dedicated approved knowledge
    for any confirmed weak or cross-topic cases before the final 100-case rerun.
-3. Review visibility for all 51 live RAGFlow documents, enroll the approved PAS
-   metadata mapping, and run same-user before/after organization and project-group
-   revocation checks before treating ACL answers as live fail-closed evidence.
-4. Keep code work on the current fake-data boundary unless the user provides
+5. Keep code work on the current fake-data boundary unless the user provides
    real CRM, template, or source-data inputs.
-5. For UI changes, update both the frontend shell and
+6. For UI changes, update both the frontend shell and
    `scripts/smoke-local-menu.mjs` so every visible secondary menu keeps a
    backend-backed smoke check.
-6. Treat the 50/100-question sets as final quality gates, not as blockers for
+7. Treat the 50/100-question sets as final quality gates, not as blockers for
    normal code polishing.
-7. Before opening new V0-V3 implementation issues, check this audit first and
+8. Before opening new V0-V3 implementation issues, check this audit first and
    avoid re-dispatching already merged code layers.

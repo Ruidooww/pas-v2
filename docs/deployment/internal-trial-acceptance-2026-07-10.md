@@ -1,17 +1,18 @@
-# PAS V0 内网试运行验收单 - 2026-07-10
+# PAS V0 内网试运行验收单 - 2026-07-12
 
 ## 验收结论
 
-当前代码、容器、权限模型和 50 题技术运行已通过内网试运行前的本机技术预检，
-但 **尚未获得正式试运行放行**。实际多用户内网入口仍需完成 HTTPS 配置；最终
-门禁仍需技术部审核人逐题确认 50 题结果，并将审核结论提交到回归门禁接口，
-得到 `gateStatus=passed` 和 `canGoLive=true`。
+当前代码、容器、权限模型、AI 模型接入代码和历史 50 题技术运行已通过本机技术
+预检，但 **尚未获得正式试运行放行**。实际多用户内网入口仍需完成 HTTPS、
+RAGFlow 文档元数据登记和真实模型激活；随后必须重新执行 50 题，由技术部审核人
+逐题确认，并将审核结论提交到回归门禁接口，得到 `gateStatus=passed` 和
+`canGoLive=true`。
 
 ## 试运行边界
 
 - 目标环境：公司内网试运行；`http://127.0.0.1:18000` 仅为当前本机预检入口，
   不是其他内网用户的正式入口。
-- 应用基线：`da15ce6367e4fc5e5dce67490b86fd68f62a1dee`。
+- 应用代码基线：`7bbaa1c5065d28b683305b6f335e073c93b88da3`。后续验收证据提交只修改文档。
 - PAS 只维护 `HYYN-frontend`、`HYYN-backend`、`HYYN-postgres`、
   `HYYN-redis` 四个容器。
 - RAGFlow 为外部依赖，当前使用 `real` 模式。
@@ -25,11 +26,11 @@
 
 | 项目 | 结果 | 证据 |
 | --- | --- | --- |
-| 单元测试 | 通过 | backend `58` files / `272` tests；frontend `13` files / `57` tests |
+| 单元测试 | 通过 | backend `67` files / `364` tests；frontend `16` files / `73` tests |
 | 类型检查 | 通过 | `pnpm typecheck` |
-| 构建 | 通过，有非阻断告警 | `pnpm build`；主 JavaScript chunk 约 `1.17 MB`，后续处理路由级拆包 |
+| 构建 | 通过 | `pnpm build`；37 个 JavaScript chunk，入口约 `164.07 kB`，最大共享 chunk 约 `527.72 kB`，原 800 kB 告警已消除 |
 | Compose 合同 | 通过 | `pnpm compose:config`；仅四个 PAS 服务 |
-| 菜单 smoke | 通过 | `pnpm test:smoke`；6 个一级菜单、23 个可见二级菜单 |
+| 菜单 smoke | 通过 | `pnpm test:smoke` 和真实栈 smoke；6 个一级菜单、24 个可见二级菜单 |
 | 容器健康 | 通过 | 四个 HYYN 容器均为 `healthy` |
 | API 健康 | 通过 | `/api/health=ok`、`/api/ragflow/health=ok` |
 | V0 真实 smoke | 通过 | 不使用 `-AllowMissingExportTemplates`；登录、RAGFlow、CRM mock、QA、客户分析、方案、三格式导出和反馈均通过 |
@@ -37,8 +38,11 @@
 | 浏览器检查 | 通过 | `1280x720` 与 `390x844` 无横向溢出、标签裁切或控件重叠 |
 | 权限 smoke | 通过 | 技术部三个子团队可维护文档；销售写入被拒绝；项目授权读取与无关用户隔离生效 |
 | 本地密钥配置 | 通过 | `.env` 已持久化 `REDIS_PASSWORD`；Compose 与运行容器关键配置一致，不记录密钥值 |
-| 50 题技术运行 | 通过 | 50 个唯一批准题目：`answered=50`、`no_hit=0`、`error=0`、引用 `250` 条 |
-| 50 题人工审核 | **待完成** | 审核人为技术部审核人；50 题均保持 `human_review_result=pending` |
+| AI 模型接入代码 | 通过 | 管理员菜单/API、加密持久化、白名单、HTTPS 写保护、RAGFlow 只读状态、QA/客户分析/方案生成和降级审计均已验证；独立复审结论为可合并 |
+| AI 模型部署配置 | **待完成** | 当前 `.env` 仍为 `LLM_CLIENT_MODE=mock`，且未持久化 `MODEL_CONFIG_ENCRYPTION_KEY`、`MODEL_ENDPOINT_ALLOWLIST` 和真实 API Key |
+| 历史 50 题技术运行 | 通过，仅作预检 | 旧基线 50 个唯一批准题目：`answered=50`、`no_hit=0`、`error=0`、引用 `250` 条 |
+| 最终 50 题技术运行 | **待完成** | HTTPS、51 份文档元数据和真实模型配置固定后，基于 `7bbaa1c` 应用代码重新执行 |
+| 50 题人工审核 | **待完成** | 审核人为技术部审核人；必须审核最终重跑材料，现有旧材料 50 题均为 `human_review_result=pending` |
 | 回归门禁入库 | **待完成** | 人工审核后提交 `/api/internal/regression-runs`，必须返回 `gateStatus=passed`、`canGoLive=true` |
 | 内网 HTTPS 入口 | **待完成** | 实际多用户入口必须终止 HTTPS，设置 `COOKIE_SECURE=true` 并按真实代理层数复测 |
 
@@ -48,6 +52,9 @@
 
 - `temp/regression/PAS-V0-50题技术运行-2026-07-10.json`
 - `temp/regression/PAS-V0-50题审核底稿-2026-07-10.md`
+
+这两份材料记录模型接入前的历史技术预检。它们可用于对照，但不得直接作为
+`7bbaa1c` 应用代码和真实模型配置的最终放行材料。
 
 技术运行材料满足以下完整性检查：
 
@@ -107,6 +114,7 @@ pnpm typecheck
 pnpm build
 pnpm compose:config
 pnpm test:smoke
+pnpm smoke:local -- --base-url http://127.0.0.1:18000
 ```
 
 ## 回滚
