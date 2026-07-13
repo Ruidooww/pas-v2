@@ -2,6 +2,10 @@ import { describe, expect, it } from "vitest";
 import { MockCrmClient } from "./mock-crm.client";
 
 describe("MockCrmClient", () => {
+  it("reports healthy without an external request", async () => {
+    await expect(new MockCrmClient().checkHealth()).resolves.toBeUndefined();
+  });
+
   it("lists V0 demo customer summaries", async () => {
     const client = new MockCrmClient();
 

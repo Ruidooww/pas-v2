@@ -147,6 +147,43 @@ describe("ExternalCrmClient", () => {
     ]);
   });
 
+  it("retries one transient network failure without logging sensitive details", async () => {
+    let customerAttempts = 0;
+    const fetcher = vi.fn(async (url: string) => {
+      if (url.endsWith("/users/options")) {
+        return jsonResponse(200, { data: [] });
+      }
+      customerAttempts += 1;
+      if (customerAttempts === 1) {
+        throw new Error(`socket failure ${config.apiToken} customer-1`);
+      }
+      return jsonResponse(200, { data: [], meta: { totalPages: 1 } });
+    });
+    const logger = { warn: vi.fn() };
+
+    await expect(new ExternalCrmClient(config, fetcher, logger).listCustomers()).resolves.toEqual([]);
+
+    expect(customerAttempts).toBe(2);
+    expect(logger.warn).toHaveBeenCalledOnce();
+    const logMessage = String(logger.warn.mock.calls[0]?.[0]);
+    expect(logMessage).toBe("CRM read retry operation=customer_list attempt=2 reason=network");
+    expect(logMessage).not.toContain(config.apiToken);
+    expect(logMessage).not.toContain("customer-1");
+  });
+
+  it("checks connectivity with one read-only owners request", async () => {
+    const fetcher = vi.fn().mockResolvedValue(jsonResponse(200, { data: [] }));
+
+    await expect(new ExternalCrmClient(config, fetcher).checkHealth()).resolves.toBeUndefined();
+
+    expect(fetcher).toHaveBeenCalledOnce();
+    expect(fetcher).toHaveBeenCalledWith(
+      `${config.baseUrl}/users/options`,
+      expect.objectContaining({ method: "GET", redirect: "error" })
+    );
+    expect(fetcher.mock.calls[0]?.[1]?.body).toBeUndefined();
+  });
+
   it.each([
     [401, "CRM_AUTHENTICATION_FAILED"],
     [403, "CRM_AUTHENTICATION_FAILED"],
@@ -155,9 +192,12 @@ describe("ExternalCrmClient", () => {
     [400, "CRM_REQUEST_REJECTED"]
   ] as const)("maps HTTP %i to %s", async (status, code) => {
     const fetcher = vi.fn().mockResolvedValue(jsonResponse(status, { secret: "must-not-leak" }));
-    const promise = new ExternalCrmClient(config, fetcher).getCustomerContext("customer-1");
+    const logger = { warn: vi.fn() };
+    const promise = new ExternalCrmClient(config, fetcher, logger).getCustomerContext("customer-1");
     await expect(promise).rejects.toMatchObject({ code, upstreamStatus: status });
     await expect(promise).rejects.not.toThrow("must-not-leak");
+    expect(fetcher).toHaveBeenCalledTimes(status === 429 || status >= 500 ? 2 : 1);
+    expect(logger.warn).toHaveBeenCalledTimes(status === 429 || status >= 500 ? 1 : 0);
   });
 
   it("returns undefined when the requested customer does not exist", async () => {
@@ -208,7 +248,7 @@ describe("ExternalCrmClient", () => {
   it("maps timeout and invalid JSON without leaking transport details", async () => {
     const timeout = Object.assign(new Error("socket detail"), { name: "TimeoutError" });
     await expect(
-      new ExternalCrmClient(config, vi.fn().mockRejectedValue(timeout)).listCustomers()
+      new ExternalCrmClient(config, vi.fn().mockRejectedValue(timeout), { warn: vi.fn() }).listCustomers()
     ).rejects.toMatchObject({ code: "CRM_UNAVAILABLE", message: "CRM request timed out" });
 
     const invalidJson = vi.fn().mockResolvedValue({
@@ -222,6 +262,7 @@ describe("ExternalCrmClient", () => {
       code: "CRM_RESPONSE_INVALID",
       message: "CRM returned an invalid response"
     });
+    expect(invalidJson).toHaveBeenCalledTimes(2);
   });
 
   it.each([
