@@ -145,6 +145,19 @@ describe("App", () => {
     expect((await screen.findAllByRole("heading", { name: "我的待办" })).length).toBeGreaterThan(0);
   });
 
+  it("drills from a dashboard metric into the filtered task page", async () => {
+    localStorage.setItem("pas.access-token", "token");
+    vi.stubGlobal("fetch", vi.fn(mockAdminFetch));
+
+    render(<App />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "查看高优先级明细" }));
+
+    expect((await screen.findAllByRole("heading", { name: "我的待办" })).length).toBeGreaterThan(0);
+    expect(window.location.pathname).toBe("/workbench/my-tasks");
+    expect(window.location.search).toBe("?priority=high");
+  });
+
   it("shows the business flow console from the business first-level menu", async () => {
     localStorage.setItem("pas.access-token", "token");
     vi.stubGlobal("fetch", vi.fn(mockAdminFetch));

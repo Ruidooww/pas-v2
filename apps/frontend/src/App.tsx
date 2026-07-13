@@ -112,7 +112,10 @@ export function App() {
     setOpenKeys([]);
   };
 
-  const navigateToSecondary = (key: SecondaryMenuKey | null, options: { updateUrl?: boolean } = {}) => {
+  const navigateToSecondary = (
+    key: SecondaryMenuKey | null,
+    options: { updateUrl?: boolean; search?: string } = {}
+  ) => {
     const nextSecondary = findSecondary(menu, key);
     if (!key || !nextSecondary) return;
     setActiveSecondaryKey(key);
@@ -121,8 +124,13 @@ export function App() {
       const nextOpenKey = primaryKeyToMenuKey(nextPrimary.key);
       setOpenKeys([nextOpenKey]);
     }
-    if (options.updateUrl !== false && nextSecondary.route && window.location.pathname !== nextSecondary.route) {
-      window.history.pushState({}, "", nextSecondary.route);
+    const nextUrl = `${nextSecondary.route}${options.search ?? ""}`;
+    if (
+      options.updateUrl !== false &&
+      nextSecondary.route &&
+      `${window.location.pathname}${window.location.search}` !== nextUrl
+    ) {
+      window.history.pushState({}, "", nextUrl);
     }
   };
 
@@ -297,7 +305,9 @@ export function App() {
             )}
             <Layout.Content className="pas-content">
               <Suspense fallback={<PageLoading />}>
-                {renderActiveContent(activeView, user, activeSecondaryKey)}
+                {renderActiveContent(activeView, user, activeSecondaryKey, (key, search) =>
+                  navigateToSecondary(key, { search })
+                )}
               </Suspense>
             </Layout.Content>
           </Layout>
@@ -336,14 +346,19 @@ async function loadMenuForUser(user: PublicUser): Promise<EffectivePrimaryMenuIt
   }
 }
 
-function renderActiveContent(view: View, user: PublicUser, activeSecondaryKey: SecondaryMenuKey | null) {
+function renderActiveContent(
+  view: View,
+  user: PublicUser,
+  activeSecondaryKey: SecondaryMenuKey | null,
+  onNavigate: (key: SecondaryMenuKey, search?: string) => void
+) {
   switch (view) {
     case "workbenchOverview":
-      return <WorkbenchOverviewPage mode="overview" user={user} />;
+      return <WorkbenchOverviewPage mode="overview" user={user} onNavigate={onNavigate} />;
     case "workbenchMyTasks":
-      return <WorkbenchOverviewPage mode="myTasks" user={user} />;
+      return <WorkbenchOverviewPage mode="myTasks" user={user} onNavigate={onNavigate} />;
     case "workbenchTeamTasks":
-      return <WorkbenchOverviewPage mode="teamTasks" user={user} />;
+      return <WorkbenchOverviewPage mode="teamTasks" user={user} onNavigate={onNavigate} />;
     case "customerManagement":
       return <CustomerManagementPage />;
     case "customerInsights":

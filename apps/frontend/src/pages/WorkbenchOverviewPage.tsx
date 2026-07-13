@@ -10,13 +10,16 @@ import {
 } from "@ant-design/icons";
 import { Alert, Avatar, Card, Empty, Tag, Typography } from "antd";
 import { api } from "../api";
-import type { PublicUser, WorkbenchActivity, WorkbenchMetric, WorkbenchOverview, WorkbenchTask, WorkbenchTaskScope } from "../types";
+import { MetricDrilldown } from "../components/MetricDrilldown";
+import { buildDrilldownSearch } from "../drilldown";
+import type { PublicUser, SecondaryMenuKey, WorkbenchActivity, WorkbenchMetric, WorkbenchOverview, WorkbenchTask, WorkbenchTaskScope } from "../types";
 
 type WorkbenchMode = "overview" | "myTasks" | "teamTasks";
 
 type WorkbenchOverviewPageProps = {
   mode: WorkbenchMode;
   user?: PublicUser;
+  onNavigate: (key: SecondaryMenuKey, search?: string) => void;
 };
 
 type DashboardKpi = {
@@ -60,7 +63,7 @@ const modeCopy: Record<WorkbenchMode, { title: string; description: string }> = 
   }
 };
 
-export function WorkbenchOverviewPage({ mode, user }: WorkbenchOverviewPageProps) {
+export function WorkbenchOverviewPage({ mode, user, onNavigate }: WorkbenchOverviewPageProps) {
   const [overview, setOverview] = useState<WorkbenchOverview | null>(null);
   const [tasks, setTasks] = useState<WorkbenchTask[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -130,11 +133,16 @@ export function WorkbenchOverviewPage({ mode, user }: WorkbenchOverviewPageProps
           </div>
           <div className="dashboard-kpi-row">
             {kpis.map((kpi) => (
-              <div className="dashboard-kpi" key={kpi.key}>
+              <MetricDrilldown
+                className="dashboard-kpi"
+                key={kpi.key}
+                label={kpi.label}
+                onClick={() => navigateKpi(kpi.key, user, onNavigate)}
+              >
                 <Typography.Text type="secondary">{kpi.label}</Typography.Text>
                 <strong>{kpi.value}</strong>
                 <Typography.Text className="dashboard-kpi-trend">{kpi.hint}</Typography.Text>
-              </div>
+              </MetricDrilldown>
             ))}
           </div>
         </Card>
@@ -197,11 +205,16 @@ export function WorkbenchOverviewPage({ mode, user }: WorkbenchOverviewPageProps
       <aside className="dashboard-side">
         <Card className="dashboard-side-card" title="评审与交付">
           {reviewSummary.map((item) => (
-            <div className="dashboard-review-row" key={item.key}>
+            <MetricDrilldown
+              className="dashboard-review-row"
+              key={item.key}
+              label={item.label}
+              onClick={() => navigateReview(item.key, user, onNavigate)}
+            >
               <span className={`dashboard-review-icon is-${item.tone}`}>{item.icon}</span>
               <span>{item.label}</span>
               <strong>{item.count}</strong>
-            </div>
+            </MetricDrilldown>
           ))}
         </Card>
 
@@ -223,6 +236,41 @@ export function WorkbenchOverviewPage({ mode, user }: WorkbenchOverviewPageProps
         </Card>
       </aside>
     </section>
+  );
+}
+
+function navigateKpi(
+  key: string,
+  user: PublicUser | undefined,
+  onNavigate: (key: SecondaryMenuKey, search?: string) => void
+): void {
+  if (key === "high_priority") {
+    onNavigate("my_tasks", buildDrilldownSearch({ priority: "high" }));
+    return;
+  }
+  if (key === "blocked") {
+    onNavigate(user?.role === "sales" ? "my_tasks" : "team_tasks", buildDrilldownSearch({ status: "blocked" }));
+    return;
+  }
+  if (key === "customers") {
+    onNavigate("customer_management");
+    return;
+  }
+  onNavigate("my_tasks", buildDrilldownSearch({ status: "active" }));
+}
+
+function navigateReview(
+  key: string,
+  user: PublicUser | undefined,
+  onNavigate: (key: SecondaryMenuKey, search?: string) => void
+): void {
+  if (key === "proposal") {
+    onNavigate("proposal_tasks", buildDrilldownSearch({ source: "proposal" }));
+    return;
+  }
+  onNavigate(
+    user?.role === "sales" ? "my_tasks" : "team_tasks",
+    buildDrilldownSearch({ status: key === "done" ? "done" : "blocked" })
   );
 }
 
