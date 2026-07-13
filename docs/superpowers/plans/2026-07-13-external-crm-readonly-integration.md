@@ -419,6 +419,8 @@ it("maps customer context and excludes inactive opportunities", async () => {
 
 Add table-driven HTTP tests and a malformed-root test:
 
+Only the customer detail request treats HTTP 404 as a missing customer. Every non-detail 404 is a rejected CRM request.
+
 ```ts
 it.each([
   [401, "CRM_AUTHENTICATION_FAILED"],
@@ -440,10 +442,10 @@ it("returns undefined when the customer detail is missing", async () => {
   ).resolves.toBeUndefined();
 });
 
-it("maps a non-detail HTTP 404 to CRM_NOT_FOUND", async () => {
+it("maps a non-detail HTTP 404 to CRM_REQUEST_REJECTED", async () => {
   const fetcher = vi.fn().mockResolvedValue(jsonResponse(404, { secret: "must-not-leak" }));
   await expect(new ExternalCrmClient(config, fetcher).listCustomers()).rejects.toMatchObject({
-    code: "CRM_NOT_FOUND",
+    code: "CRM_REQUEST_REJECTED",
     upstreamStatus: 404
   });
 });
@@ -545,7 +547,7 @@ export class ExternalCrmClient implements CrmClient {
     const encoded = encodeURIComponent(customerId);
     let detail: Record<string, unknown>;
     try {
-      detail = await this.loadObject(`/customers/${encoded}`);
+      detail = await this.loadObject(`/customers/${encoded}`, true);
     } catch (error) {
       if (error instanceof CrmClientError && error.code === "CRM_NOT_FOUND") return undefined;
       throw error;
@@ -602,14 +604,14 @@ export class ExternalCrmClient implements CrmClient {
     return body.data.map(recordValue).filter(isDefined);
   }
 
-  private async loadObject(path: string): Promise<Record<string, unknown>> {
-    const body = recordValue(await this.request(path));
+  private async loadObject(path: string, allowNotFound = false): Promise<Record<string, unknown>> {
+    const body = recordValue(await this.request(path, allowNotFound));
     const data = recordValue(body?.data);
     if (!data) throw invalidResponse();
     return data;
   }
 
-  private async request(path: string): Promise<unknown> {
+  private async request(path: string, allowNotFound = false): Promise<unknown> {
     let response: FetchResponse;
     try {
       response = await this.fetcher(`${this.config.baseUrl}${path}`, {
@@ -624,7 +626,7 @@ export class ExternalCrmClient implements CrmClient {
       }
       throw new CrmClientError("CRM_UNAVAILABLE", "CRM is unavailable");
     }
-    if (!response.ok) throw httpError(response.status);
+    if (!response.ok) throw httpError(response.status, allowNotFound);
     try {
       return await response.json?.();
     } catch {
@@ -703,11 +705,11 @@ function mapFollowUp(row: Record<string, unknown>, owners: Map<string, string>):
   return { happenedAt, owner: owners.get(ownerId) || ownerId, summary };
 }
 
-function httpError(status: number): CrmClientError {
+function httpError(status: number, allowNotFound: boolean): CrmClientError {
   const code: CrmErrorCode =
     status === 401 || status === 403
       ? "CRM_AUTHENTICATION_FAILED"
-      : status === 404
+      : status === 404 && allowNotFound
         ? "CRM_NOT_FOUND"
         : status === 429
           ? "CRM_RATE_LIMITED"

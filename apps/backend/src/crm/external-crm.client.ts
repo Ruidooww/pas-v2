@@ -189,7 +189,10 @@ function opportunityAmount(value: unknown): number {
 }
 
 function validDatePrefix(value: unknown): string {
-  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(stringValue(value));
+  const raw = stringValue(value);
+  const match = /^(\d{4})-(\d{2})-(\d{2})(?:T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)?)?$/.exec(
+    raw
+  );
   if (!match) return "";
   const year = Number(match[1]);
   const month = Number(match[2]);
@@ -198,7 +201,7 @@ function validDatePrefix(value: unknown): string {
   const daysInMonth = [31, leapYear ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
   const maxDay = daysInMonth[month - 1];
   if (maxDay === undefined || day < 1 || day > maxDay) return "";
-  return match[0];
+  return raw.slice(0, 10);
 }
 
 function mapStage(value: string): CrmOpportunity["stage"] | undefined {

@@ -119,19 +119,27 @@ describe("ExternalCrmClient", () => {
     ]);
   });
 
-  it("accepts only valid YYYY-MM-DD opportunity close-date prefixes", async () => {
+  it("accepts only exact dates or complete valid ISO opportunity datetimes", async () => {
     const opportunities = await loadMappedOpportunities([
       { estimatedCloseAt: "2024-02-29T00:00:00.000Z" },
       { estimatedCloseAt: "2026-12-31" },
+      { estimatedCloseAt: "2026-06-15T23:59:59+08:00" },
       { estimatedCloseAt: "2023-02-29T00:00:00.000Z" },
       { estimatedCloseAt: "2026-04-31" },
       { estimatedCloseAt: "2026-13-01" },
-      { estimatedCloseAt: "2026-2-03" }
+      { estimatedCloseAt: "2026-2-03" },
+      { estimatedCloseAt: "2026-12-31garbage" },
+      { estimatedCloseAt: "2026-12-31T25:00:00.000Z" },
+      { estimatedCloseAt: "2026-12-31T12:00" }
     ]);
 
     expect(opportunities.map(({ expectedCloseDate }) => expectedCloseDate)).toEqual([
       "2024-02-29",
       "2026-12-31",
+      "2026-06-15",
+      "",
+      "",
+      "",
       "",
       "",
       "",
