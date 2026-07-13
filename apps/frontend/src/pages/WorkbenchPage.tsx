@@ -60,7 +60,7 @@ export function WorkbenchPage({
 
   useEffect(() => {
     loadCustomers()
-      .then(setCustomers)
+      .then(({ customers }) => setCustomers(customers))
       .catch((err) => setError(err instanceof Error ? err.message : "客户列表加载失败"));
   }, []);
 

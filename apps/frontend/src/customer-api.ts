@@ -1,24 +1,25 @@
 import { api, getToken } from "./api";
 import type { CrmCustomerSummary } from "./types";
 
-type CustomerListResponse = {
+export type CustomerListResult = {
+  source: "mock" | "external";
   customers: CrmCustomerSummary[];
 };
 
 type CustomerCacheEntry = {
   token: string | null;
-  promise: Promise<CrmCustomerSummary[]>;
+  promise: Promise<CustomerListResult>;
 };
 
 let customerCache: CustomerCacheEntry | null = null;
 
-export function loadCustomers(): Promise<CrmCustomerSummary[]> {
+export function loadCustomers(): Promise<CustomerListResult> {
   const token = getToken();
   if (customerCache?.token === token) {
     return customerCache.promise;
   }
 
-  const promise = api<CustomerListResponse>("/api/crm/customers").then((response) => response.customers);
+  const promise = api<CustomerListResult>("/api/crm/customers");
   customerCache = { token, promise };
   void promise.catch(() => {
     if (customerCache?.promise === promise) {

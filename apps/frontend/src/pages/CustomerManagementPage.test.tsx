@@ -12,14 +12,14 @@ describe("CustomerManagementPage", () => {
     window.history.pushState({}, "", "/customers");
   });
 
-  it("explains the mock customer pool when no customer rows are available", async () => {
+  it("explains the mock customer pool when no rows are available", async () => {
     localStorage.setItem("pas.access-token", "test-token");
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue({
         ok: true,
         status: 200,
-        json: async () => ({ customers: [] })
+        json: async () => ({ source: "mock", customers: [] })
       })
     );
 
@@ -29,6 +29,27 @@ describe("CustomerManagementPage", () => {
     expect(screen.getByText("当前使用假数据；真实 CRM API 接好后会自动展示客户池。")).toBeInTheDocument();
   });
 
+  it("labels external customer data without sample wording", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        jsonResponse({
+          source: "external",
+          customers: [
+            { customerId: "customer-1", name: "Acme", industry: "制造", region: "华东", accountOwner: "Alice" }
+          ]
+        })
+      )
+    );
+
+    render(<CustomerManagementPage />);
+
+    expect(await screen.findByText("Acme")).toBeInTheDocument();
+    expect(screen.getAllByText("CRM 数据").length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/CRM 客户池/).length).toBeGreaterThan(0);
+    expect(screen.queryByText("样例")).not.toBeInTheDocument();
+  });
+
   it("shares the customer list request across pages for the same token", async () => {
     localStorage.setItem("pas.access-token", "test-token");
     const fetchMock = vi.fn((input: RequestInfo | URL) => {
@@ -36,6 +57,7 @@ describe("CustomerManagementPage", () => {
       if (path === "/api/crm/customers") {
         return Promise.resolve(
           jsonResponse({
+            source: "mock",
             customers: [
               {
                 customerId: "customer-1",
@@ -74,6 +96,7 @@ describe("CustomerManagementPage", () => {
       "fetch",
       vi.fn().mockResolvedValue(
         jsonResponse({
+          source: "mock",
           customers: [
             { customerId: "customer-1", name: "Acme", industry: "Manufacturing", region: "East", accountOwner: "Alice" },
             { customerId: "customer-2", name: "Beta", industry: "Finance", region: "East", accountOwner: "Bob" },

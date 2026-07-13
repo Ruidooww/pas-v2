@@ -11,13 +11,18 @@ const customerDrilldownSchema = { groupBy: ["industry", "region"] } as const;
 
 export function CustomerManagementPage() {
   const [customers, setCustomers] = useState<CrmCustomerSummary[]>([]);
+  const [source, setSource] = useState<"mock" | "external">("mock");
   const [error, setError] = useState<string | null>(null);
   const [drilldown, updateDrilldown] = useDrilldownQuery(customerDrilldownSchema);
   const groupBy = drilldown.groupBy as CustomerGrouping | undefined;
+  const isExternal = source === "external";
 
   useEffect(() => {
     loadCustomers()
-      .then(setCustomers)
+      .then((result) => {
+        setCustomers(result.customers);
+        setSource(result.source);
+      })
       .catch((err) => setError(err instanceof Error ? err.message : "客户列表加载失败"));
   }, []);
 
@@ -27,13 +32,15 @@ export function CustomerManagementPage() {
         <div className="workbench-hero-copy">
           <Typography.Text className="workbench-eyebrow">CUSTOMERS</Typography.Text>
           <Typography.Title level={2}>客户管理</Typography.Title>
-          <Typography.Paragraph type="secondary">当前使用内置客户样例池，真实 CRM 接口就绪后替换数据源。</Typography.Paragraph>
+          <Typography.Paragraph type="secondary">
+            {isExternal ? "当前展示外部 CRM 客户池，只读同步客户上下文。" : "当前使用内置客户样例池，真实 CRM 接口就绪后替换数据源。"}
+          </Typography.Paragraph>
         </div>
         <div className="workbench-metric-grid">
           <MetricDrilldown className="workbench-metric" label="客户数" onClick={() => selectGrouping(undefined)}>
             <Typography.Text type="secondary">客户数</Typography.Text>
             <strong>{customers.length}</strong>
-            <Typography.Text type="secondary">客户样例池</Typography.Text>
+            <Typography.Text type="secondary">{isExternal ? "CRM 客户池" : "客户样例池"}</Typography.Text>
           </MetricDrilldown>
           <MetricDrilldown className="workbench-metric" label="行业数" onClick={() => selectGrouping("industry")}>
             <Typography.Text type="secondary">行业数</Typography.Text>
@@ -67,8 +74,12 @@ export function CustomerManagementPage() {
           locale={{
             emptyText: (
               <EmptyState
-                title="暂无客户样例"
-                description="当前使用假数据；真实 CRM API 接好后会自动展示客户池。"
+                title={isExternal ? "暂无 CRM 客户" : "暂无客户样例"}
+                description={
+                  isExternal
+                    ? "CRM 当前未返回可用客户。"
+                    : "当前使用假数据；真实 CRM API 接好后会自动展示客户池。"
+                }
               />
             )
           }}
@@ -81,7 +92,7 @@ export function CustomerManagementPage() {
             { title: "负责人", dataIndex: "accountOwner" },
             {
               title: "状态",
-              render: () => <Tag color="blue">样例</Tag>
+              render: () => <Tag color={isExternal ? "green" : "blue"}>{isExternal ? "CRM 数据" : "样例"}</Tag>
             }
           ]}
         />
