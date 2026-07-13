@@ -11,6 +11,30 @@ describe("createCrmConfig", () => {
     });
   });
 
+  it.each(["", "   "])("uses mock mode for a blank CRM_CLIENT_MODE %#", (CRM_CLIENT_MODE) => {
+    expect(createCrmConfig({ CRM_CLIENT_MODE }).clientMode).toBe("mock");
+  });
+
+  it.each([
+    ["mock", "mock"],
+    ["  mock  ", "mock"],
+    ["  external  ", "external"]
+  ] as const)("accepts the trimmed CRM client mode %j", (CRM_CLIENT_MODE, clientMode) => {
+    expect(
+      createCrmConfig({
+        CRM_CLIENT_MODE,
+        CRM_BASE_URL: "https://demo.sworditsys.com/api/v1",
+        CRM_API_TOKEN: "test-token"
+      }).clientMode
+    ).toBe(clientMode);
+  });
+
+  it.each(["exernal", "External", "mocked"])("rejects invalid CRM client mode %j", (CRM_CLIENT_MODE) => {
+    expect(() => createCrmConfig({ CRM_CLIENT_MODE })).toThrow(
+      new Error("CRM_CLIENT_MODE must be mock or external")
+    );
+  });
+
   it("loads the approved external CRM configuration", () => {
     expect(
       createCrmConfig({

@@ -38,7 +38,7 @@ export class ExternalCrmClient implements CrmClient {
     const encoded = encodeURIComponent(customerId);
     let detail: Record<string, unknown>;
     try {
-      detail = await this.loadObject(`/customers/${encoded}`);
+      detail = await this.loadObject(`/customers/${encoded}`, true);
     } catch (error) {
       if (error instanceof CrmClientError && error.code === "CRM_NOT_FOUND") return undefined;
       throw error;
@@ -84,8 +84,15 @@ export class ExternalCrmClient implements CrmClient {
     const body = recordValue(await this.request(withPagination(path, page)));
     if (!body || !Array.isArray(body.data)) throw invalidResponse();
     const meta = recordValue(body.meta);
-    const totalPages = meta ? numberValue(meta.totalPages) ?? 1 : 1;
-    if (!Number.isInteger(totalPages) || totalPages < 1 || totalPages > MAX_PAGES) throw invalidResponse();
+    const totalPages = meta?.totalPages;
+    if (
+      typeof totalPages !== "number" ||
+      !Number.isInteger(totalPages) ||
+      totalPages < 1 ||
+      totalPages > MAX_PAGES
+    ) {
+      throw invalidResponse();
+    }
     return { rows: body.data.map(recordValue).filter(isDefined), totalPages };
   }
 
@@ -95,14 +102,14 @@ export class ExternalCrmClient implements CrmClient {
     return body.data.map(recordValue).filter(isDefined);
   }
 
-  private async loadObject(path: string): Promise<Record<string, unknown>> {
-    const body = recordValue(await this.request(path));
+  private async loadObject(path: string, allowNotFound = false): Promise<Record<string, unknown>> {
+    const body = recordValue(await this.request(path, allowNotFound));
     const data = recordValue(body?.data);
     if (!data) throw invalidResponse();
     return data;
   }
 
-  private async request(path: string): Promise<unknown> {
+  private async request(path: string, allowNotFound = false): Promise<unknown> {
     let response: FetchResponse;
     try {
       response = await this.fetcher(`${this.config.baseUrl}${path}`, {
@@ -117,7 +124,7 @@ export class ExternalCrmClient implements CrmClient {
       }
       throw new CrmClientError("CRM_UNAVAILABLE", "CRM is unavailable");
     }
-    if (!response.ok) throw httpError(response.status);
+    if (!response.ok) throw httpError(response.status, allowNotFound);
     try {
       return await response.json?.();
     } catch {
@@ -165,15 +172,33 @@ function mapOpportunity(row: Record<string, unknown>): CrmOpportunity | undefine
   const name = stringValue(row.name);
   const stage = mapStage(stringValue(row.stage));
   if (!opportunityId || !name || !stage) return undefined;
-  const amount = Number(row.estimatedAmount);
-  const rawDate = stringValue(row.estimatedCloseAt);
   return {
     opportunityId,
     name,
     stage,
-    estimatedValue: Number.isFinite(amount) ? amount : 0,
-    expectedCloseDate: /^\d{4}-\d{2}-\d{2}/.test(rawDate) ? rawDate.slice(0, 10) : ""
+    estimatedValue: opportunityAmount(row.estimatedAmount),
+    expectedCloseDate: validDatePrefix(row.estimatedCloseAt)
   };
+}
+
+function opportunityAmount(value: unknown): number {
+  if (typeof value === "number") return Number.isFinite(value) ? value : 0;
+  if (typeof value !== "string" || !value.trim()) return 0;
+  const amount = Number(value);
+  return Number.isFinite(amount) ? amount : 0;
+}
+
+function validDatePrefix(value: unknown): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(stringValue(value));
+  if (!match) return "";
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const leapYear = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+  const daysInMonth = [31, leapYear ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  const maxDay = daysInMonth[month - 1];
+  if (maxDay === undefined || day < 1 || day > maxDay) return "";
+  return match[0];
 }
 
 function mapStage(value: string): CrmOpportunity["stage"] | undefined {
@@ -192,11 +217,11 @@ function mapFollowUp(row: Record<string, unknown>, owners: Map<string, string>):
   return { happenedAt, owner: owners.get(ownerId) || ownerId, summary };
 }
 
-function httpError(status: number): CrmClientError {
+function httpError(status: number, allowNotFound: boolean): CrmClientError {
   const code: CrmErrorCode =
     status === 401 || status === 403
       ? "CRM_AUTHENTICATION_FAILED"
-      : status === 404
+      : status === 404 && allowNotFound
         ? "CRM_NOT_FOUND"
         : status === 429
           ? "CRM_RATE_LIMITED"
@@ -218,10 +243,6 @@ function recordValue(value: unknown): Record<string, unknown> | undefined {
 
 function stringValue(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
-}
-
-function numberValue(value: unknown): number | undefined {
-  return typeof value === "number" ? value : undefined;
 }
 
 function isDefined<T>(value: T | undefined): value is T {

@@ -97,6 +97,48 @@ describe("ExternalCrmClient", () => {
     });
   });
 
+  it("accepts only finite numeric opportunity amounts", async () => {
+    const opportunities = await loadMappedOpportunities([
+      { estimatedAmount: 125.5 },
+      { estimatedAmount: " 380000.50 " },
+      { estimatedAmount: true },
+      { estimatedAmount: null },
+      { estimatedAmount: "   " },
+      { estimatedAmount: "12x" },
+      { estimatedAmount: Number.POSITIVE_INFINITY }
+    ]);
+
+    expect(opportunities.map(({ estimatedValue }) => estimatedValue)).toEqual([
+      125.5,
+      380000.5,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]);
+  });
+
+  it("accepts only valid YYYY-MM-DD opportunity close-date prefixes", async () => {
+    const opportunities = await loadMappedOpportunities([
+      { estimatedCloseAt: "2024-02-29T00:00:00.000Z" },
+      { estimatedCloseAt: "2026-12-31" },
+      { estimatedCloseAt: "2023-02-29T00:00:00.000Z" },
+      { estimatedCloseAt: "2026-04-31" },
+      { estimatedCloseAt: "2026-13-01" },
+      { estimatedCloseAt: "2026-2-03" }
+    ]);
+
+    expect(opportunities.map(({ expectedCloseDate }) => expectedCloseDate)).toEqual([
+      "2024-02-29",
+      "2026-12-31",
+      "",
+      "",
+      "",
+      ""
+    ]);
+  });
+
   it.each([
     [401, "CRM_AUTHENTICATION_FAILED"],
     [403, "CRM_AUTHENTICATION_FAILED"],
@@ -110,19 +152,38 @@ describe("ExternalCrmClient", () => {
     await expect(promise).rejects.not.toThrow("must-not-leak");
   });
 
-  it("maps a customer-list HTTP 404 to CRM_NOT_FOUND", async () => {
-    const fetcher = vi.fn().mockResolvedValue(jsonResponse(404, { secret: "must-not-leak" }));
-
-    await expect(new ExternalCrmClient(config, fetcher).listCustomers()).rejects.toMatchObject({
-      code: "CRM_NOT_FOUND",
-      upstreamStatus: 404
-    });
-  });
-
   it("returns undefined when the requested customer does not exist", async () => {
     const fetcher = vi.fn().mockResolvedValue(jsonResponse(404, { secret: "must-not-leak" }));
 
     await expect(new ExternalCrmClient(config, fetcher).getCustomerContext("customer-1")).resolves.toBeUndefined();
+  });
+
+  it.each([
+    ["customer list", "list", "/customers?page=1&pageSize=100"],
+    ["owners", "context", "/users/options"],
+    ["contacts", "context", "/customers/customer-1/contacts"],
+    ["followups", "context", "/customers/customer-1/followups?page=1&pageSize=100"],
+    ["opportunities", "context", "/opportunities?customerId=customer-1&page=1&pageSize=100"]
+  ] as const)("maps a non-detail %s HTTP 404 to CRM_REQUEST_REJECTED", async (_, operation, rejectedPath) => {
+    const fetcher = vi.fn(async (url: string) => {
+      const path = url.slice(config.baseUrl.length);
+      if (path === rejectedPath) return jsonResponse(404, { secret: "must-not-leak" });
+      if (path === "/customers/customer-1") {
+        return jsonResponse(200, { data: { id: "customer-1", name: "Acme" } });
+      }
+      if (path === "/users/options" || path === "/customers/customer-1/contacts") {
+        return jsonResponse(200, { data: [] });
+      }
+      return jsonResponse(200, { data: [], meta: { totalPages: 1 } });
+    });
+    const client = new ExternalCrmClient(config, fetcher);
+    const promise =
+      operation === "list" ? client.listCustomers() : client.getCustomerContext("customer-1");
+
+    await expect(promise).rejects.toMatchObject({
+      code: "CRM_REQUEST_REJECTED",
+      upstreamStatus: 404
+    });
   });
 
   it("rejects a structurally invalid customer list", async () => {
@@ -155,11 +216,18 @@ describe("ExternalCrmClient", () => {
     });
   });
 
-  it("rejects pagination above the bounded maximum", async () => {
+  it.each([
+    ["missing meta", undefined],
+    ["missing totalPages", {}],
+    ["non-number totalPages", { totalPages: "1" }],
+    ["non-integer totalPages", { totalPages: 1.5 }],
+    ["totalPages below one", { totalPages: 0 }],
+    ["totalPages above the bounded maximum", { totalPages: 101 }]
+  ] as const)("rejects pagination with %s", async (_, meta) => {
     const fetcher = vi.fn(async (url: string) =>
       url.endsWith("/users/options")
         ? jsonResponse(200, { data: [] })
-        : jsonResponse(200, { data: [], meta: { totalPages: 101 } })
+        : jsonResponse(200, meta === undefined ? { data: [] } : { data: [], meta })
     );
     await expect(new ExternalCrmClient(config, fetcher).listCustomers()).rejects.toMatchObject({
       code: "CRM_RESPONSE_INVALID"
@@ -173,4 +241,31 @@ function jsonResponse(status: number, body: unknown) {
     status,
     json: async () => body
   };
+}
+
+async function loadMappedOpportunities(values: Record<string, unknown>[]) {
+  const fetcher = vi.fn(async (url: string) => {
+    if (url.endsWith("/customers/customer-1")) {
+      return jsonResponse(200, { data: { id: "customer-1", name: "Acme" } });
+    }
+    if (url.endsWith("/users/options") || url.endsWith("/customers/customer-1/contacts")) {
+      return jsonResponse(200, { data: [] });
+    }
+    if (url.includes("/customers/customer-1/followups")) {
+      return jsonResponse(200, { data: [], meta: { totalPages: 1 } });
+    }
+    return jsonResponse(200, {
+      data: values.map((value, index) => ({
+        id: `opportunity-${index}`,
+        name: `Opportunity ${index}`,
+        stage: "POC_TEST",
+        ...value
+      })),
+      meta: { totalPages: 1 }
+    });
+  });
+
+  const context = await new ExternalCrmClient(config, fetcher).getCustomerContext("customer-1");
+  if (!context) throw new Error("Expected customer context");
+  return context.opportunities;
 }

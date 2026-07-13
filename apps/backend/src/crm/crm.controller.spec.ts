@@ -103,6 +103,7 @@ describe("CrmController", () => {
 
   it.each([
     ["CRM_AUTHENTICATION_FAILED", 502],
+    ["CRM_NOT_FOUND", 404],
     ["CRM_RESPONSE_INVALID", 502],
     ["CRM_REQUEST_REJECTED", 502],
     ["CRM_RATE_LIMITED", 503],
@@ -119,6 +120,12 @@ describe("CrmController", () => {
       expect(error).toBeInstanceOf(HttpException);
       expect((error as HttpException).getStatus()).toBe(status);
       expect((error as HttpException).getResponse()).toMatchObject({ code });
+      if (code === "CRM_NOT_FOUND") {
+        expect((error as HttpException).getResponse()).toEqual({
+          code: "CRM_NOT_FOUND",
+          message: "Customer not found"
+        });
+      }
     }
   });
 });

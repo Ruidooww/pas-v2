@@ -16,7 +16,7 @@ const MIN_TIMEOUT_MS = 1000;
 const MAX_TIMEOUT_MS = 30000;
 
 export function createCrmConfig(env: CrmEnv = process.env): CrmConfig {
-  const clientMode = env.CRM_CLIENT_MODE?.trim() === "external" ? "external" : "mock";
+  const clientMode = parseClientMode(env.CRM_CLIENT_MODE);
   const timeoutMs = parseTimeout(env.CRM_TIMEOUT_MS);
   if (clientMode === "mock") {
     return { clientMode, baseUrl: "", apiToken: "", timeoutMs };
@@ -28,6 +28,13 @@ export function createCrmConfig(env: CrmEnv = process.env): CrmConfig {
     apiToken: required(env.CRM_API_TOKEN, "CRM_API_TOKEN"),
     timeoutMs
   };
+}
+
+function parseClientMode(value: string | undefined): CrmClientMode {
+  const normalized = value?.trim() || "";
+  if (!normalized) return "mock";
+  if (normalized === "mock" || normalized === "external") return normalized;
+  throw new Error("CRM_CLIENT_MODE must be mock or external");
 }
 
 function normalizeExternalBaseUrl(value: string | undefined): string {
