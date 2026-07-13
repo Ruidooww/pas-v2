@@ -48,6 +48,10 @@ services:
       LLM_BASE_URL: ${LLM_BASE_URL:-https://dashscope.aliyuncs.com/compatible-mode/v1}
       LLM_MODEL: ${LLM_MODEL:-qwen-max}
       LLM_TIMEOUT_MS: ${LLM_TIMEOUT_MS:-30000}
+      CRM_CLIENT_MODE: ${CRM_CLIENT_MODE:-mock}
+      CRM_BASE_URL: ${CRM_BASE_URL:-https://demo.sworditsys.com/api/v1}
+      CRM_API_TOKEN: ${CRM_API_TOKEN:-}
+      CRM_TIMEOUT_MS: ${CRM_TIMEOUT_MS:-10000}
       EXPORT_TEMPLATE_ROOT: ${EXPORT_TEMPLATE_ROOT:-}
       EXPORT_TEMPLATE_VERSION: ${EXPORT_TEMPLATE_VERSION:-v0-temp-1}
       JWT_SECRET: ${JWT_SECRET:-}
