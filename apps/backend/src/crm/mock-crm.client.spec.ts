@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { CrmUnavailableError, MockCrmClient } from "./mock-crm.client";
+import { MockCrmClient } from "./mock-crm.client";
 
 describe("MockCrmClient", () => {
   it("lists V0 demo customer summaries", async () => {
-    const client = new MockCrmClient({ clientMode: "mock" });
+    const client = new MockCrmClient();
 
     const customers = await client.listCustomers();
 
@@ -19,7 +19,7 @@ describe("MockCrmClient", () => {
   });
 
   it("returns a reusable customer context", async () => {
-    const client = new MockCrmClient({ clientMode: "mock" });
+    const client = new MockCrmClient();
 
     const detail = await client.getCustomer("demo-huaxin-manufacturing");
     const context = await client.getCustomerContext("demo-huaxin-manufacturing");
@@ -52,16 +52,8 @@ describe("MockCrmClient", () => {
   });
 
   it("returns undefined for unknown customers", async () => {
-    const client = new MockCrmClient({ clientMode: "mock" });
+    const client = new MockCrmClient();
 
     await expect(client.getCustomer("missing")).resolves.toBeUndefined();
-  });
-
-  it("fails external mode with a sanitized error", async () => {
-    const client = new MockCrmClient({ clientMode: "external" });
-
-    await expect(client.listCustomers()).rejects.toEqual(
-      new CrmUnavailableError("External CRM adapter is not configured")
-    );
   });
 });

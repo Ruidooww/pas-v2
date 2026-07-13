@@ -2,13 +2,18 @@ import { useEffect, useState } from "react";
 import { Alert, Button, Card, message, Space, Tag, Typography } from "antd";
 import { api } from "../api";
 import { EmptyState } from "../components/EmptyState";
+import { MetricDrilldown } from "../components/MetricDrilldown";
 import { PlainList as List } from "../components/PlainList";
+import { useDrilldownQuery } from "../drilldown";
 import type { ExportDownloadResponse, ExportFormat, ExportJob } from "../types";
+
+const exportDrilldownSchema = { result: ["all", "completed", "abnormal"] } as const;
 
 export function ExportJobsPage() {
   const [jobs, setJobs] = useState<ExportJob[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [drilldown, updateDrilldown] = useDrilldownQuery(exportDrilldownSchema);
 
   useEffect(() => {
     void loadJobs();
@@ -17,6 +22,8 @@ export function ExportJobsPage() {
   const completed = jobs.filter((job) => job.status === "completed").length;
   const partial = jobs.filter((job) => job.status === "partial").length;
   const failed = jobs.filter((job) => job.status === "failed").length;
+  const visibleJobs = filterExportJobs(jobs, drilldown.result);
+  const activeFilter = exportFilterLabel(drilldown.result);
 
   return (
     <Space className="pas-page-stack" orientation="vertical" size="middle">
@@ -27,25 +34,32 @@ export function ExportJobsPage() {
           <Typography.Paragraph type="secondary">查看方案交付导出任务、格式状态和可下载文件。</Typography.Paragraph>
         </div>
         <div className="workbench-metric-grid">
-          <div className="workbench-metric">
+          <MetricDrilldown className="workbench-metric" label="任务数" onClick={() => updateDrilldown({ result: "all" })}>
             <Typography.Text type="secondary">任务数</Typography.Text>
             <strong>{jobs.length}</strong>
             <Typography.Text type="secondary">当前可见</Typography.Text>
-          </div>
-          <div className="workbench-metric">
+          </MetricDrilldown>
+          <MetricDrilldown className="workbench-metric" label="完成" onClick={() => updateDrilldown({ result: "completed" })}>
             <Typography.Text type="secondary">完成</Typography.Text>
             <strong>{completed}</strong>
             <Typography.Text type="secondary">全部格式可用</Typography.Text>
-          </div>
-          <div className="workbench-metric">
+          </MetricDrilldown>
+          <MetricDrilldown className="workbench-metric" label="异常" onClick={() => updateDrilldown({ result: "abnormal" })}>
             <Typography.Text type="secondary">异常</Typography.Text>
             <strong>{partial + failed}</strong>
             <Typography.Text type="secondary">需检查模板或导出结果</Typography.Text>
-          </div>
+          </MetricDrilldown>
         </div>
       </section>
 
       {error && <Alert type="error" title={error} closable onClose={() => setError(null)} />}
+
+      {activeFilter && (
+        <Space className="drilldown-filter-summary" wrap>
+          <Tag color="blue">当前筛选：{activeFilter}</Tag>
+          <Button type="link" size="small" onClick={() => updateDrilldown({})}>清除筛选</Button>
+        </Space>
+      )}
 
       <Card className="pas-panel" title="导出任务" loading={loading}>
         {jobs.length === 0 ? (
@@ -55,7 +69,7 @@ export function ExportJobsPage() {
           />
         ) : (
           <List
-            dataSource={jobs}
+            dataSource={visibleJobs}
             renderItem={(job) => (
               <List.Item>
                 <List.Item.Meta
@@ -129,6 +143,19 @@ export function ExportJobsPage() {
       message.error(err instanceof Error ? err.message : "下载失败");
     }
   }
+}
+
+function filterExportJobs(jobs: ExportJob[], result?: string): ExportJob[] {
+  if (result === "completed") return jobs.filter((job) => job.status === "completed");
+  if (result === "abnormal") return jobs.filter((job) => job.status === "partial" || job.status === "failed");
+  return jobs;
+}
+
+function exportFilterLabel(result?: string): string | undefined {
+  if (result === "all") return "全部任务";
+  if (result === "completed") return "已完成";
+  if (result === "abnormal") return "异常";
+  return undefined;
 }
 
 function statusColor(status: ExportJob["status"]): string {

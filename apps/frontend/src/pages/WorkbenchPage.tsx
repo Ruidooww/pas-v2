@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import {
   Alert,
   Button,
@@ -13,23 +14,33 @@ import {
   Typography
 } from "antd";
 import { api } from "../api";
+import { MetricDrilldown } from "../components/MetricDrilldown";
 import { PlainList as List } from "../components/PlainList";
 import { loadCustomers } from "../customer-api";
+import { buildDrilldownSearch, useDrilldownQuery } from "../drilldown";
 import type {
   CrmCustomerSummary,
   CustomerAnalysisResult,
   ExportDownloadResponse,
   ExportFormat,
   ExportJob,
-  ProposalJob
+  ProposalJob,
+  SecondaryMenuKey
 } from "../types";
 
 const POLL_INTERVAL_MS = 1500;
 const MAX_POLLS = 200;
+const proposalDrilldownSchema = { source: ["proposal"] } as const;
 
 export type WorkbenchPageMode = "customerInsights" | "proposalTasks";
 
-export function WorkbenchPage({ mode = "customerInsights" }: { mode?: WorkbenchPageMode }) {
+export function WorkbenchPage({
+  mode = "customerInsights",
+  onNavigate = () => undefined
+}: {
+  mode?: WorkbenchPageMode;
+  onNavigate?: (key: SecondaryMenuKey, search?: string) => void;
+}) {
   const [customers, setCustomers] = useState<CrmCustomerSummary[]>([]);
   const [customerId, setCustomerId] = useState<string | undefined>();
   const [analysis, setAnalysis] = useState<CustomerAnalysisResult | null>(null);
@@ -41,13 +52,15 @@ export function WorkbenchPage({ mode = "customerInsights" }: { mode?: WorkbenchP
   const [exportJob, setExportJob] = useState<ExportJob | null>(null);
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [proposalDrilldown, updateProposalDrilldown] = useDrilldownQuery(proposalDrilldownSchema);
   const pollCount = useRef(0);
+  const proposalProgressRef = useRef<HTMLDivElement>(null);
   const isCustomerInsights = mode === "customerInsights";
   const isProposalTasks = mode === "proposalTasks";
 
   useEffect(() => {
     loadCustomers()
-      .then(setCustomers)
+      .then(({ customers }) => setCustomers(customers))
       .catch((err) => setError(err instanceof Error ? err.message : "客户列表加载失败"));
   }, []);
 
@@ -104,6 +117,11 @@ export function WorkbenchPage({ mode = "customerInsights" }: { mode?: WorkbenchP
   const handlePollError = (err: unknown) => {
     setGenerating(false);
     setError(err instanceof Error ? err.message : "查询生成进度失败");
+  };
+
+  const showProposalProgress = (job: ProposalJob) => {
+    flushSync(() => setProposalJob(job));
+    proposalProgressRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   const generate = async () => {
@@ -178,7 +196,7 @@ export function WorkbenchPage({ mode = "customerInsights" }: { mode?: WorkbenchP
       };
   const workbenchMetrics = isCustomerInsights
     ? [
-        { label: "客户池", value: String(customers.length), hint: "CRM 可选客户" },
+        { label: "客户池", value: String(customers.length), hint: "CRM 可选客户", target: "customer_management" as const },
         {
           label: "当前客户",
           value: selectedCustomer?.name ?? "未选择",
@@ -191,7 +209,7 @@ export function WorkbenchPage({ mode = "customerInsights" }: { mode?: WorkbenchP
         }
       ]
     : [
-        { label: "客户池", value: String(customers.length), hint: "CRM 可选客户" },
+        { label: "客户池", value: String(customers.length), hint: "CRM 可选客户", target: "customer_management" as const },
         {
           label: "方案任务",
           value: proposalJob ? statusText(proposalJob.status) : "未启动",
@@ -200,7 +218,9 @@ export function WorkbenchPage({ mode = "customerInsights" }: { mode?: WorkbenchP
         {
           label: "导出包",
           value: exportJob ? `${completedExports}/${exportJob.formats.length}` : "未生成",
-          hint: "docx / pptx / xlsx"
+          hint: "docx / pptx / xlsx",
+          target: exportJob ? ("export_jobs" as const) : undefined,
+          search: exportJob ? buildDrilldownSearch({ result: "completed" }) : undefined
         }
       ];
 
@@ -220,14 +240,34 @@ export function WorkbenchPage({ mode = "customerInsights" }: { mode?: WorkbenchP
         </div>
         <div className="workbench-metric-grid">
           {workbenchMetrics.map((metric) => (
-            <div className="workbench-metric" key={metric.label}>
-              <Typography.Text type="secondary">{metric.label}</Typography.Text>
-              <strong>{metric.value}</strong>
-              <Typography.Text type="secondary">{metric.hint}</Typography.Text>
-            </div>
+            metric.target ? (
+              <MetricDrilldown
+                className="workbench-metric"
+                key={metric.label}
+                label={metric.label}
+                onClick={() => metric.target && onNavigate(metric.target, metric.search)}
+              >
+                <Typography.Text type="secondary">{metric.label}</Typography.Text>
+                <strong>{metric.value}</strong>
+                <Typography.Text type="secondary">{metric.hint}</Typography.Text>
+              </MetricDrilldown>
+            ) : (
+              <div className="workbench-metric" key={metric.label}>
+                <Typography.Text type="secondary">{metric.label}</Typography.Text>
+                <strong>{metric.value}</strong>
+                <Typography.Text type="secondary">{metric.hint}</Typography.Text>
+              </div>
+            )
           ))}
         </div>
       </section>
+
+      {isProposalTasks && proposalDrilldown.source === "proposal" && (
+        <Space className="drilldown-filter-summary" wrap>
+          <Tag color="blue">当前下钻：方案相关</Tag>
+          <Button type="link" size="small" onClick={() => updateProposalDrilldown({})}>清除下钻</Button>
+        </Space>
+      )}
 
       <Card className="pas-panel pas-toolbar-panel" title={pageCopy.title}>
         <Space className="workbench-toolbar" wrap>
@@ -288,21 +328,23 @@ export function WorkbenchPage({ mode = "customerInsights" }: { mode?: WorkbenchP
       )}
 
       {isProposalTasks && proposalJob && (
-        <Card className="pas-panel" title="方案生成进度">
-          <Steps
-            size="small"
-            orientation="vertical"
-            items={proposalJob.progress.map((record) => ({
-              title: record.message,
-              status:
-                record.status === "failed" ? "error" : record.status === "completed" ? "finish" : "process",
-              description: record.at
-            }))}
-          />
-          {proposalJob.status === "failed" && (
-            <Alert type="error" title={`生成失败：${proposalJob.failureReason ?? "未知原因"}`} />
-          )}
-        </Card>
+        <div ref={proposalProgressRef} style={{ scrollMarginTop: 88 }}>
+          <Card className="pas-panel" title="方案生成进度">
+            <Steps
+              size="small"
+              orientation="vertical"
+              items={proposalJob.progress.map((record) => ({
+                title: record.message,
+                status:
+                  record.status === "failed" ? "error" : record.status === "completed" ? "finish" : "process",
+                description: record.at
+              }))}
+            />
+            {proposalJob.status === "failed" && (
+              <Alert type="error" title={`生成失败：${proposalJob.failureReason ?? "未知原因"}`} />
+            )}
+          </Card>
+        </div>
       )}
 
       {isProposalTasks && (
@@ -325,7 +367,7 @@ export function WorkbenchPage({ mode = "customerInsights" }: { mode?: WorkbenchP
                         {(latestProgress?.message ?? "暂无进度") + " · " + formatDateTime(job.updatedAt)}
                       </Typography.Text>
                     </Space>
-                    <Button size="small" onClick={() => setProposalJob(job)}>
+                    <Button size="small" onClick={() => showProposalProgress(job)}>
                       查看进度
                     </Button>
                   </div>

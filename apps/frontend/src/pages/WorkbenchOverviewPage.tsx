@@ -8,15 +8,22 @@ import {
   SafetyCertificateOutlined,
   SyncOutlined
 } from "@ant-design/icons";
-import { Alert, Avatar, Card, Empty, Tag, Typography } from "antd";
+import { Alert, Avatar, Button, Card, Empty, Space, Tag, Typography } from "antd";
 import { api } from "../api";
-import type { PublicUser, WorkbenchActivity, WorkbenchMetric, WorkbenchOverview, WorkbenchTask, WorkbenchTaskScope } from "../types";
+import { MetricDrilldown } from "../components/MetricDrilldown";
+import { buildDrilldownSearch, useDrilldownQuery } from "../drilldown";
+import type { PublicUser, SecondaryMenuKey, WorkbenchActivity, WorkbenchMetric, WorkbenchOverview, WorkbenchTask, WorkbenchTaskScope } from "../types";
 
 type WorkbenchMode = "overview" | "myTasks" | "teamTasks";
+const taskDrilldownSchema = {
+  priority: ["high"],
+  status: ["pending", "blocked", "done"]
+} as const;
 
 type WorkbenchOverviewPageProps = {
   mode: WorkbenchMode;
   user?: PublicUser;
+  onNavigate: (key: SecondaryMenuKey, search?: string) => void;
 };
 
 type DashboardKpi = {
@@ -60,12 +67,13 @@ const modeCopy: Record<WorkbenchMode, { title: string; description: string }> = 
   }
 };
 
-export function WorkbenchOverviewPage({ mode, user }: WorkbenchOverviewPageProps) {
+export function WorkbenchOverviewPage({ mode, user, onNavigate }: WorkbenchOverviewPageProps) {
   const [overview, setOverview] = useState<WorkbenchOverview | null>(null);
   const [tasks, setTasks] = useState<WorkbenchTask[]>([]);
   const [error, setError] = useState<string | null>(null);
   const copy = modeCopy[mode];
   const displayName = user?.displayName || "当前用户";
+  const [taskDrilldown, updateTaskDrilldown] = useDrilldownQuery(taskDrilldownSchema);
 
   useEffect(() => {
     setError(null);
@@ -89,16 +97,17 @@ export function WorkbenchOverviewPage({ mode, user }: WorkbenchOverviewPageProps
   }, [mode]);
 
   const kpis = useMemo(() => mapMetrics(overview?.metrics, tasks), [overview?.metrics, tasks]);
+  const visibleTasks = useMemo(() => filterTasks(tasks, taskDrilldown), [taskDrilldown, tasks]);
   const dashboardTasks = useMemo(
-    () => tasks.map(mapTaskToDashboard).slice(0, 4),
-    [tasks]
+    () => visibleTasks.map(mapTaskToDashboard).slice(0, 4),
+    [visibleTasks]
   );
   const activities = useMemo(
     () => (overview?.activities?.length ? mapActivities(overview.activities) : []),
     [overview?.activities]
   );
-  const reviewSummary = useMemo(() => buildReviewSummary(tasks), [tasks]);
-  const riskReviews = useMemo(() => buildRiskReviews(tasks), [tasks]);
+  const reviewSummary = useMemo(() => buildReviewSummary(visibleTasks), [visibleTasks]);
+  const riskReviews = useMemo(() => buildRiskReviews(visibleTasks), [visibleTasks]);
   const displayDate = overview?.generatedAt ? new Date(overview.generatedAt) : new Date();
 
   return (
@@ -111,6 +120,19 @@ export function WorkbenchOverviewPage({ mode, user }: WorkbenchOverviewPageProps
           </div>
           <Typography.Text className="dashboard-date">{formatDashboardDate(displayDate)}</Typography.Text>
         </header>
+
+        {mode !== "overview" && activeTaskFilterLabel(taskDrilldown) && (
+          <Space className="drilldown-filter-summary" wrap>
+            <Tag color="blue">当前筛选：{activeTaskFilterLabel(taskDrilldown)}</Tag>
+            <Button
+              type="link"
+              size="small"
+              onClick={() => updateTaskDrilldown({})}
+            >
+              清除筛选
+            </Button>
+          </Space>
+        )}
 
         {error && <Alert className="dashboard-alert" type="error" message={error} closable onClose={() => setError(null)} />}
 
@@ -130,11 +152,16 @@ export function WorkbenchOverviewPage({ mode, user }: WorkbenchOverviewPageProps
           </div>
           <div className="dashboard-kpi-row">
             {kpis.map((kpi) => (
-              <div className="dashboard-kpi" key={kpi.key}>
+              <MetricDrilldown
+                className="dashboard-kpi"
+                key={kpi.key}
+                label={kpi.label}
+                onClick={() => navigateKpi(kpi.key, mode, user, onNavigate)}
+              >
                 <Typography.Text type="secondary">{kpi.label}</Typography.Text>
                 <strong>{kpi.value}</strong>
                 <Typography.Text className="dashboard-kpi-trend">{kpi.hint}</Typography.Text>
-              </div>
+              </MetricDrilldown>
             ))}
           </div>
         </Card>
@@ -197,11 +224,16 @@ export function WorkbenchOverviewPage({ mode, user }: WorkbenchOverviewPageProps
       <aside className="dashboard-side">
         <Card className="dashboard-side-card" title="评审与交付">
           {reviewSummary.map((item) => (
-            <div className="dashboard-review-row" key={item.key}>
+            <MetricDrilldown
+              className="dashboard-review-row"
+              key={item.key}
+              label={item.label}
+              onClick={() => navigateReview(item.key, mode, user, onNavigate)}
+            >
               <span className={`dashboard-review-icon is-${item.tone}`}>{item.icon}</span>
               <span>{item.label}</span>
               <strong>{item.count}</strong>
-            </div>
+            </MetricDrilldown>
           ))}
         </Card>
 
@@ -226,6 +258,72 @@ export function WorkbenchOverviewPage({ mode, user }: WorkbenchOverviewPageProps
   );
 }
 
+function filterTasks(tasks: WorkbenchTask[], drilldown: Record<string, string>): WorkbenchTask[] {
+  return tasks.filter((task) => {
+    if (drilldown.priority && task.priority !== drilldown.priority) return false;
+    if (drilldown.status && task.status !== drilldown.status) return false;
+    return true;
+  });
+}
+
+function activeTaskFilterLabel(drilldown: Record<string, string>): string | undefined {
+  if (drilldown.priority === "high") return "高优先级";
+  if (drilldown.status === "pending") return "待处理";
+  if (drilldown.status === "blocked") return "阻塞";
+  if (drilldown.status === "done") return "已完成";
+  return undefined;
+}
+
+function navigateKpi(
+  key: string,
+  mode: WorkbenchMode,
+  user: PublicUser | undefined,
+  onNavigate: (key: SecondaryMenuKey, search?: string) => void
+): void {
+  const target = taskDrilldownTarget(mode, user);
+  if (key === "high_priority") {
+    onNavigate(target, buildDrilldownSearch({ priority: "high" }));
+    return;
+  }
+  if (key === "blocked") {
+    onNavigate(target, buildDrilldownSearch({ status: "blocked" }));
+    return;
+  }
+  if (key === "completed") {
+    onNavigate(target, buildDrilldownSearch({ status: "done" }));
+    return;
+  }
+  if (key === "customers") {
+    onNavigate("customer_management");
+    return;
+  }
+  if (key === "pending_tasks") {
+    onNavigate(target, buildDrilldownSearch({ status: "pending" }));
+  }
+}
+
+function navigateReview(
+  key: string,
+  mode: WorkbenchMode,
+  user: PublicUser | undefined,
+  onNavigate: (key: SecondaryMenuKey, search?: string) => void
+): void {
+  if (key === "proposal") {
+    onNavigate("proposal_tasks", buildDrilldownSearch({ source: "proposal" }));
+    return;
+  }
+  onNavigate(
+    taskDrilldownTarget(mode, user),
+    buildDrilldownSearch({ status: key === "done" ? "done" : "blocked" })
+  );
+}
+
+function taskDrilldownTarget(mode: WorkbenchMode, user: PublicUser | undefined): SecondaryMenuKey {
+  if (mode === "myTasks") return "my_tasks";
+  if (mode === "teamTasks") return "team_tasks";
+  return user?.role === "sales" ? "my_tasks" : "team_tasks";
+}
+
 function mapMetrics(metrics: WorkbenchMetric[] | undefined, tasks: WorkbenchTask[]): DashboardKpi[] {
   if (metrics?.length) {
     return metrics.slice(0, 4).map((metric) => ({
@@ -237,7 +335,7 @@ function mapMetrics(metrics: WorkbenchMetric[] | undefined, tasks: WorkbenchTask
   }
 
   return [
-    { key: "active_tasks", label: "待处理任务", value: tasks.filter((task) => task.status !== "done").length, hint: "来自工作台队列" },
+    { key: "pending_tasks", label: "待处理任务", value: tasks.filter((task) => task.status === "pending").length, hint: "来自工作台队列" },
     { key: "high_priority", label: "高优先级", value: tasks.filter((task) => task.priority === "high").length, hint: "今日优先推进" },
     { key: "blocked", label: "阻塞项", value: tasks.filter((task) => task.status === "blocked").length, hint: "需要业务输入" },
     { key: "completed", label: "已完成", value: tasks.filter((task) => task.status === "done").length, hint: "当前视图统计" }

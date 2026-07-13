@@ -1,4 +1,3 @@
-import type { CrmConfig } from "./crm.config";
 import type { CrmClient, CrmCustomerContext, CrmCustomerSummary } from "./crm.types";
 
 const demoCustomerContexts: CrmCustomerContext[] = [
@@ -129,36 +128,17 @@ const demoCustomerContexts: CrmCustomerContext[] = [
   }
 ];
 
-export class CrmUnavailableError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "CrmUnavailableError";
-  }
-}
-
 export class MockCrmClient implements CrmClient {
-  constructor(private readonly config: CrmConfig) {}
-
   async listCustomers(): Promise<CrmCustomerSummary[]> {
-    this.assertMockMode();
-
     return demoCustomerContexts.map(toSummary);
   }
 
   async getCustomer(customerId: string): Promise<CrmCustomerContext | undefined> {
-    this.assertMockMode();
-
     return demoCustomerContexts.find((customer) => customer.customerId === customerId);
   }
 
   async getCustomerContext(customerId: string): Promise<CrmCustomerContext | undefined> {
     return this.getCustomer(customerId);
-  }
-
-  private assertMockMode(): void {
-    if (this.config.clientMode !== "mock") {
-      throw new CrmUnavailableError("External CRM adapter is not configured");
-    }
   }
 }
 

@@ -456,6 +456,37 @@ select,
   white-space: nowrap;
 }
 
+.metric-drilldown {
+  appearance: none;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  transition: border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
+}
+
+.metric-drilldown:focus-visible {
+  outline: 3px solid rgba(0, 122, 255, 0.28);
+  outline-offset: 2px;
+}
+
+.workbench-metric.metric-drilldown:hover,
+.system-hero-stat.metric-drilldown:hover,
+.business-flow-metric.metric-drilldown:hover {
+  border-color: rgba(0, 122, 255, 0.42);
+  background: #f8fbff;
+  box-shadow: 0 8px 20px rgba(0, 122, 255, 0.08);
+}
+
+.drilldown-filter-summary {
+  min-height: 32px;
+  align-items: center;
+}
+
+.drilldown-filter-summary .ant-tag {
+  margin-inline-end: 0;
+}
+
 .customer-select.ant-select {
   min-width: min(420px, 100%);
   flex: 1 1 360px;
@@ -666,6 +697,16 @@ select,
   width: 100%;
 }
 
+.business-flow-metric {
+  display: block;
+  width: 100%;
+  min-height: 104px;
+  padding: 18px;
+  border: 1px solid #e5e5ea;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
 .business-flow-tab {
   display: grid;
   gap: 12px;
@@ -766,6 +807,25 @@ select,
   flex-wrap: wrap;
   gap: 6px;
   margin-top: 12px;
+}
+
+.platform-analytics-metric,
+.platform-security-metric,
+.system-path-stat {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+}
+
+.platform-analytics-metric:hover,
+.platform-security-metric:hover,
+.system-path-stat:hover {
+  border-color: rgba(0, 122, 255, 0.28);
+  background: #f5f9ff;
 }
 
 .platform-form-grid {
@@ -1195,6 +1255,11 @@ select,
 
 .system-subpanel .ant-card-body {
   padding: 16px;
+}
+
+.system-subpanel.is-selected {
+  border-color: rgba(0, 122, 255, 0.5);
+  box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.08);
 }
 
 .system-path-header {
@@ -2230,6 +2295,18 @@ select,
   border-right: 1px solid #e6ebf2;
 }
 
+.dashboard-kpi.metric-drilldown {
+  border-top: 0;
+  border-bottom: 0;
+  border-left: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.dashboard-kpi.metric-drilldown:hover {
+  background: #f8fbff;
+}
+
 .dashboard-kpi + .dashboard-kpi {
   padding-left: 42px;
 }
@@ -2470,6 +2547,18 @@ select,
   border-bottom: 1px solid #e8edf3;
   color: #111827;
   text-align: left;
+}
+
+.dashboard-review-row.metric-drilldown {
+  border-top: 0;
+  border-right: 0;
+  border-left: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.dashboard-review-row.metric-drilldown:hover {
+  background: #f8fbff;
 }
 
 .dashboard-review-row:last-child,

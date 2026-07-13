@@ -45,16 +45,17 @@ const TASKS: WorkbenchTask[] = [
 
 export class WorkbenchService {
   getOverview(): WorkbenchOverview {
-    const activeTasks = TASKS.filter((task) => task.status !== "done");
+    const openTasks = TASKS.filter((task) => task.status !== "done");
+    const pendingTasks = TASKS.filter((task) => task.status === "pending");
     return {
       generatedAt: new Date().toISOString(),
       metrics: [
-        { key: "active_tasks", label: "待处理任务", value: activeTasks.length, hint: "来自工作台样例队列" },
+        { key: "pending_tasks", label: "待处理任务", value: pendingTasks.length, hint: "来自工作台样例队列" },
         { key: "high_priority", label: "高优先级", value: TASKS.filter((task) => task.priority === "high").length, hint: "今日优先推进" },
         { key: "blocked", label: "外部阻塞", value: TASKS.filter((task) => task.status === "blocked").length, hint: "需要业务输入" },
         { key: "customers", label: "样例客户", value: 3, hint: "沿用 CRM 样例客户池" }
       ],
-      tasks: activeTasks.slice(0, 3),
+      tasks: openTasks.slice(0, 3),
       activities: [
         {
           activityId: "act-proposal-generated",

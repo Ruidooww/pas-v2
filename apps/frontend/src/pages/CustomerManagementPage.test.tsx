@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { clearCustomerCache } from "../customer-api";
 import { CustomerManagementPage } from "./CustomerManagementPage";
@@ -9,16 +9,17 @@ describe("CustomerManagementPage", () => {
     clearCustomerCache();
     vi.unstubAllGlobals();
     localStorage.clear();
+    window.history.pushState({}, "", "/customers");
   });
 
-  it("explains the mock customer pool when no customer rows are available", async () => {
+  it("explains the mock customer pool when no rows are available", async () => {
     localStorage.setItem("pas.access-token", "test-token");
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue({
         ok: true,
         status: 200,
-        json: async () => ({ customers: [] })
+        json: async () => ({ source: "mock", customers: [] })
       })
     );
 
@@ -28,6 +29,27 @@ describe("CustomerManagementPage", () => {
     expect(screen.getByText("当前使用假数据；真实 CRM API 接好后会自动展示客户池。")).toBeInTheDocument();
   });
 
+  it("labels external customer data without sample wording", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        jsonResponse({
+          source: "external",
+          customers: [
+            { customerId: "customer-1", name: "Acme", industry: "制造", region: "华东", accountOwner: "Alice" }
+          ]
+        })
+      )
+    );
+
+    render(<CustomerManagementPage />);
+
+    expect(await screen.findByText("Acme")).toBeInTheDocument();
+    expect(screen.getAllByText("CRM 数据").length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/CRM 客户池/).length).toBeGreaterThan(0);
+    expect(screen.queryAllByText(/样例/)).toHaveLength(0);
+  });
+
   it("shares the customer list request across pages for the same token", async () => {
     localStorage.setItem("pas.access-token", "test-token");
     const fetchMock = vi.fn((input: RequestInfo | URL) => {
@@ -35,6 +57,7 @@ describe("CustomerManagementPage", () => {
       if (path === "/api/crm/customers") {
         return Promise.resolve(
           jsonResponse({
+            source: "mock",
             customers: [
               {
                 customerId: "customer-1",
@@ -66,6 +89,31 @@ describe("CustomerManagementPage", () => {
 
     const customerListCalls = fetchMock.mock.calls.filter(([input]) => String(input) === "/api/crm/customers");
     expect(customerListCalls).toHaveLength(1);
+  });
+
+  it("drills into grouped industry counts and preserves the grouping query", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        jsonResponse({
+          source: "mock",
+          customers: [
+            { customerId: "customer-1", name: "Acme", industry: "Manufacturing", region: "East", accountOwner: "Alice" },
+            { customerId: "customer-2", name: "Beta", industry: "Finance", region: "East", accountOwner: "Bob" },
+            { customerId: "customer-3", name: "Gamma", industry: "Manufacturing", region: "South", accountOwner: "Carol" }
+          ]
+        })
+      )
+    );
+
+    render(<CustomerManagementPage />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "查看行业数明细" }));
+
+    expect(await screen.findByRole("heading", { name: "行业分布" })).toBeTruthy();
+    expect(screen.getByText("Manufacturing：2")).toBeTruthy();
+    expect(screen.getByText("Finance：1")).toBeTruthy();
+    expect(window.location.search).toBe("?groupBy=industry");
   });
 });
 

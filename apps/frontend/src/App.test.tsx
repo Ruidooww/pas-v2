@@ -145,6 +145,91 @@ describe("App", () => {
     expect((await screen.findAllByRole("heading", { name: "我的待办" })).length).toBeGreaterThan(0);
   });
 
+  it("drills from a dashboard metric into the filtered task page", async () => {
+    localStorage.setItem("pas.access-token", "token");
+    vi.stubGlobal("fetch", vi.fn(mockAdminFetch));
+
+    render(<App />);
+
+    expect((await screen.findAllByText("方案初稿")).length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole("button", { name: "查看高优先级明细" }));
+
+    expect((await screen.findAllByRole("heading", { name: "团队任务" })).length).toBeGreaterThan(0);
+    expect(window.location.pathname).toBe("/workbench/team-tasks");
+    expect(window.location.search).toBe("?priority=high");
+    expect((await screen.findAllByText("方案初稿")).length).toBeGreaterThan(0);
+    expect(screen.queryByText("模板复核阻塞项")).toBeNull();
+  });
+
+  it("keeps metric drilldowns within the current task scope and filters pending tasks exactly", async () => {
+    localStorage.setItem("pas.access-token", "token");
+    window.history.pushState({}, "", "/workbench/team-tasks");
+    vi.stubGlobal("fetch", vi.fn(mockAdminFetch));
+
+    render(<App />);
+    expect((await screen.findAllByRole("heading", { name: "团队任务" })).length).toBeGreaterThan(0);
+
+    fireEvent.click(await screen.findByRole("button", { name: "查看高优先级明细" }));
+    expect(window.location.pathname).toBe("/workbench/team-tasks");
+    expect(window.location.search).toBe("?priority=high");
+
+    fireEvent.click(screen.getByRole("button", { name: "查看待处理任务明细" }));
+    expect(window.location.pathname).toBe("/workbench/team-tasks");
+    expect(window.location.search).toBe("?status=pending");
+    expect((await screen.findAllByText("画像补充")).length).toBeGreaterThan(0);
+    expect(screen.queryByText("方案初稿")).toBeNull();
+    expect(screen.queryByText("模板复核阻塞项")).toBeNull();
+  });
+
+  it("maps the completed metric to completed tasks", async () => {
+    localStorage.setItem("pas.access-token", "token");
+    window.history.pushState({}, "", "/workbench/team-tasks");
+    vi.stubGlobal("fetch", vi.fn(mockAdminFetch));
+
+    render(<App />);
+    expect((await screen.findAllByRole("heading", { name: "团队任务" })).length).toBeGreaterThan(0);
+
+    const completedKpi = (await screen.findAllByRole("button", { name: "查看已完成明细" })).find((button) =>
+      button.classList.contains("dashboard-kpi")
+    );
+    expect(completedKpi).toBeTruthy();
+    fireEvent.click(completedKpi!);
+
+    expect(window.location.pathname).toBe("/workbench/team-tasks");
+    expect(window.location.search).toBe("?status=done");
+    expect((await screen.findAllByText("已交付方案归档")).length).toBeGreaterThan(0);
+    expect(screen.queryByText("画像补充")).toBeNull();
+  });
+
+  it("keeps review drilldowns within my task scope", async () => {
+    localStorage.setItem("pas.access-token", "token");
+    window.history.pushState({}, "", "/workbench/my-tasks");
+    vi.stubGlobal("fetch", vi.fn(mockAdminFetch));
+
+    render(<App />);
+    expect((await screen.findAllByRole("heading", { name: "我的待办" })).length).toBeGreaterThan(0);
+    expect(await screen.findByRole("button", { name: "查看阻塞中明细" })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "查看阻塞中明细" }));
+
+    expect(window.location.pathname).toBe("/workbench/my-tasks");
+    expect(window.location.search).toBe("?status=blocked");
+  });
+
+  it("preserves proposal context when drilling from the review summary", async () => {
+    localStorage.setItem("pas.access-token", "token");
+    vi.stubGlobal("fetch", vi.fn(mockAdminFetch));
+
+    render(<App />);
+
+    expect((await screen.findAllByText("方案初稿")).length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole("button", { name: "查看方案相关明细" }));
+
+    expect((await screen.findAllByRole("heading", { name: "方案生成" })).length).toBeGreaterThan(0);
+    expect(await screen.findByText("当前下钻：方案相关")).toBeTruthy();
+    expect(window.location.search).toBe("?source=proposal");
+  });
+
   it("shows the business flow console from the business first-level menu", async () => {
     localStorage.setItem("pas.access-token", "token");
     vi.stubGlobal("fetch", vi.fn(mockAdminFetch));
@@ -162,6 +247,24 @@ describe("App", () => {
     expect(await screen.findByText("业务记录")).toBeTruthy();
     expect(screen.queryByText("会议")).toBeNull();
     expect(screen.queryByText("合同")).toBeNull();
+  });
+
+  it("drills from the customer insight pool metric into customer management", async () => {
+    localStorage.setItem("pas.access-token", "token");
+    vi.stubGlobal("fetch", vi.fn(mockAdminFetch));
+
+    render(<App />);
+
+    fireEvent.click(await screen.findByText("客户作战"));
+    const customerInsightMenuItem = (await screen.findAllByText("客户画像")).find((element) =>
+      element.closest('[role="menuitem"]')
+    );
+    expect(customerInsightMenuItem).toBeTruthy();
+    fireEvent.click(customerInsightMenuItem as HTMLElement);
+    fireEvent.click(await screen.findByRole("button", { name: "查看客户池明细" }));
+
+    expect((await screen.findAllByRole("heading", { name: "客户管理" })).length).toBeGreaterThan(0);
+    expect(window.location.pathname).toBe("/customers");
   });
 
   it("shows only analytics metrics from the analytics first-level menu", async () => {
@@ -198,22 +301,41 @@ describe("App", () => {
   });
 
   it("shows existing proposal jobs from the proposal generation page", async () => {
+    const originalScrollIntoView = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "scrollIntoView");
+    const scrollIntoView = vi.fn();
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+      configurable: true,
+      value: scrollIntoView
+    });
     localStorage.setItem("pas.access-token", "token");
     vi.stubGlobal("fetch", vi.fn(mockAdminFetch));
 
-    render(<App />);
+    try {
+      render(<App />);
 
-    fireEvent.click(await screen.findByText("方案生产"));
-    const proposalMenuItem = (await screen.findAllByText("方案生成")).find((element) =>
-      element.closest('[role="menuitem"]')
-    );
-    expect(proposalMenuItem).toBeTruthy();
-    fireEvent.click(proposalMenuItem as HTMLElement);
+      fireEvent.click(await screen.findByText("方案生产"));
+      const proposalMenuItem = (await screen.findAllByText("方案生成")).find((element) =>
+        element.closest('[role="menuitem"]')
+      );
+      expect(proposalMenuItem).toBeTruthy();
+      fireEvent.click(proposalMenuItem as HTMLElement);
 
-    expect((await screen.findAllByRole("heading", { name: "方案生成" })).length).toBeGreaterThan(0);
-    expect(await screen.findByText("最近方案任务")).toBeTruthy();
-    expect(await screen.findByText("demo-huaxin-manufacturing")).toBeTruthy();
-    expect(await screen.findByText("proposal-job-1")).toBeTruthy();
+      expect((await screen.findAllByRole("heading", { name: "方案生成" })).length).toBeGreaterThan(0);
+      expect(await screen.findByText("最近方案任务")).toBeTruthy();
+      expect(await screen.findByText("demo-huaxin-manufacturing")).toBeTruthy();
+      expect(await screen.findByText("proposal-job-1")).toBeTruthy();
+
+      fireEvent.click(screen.getByRole("button", { name: "查看进度" }));
+
+      expect(await screen.findByText("方案生成进度")).toBeTruthy();
+      expect(scrollIntoView).toHaveBeenCalledWith({ behavior: "smooth", block: "start" });
+    } finally {
+      if (originalScrollIntoView) {
+        Object.defineProperty(HTMLElement.prototype, "scrollIntoView", originalScrollIntoView);
+      } else {
+        Reflect.deleteProperty(HTMLElement.prototype, "scrollIntoView");
+      }
+    }
   });
 
   it("opens the secondary page that matches the current browser path", async () => {
@@ -459,7 +581,7 @@ function createWorkbenchOverview(): WorkbenchOverview {
   return {
     generatedAt: "2026-07-07T00:00:00.000Z",
     metrics: [
-      { key: "active_tasks", label: "待处理任务", value: 2, hint: "mock" },
+      { key: "pending_tasks", label: "待处理任务", value: 1, hint: "mock" },
       { key: "high_priority", label: "高优先级", value: 1, hint: "mock" }
     ],
     tasks: [
@@ -482,6 +604,26 @@ function createWorkbenchOverview(): WorkbenchOverview {
         priority: "medium",
         dueAt: "2026-07-10",
         source: "manual"
+      },
+      {
+        taskId: "task-3",
+        title: "画像补充",
+        customerName: "融盛金服",
+        owner: "售前一组",
+        status: "pending",
+        priority: "medium",
+        dueAt: "2026-07-09",
+        source: "crm"
+      },
+      {
+        taskId: "task-4",
+        title: "已交付方案归档",
+        customerName: "华信精工",
+        owner: "Admin",
+        status: "done",
+        priority: "low",
+        dueAt: "2026-07-07",
+        source: "proposal"
       }
     ],
     activities: [

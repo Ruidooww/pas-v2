@@ -1,9 +1,14 @@
 import { Module } from "@nestjs/common";
 import { createCrmConfig, type CrmConfig } from "./crm.config";
 import { CrmController } from "./crm.controller";
+import { ExternalCrmClient } from "./external-crm.client";
 import { MockCrmClient } from "./mock-crm.client";
 import { CRM_CLIENT, CRM_CONFIG } from "./crm.tokens";
 import type { CrmClient } from "./crm.types";
+
+export function createCrmClient(config: CrmConfig): CrmClient {
+  return config.clientMode === "external" ? new ExternalCrmClient(config) : new MockCrmClient();
+}
 
 @Module({
   controllers: [CrmController],
@@ -14,7 +19,7 @@ import type { CrmClient } from "./crm.types";
     },
     {
       provide: CRM_CLIENT,
-      useFactory: (config: CrmConfig): CrmClient => new MockCrmClient(config),
+      useFactory: createCrmClient,
       inject: [CRM_CONFIG]
     }
   ],

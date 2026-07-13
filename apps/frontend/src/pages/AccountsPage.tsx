@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Alert, Button, Card, Input, Select, Space, Spin, Switch, Tag, Typography } from "antd";
 import { api } from "../api";
+import { MetricDrilldown } from "../components/MetricDrilldown";
+import { useDrilldownQuery } from "../drilldown";
 import type {
   OrganizationCatalog,
   OrganizationUnit,
@@ -32,6 +34,7 @@ type CreateUserDraft = {
 };
 
 const EMPTY_CATALOG: OrganizationCatalog = { units: [], projectGroups: [] };
+const accountDrilldownSchema = { accounts: ["all", "active", "admin"] } as const;
 
 export function AccountsPage() {
   const [users, setUsers] = useState<PublicUser[]>([]);
@@ -41,6 +44,7 @@ export function AccountsPage() {
   const [savingUserId, setSavingUserId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [drilldown, updateDrilldown] = useDrilldownQuery(accountDrilldownSchema);
 
   useEffect(() => {
     void refreshUsers();
@@ -48,6 +52,8 @@ export function AccountsPage() {
 
   const activeUsers = users.filter((user) => user.active).length;
   const adminUsers = users.filter((user) => user.role === "admin").length;
+  const visibleUsers = filterUsers(users, drilldown.accounts);
+  const activeFilter = accountFilterLabel(drilldown.accounts);
   const projectGroupOptions = catalog.projectGroups.map((group) => ({
     label: group.name,
     value: group.projectGroupId,
@@ -67,19 +73,26 @@ export function AccountsPage() {
           <Typography.Title level={3}>账号权限</Typography.Title>
           <Typography.Text type="secondary">统一管理账号、角色、组织单元和项目成员关系。</Typography.Text>
         </div>
-        <div className="system-hero-stat">
+        <MetricDrilldown className="system-hero-stat" label="账号总数" onClick={() => updateDrilldown({ accounts: "all" })}>
           <Typography.Text type="secondary">账号总数</Typography.Text>
           <strong>{users.length}</strong>
-        </div>
-        <div className="system-hero-stat">
+        </MetricDrilldown>
+        <MetricDrilldown className="system-hero-stat" label="启用账号" onClick={() => updateDrilldown({ accounts: "active" })}>
           <Typography.Text type="secondary">启用账号</Typography.Text>
           <strong>{activeUsers}</strong>
-        </div>
-        <div className="system-hero-stat">
+        </MetricDrilldown>
+        <MetricDrilldown className="system-hero-stat" label="管理员" onClick={() => updateDrilldown({ accounts: "admin" })}>
           <Typography.Text type="secondary">管理员</Typography.Text>
           <strong>{adminUsers}</strong>
-        </div>
+        </MetricDrilldown>
       </section>
+
+      {activeFilter && (
+        <Space className="drilldown-filter-summary" wrap>
+          <Tag color="blue">当前筛选：{activeFilter}</Tag>
+          <Button type="link" size="small" onClick={() => updateDrilldown({})}>清除筛选</Button>
+        </Space>
+      )}
 
       <Card className="pas-panel" title="创建账号">
         <div className="account-create-grid">
@@ -146,7 +159,7 @@ export function AccountsPage() {
           <div className="system-loading"><Spin /></div>
         ) : (
           <div className="system-list account-list">
-            {users.map((user) => {
+            {visibleUsers.map((user) => {
               const unit = catalog.units.find((item) => item.unitId === user.organizationUnitId);
               return (
                 <div className="system-list-item account-list-item" key={user.userId}>
@@ -282,6 +295,19 @@ export function AccountsPage() {
   function setDraftField<Key extends keyof CreateUserDraft>(key: Key, value: CreateUserDraft[Key]): void {
     setDraft((current) => ({ ...current, [key]: value }));
   }
+}
+
+function filterUsers(users: PublicUser[], accounts?: string): PublicUser[] {
+  if (accounts === "active") return users.filter((user) => user.active);
+  if (accounts === "admin") return users.filter((user) => user.role === "admin");
+  return users;
+}
+
+function accountFilterLabel(accounts?: string): string | undefined {
+  if (accounts === "all") return "全部账号";
+  if (accounts === "active") return "启用账号";
+  if (accounts === "admin") return "管理员";
+  return undefined;
 }
 
 function createEmptyDraft(): CreateUserDraft {
