@@ -423,7 +423,6 @@ Add table-driven HTTP tests and a malformed-root test:
 it.each([
   [401, "CRM_AUTHENTICATION_FAILED"],
   [403, "CRM_AUTHENTICATION_FAILED"],
-  [404, "CRM_NOT_FOUND"],
   [429, "CRM_RATE_LIMITED"],
   [500, "CRM_UNAVAILABLE"],
   [400, "CRM_REQUEST_REJECTED"]
@@ -432,6 +431,21 @@ it.each([
   const promise = new ExternalCrmClient(config, fetcher).getCustomerContext("customer-1");
   await expect(promise).rejects.toMatchObject({ code, upstreamStatus: status });
   await expect(promise).rejects.not.toThrow("must-not-leak");
+});
+
+it("returns undefined when the customer detail is missing", async () => {
+  const fetcher = vi.fn().mockResolvedValue(jsonResponse(404, { secret: "must-not-leak" }));
+  await expect(
+    new ExternalCrmClient(config, fetcher).getCustomerContext("customer-1")
+  ).resolves.toBeUndefined();
+});
+
+it("maps a non-detail HTTP 404 to CRM_NOT_FOUND", async () => {
+  const fetcher = vi.fn().mockResolvedValue(jsonResponse(404, { secret: "must-not-leak" }));
+  await expect(new ExternalCrmClient(config, fetcher).listCustomers()).rejects.toMatchObject({
+    code: "CRM_NOT_FOUND",
+    upstreamStatus: 404
+  });
 });
 
 it("rejects a structurally invalid customer list", async () => {
