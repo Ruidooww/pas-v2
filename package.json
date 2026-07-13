@@ -7,6 +7,7 @@
     "build": "pnpm -r build",
     "ci:images": "node scripts/build-images.mjs",
     "compose:config": "node scripts/verify-compose.mjs",
+    "crm:rotate": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/rotate-crm-token.ps1",
     "lint": "pnpm -r lint",
     "smoke:local": "node scripts/smoke-local-menu.mjs",
     "test:smoke": "node --test scripts/smoke-local-menu.test.mjs",

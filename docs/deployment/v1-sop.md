@@ -78,6 +78,12 @@ Use the feedback API and audit trail to close answer and proposal issues.
 4. For layout or export issues, update template metadata and keep the affected format disabled until renderer verification passes.
 5. Keep high-risk feedback linked to a human owner before release approval.
 
+## CRM Token Rotation SOP
+
+External CRM access is strictly read-only. After the CRM issues its daily API token, run `pnpm crm:rotate` on the PAS deployment host. The command validates the token before changing `.env`, recreates only `pas-backend`, verifies backend health, and automatically restores the previous configuration on a post-update failure.
+
+Follow `docs/deployment/crm-token-rotation-sop.md` for prerequisites, secret handling, verification, and failure recovery. Never commit the deployment `.env` or pass the token as a shell argument.
+
 ## AI Model Access SOP
 
 The **AI 模型接入** page is visible only to `admin`. PAS generation configuration is editable there; RAGFlow model and dataset information is read-only.
