@@ -156,7 +156,7 @@ export function WorkbenchOverviewPage({ mode, user, onNavigate }: WorkbenchOverv
                 className="dashboard-kpi"
                 key={kpi.key}
                 label={kpi.label}
-                onClick={() => navigateKpi(kpi.key, user, onNavigate)}
+                onClick={() => navigateKpi(kpi.key, mode, user, onNavigate)}
               >
                 <Typography.Text type="secondary">{kpi.label}</Typography.Text>
                 <strong>{kpi.value}</strong>
@@ -228,7 +228,7 @@ export function WorkbenchOverviewPage({ mode, user, onNavigate }: WorkbenchOverv
               className="dashboard-review-row"
               key={item.key}
               label={item.label}
-              onClick={() => navigateReview(item.key, user, onNavigate)}
+              onClick={() => navigateReview(item.key, mode, user, onNavigate)}
             >
               <span className={`dashboard-review-icon is-${item.tone}`}>{item.icon}</span>
               <span>{item.label}</span>
@@ -277,26 +277,29 @@ function activeTaskFilterLabel(drilldown: Record<string, string>): string | unde
 
 function navigateKpi(
   key: string,
+  mode: WorkbenchMode,
   user: PublicUser | undefined,
   onNavigate: (key: SecondaryMenuKey, search?: string) => void
 ): void {
+  const target = taskDrilldownTarget(mode, user);
   if (key === "high_priority") {
-    onNavigate("my_tasks", buildDrilldownSearch({ priority: "high" }));
+    onNavigate(target, buildDrilldownSearch({ priority: "high" }));
     return;
   }
   if (key === "blocked") {
-    onNavigate(user?.role === "sales" ? "my_tasks" : "team_tasks", buildDrilldownSearch({ status: "blocked" }));
+    onNavigate(target, buildDrilldownSearch({ status: "blocked" }));
     return;
   }
   if (key === "customers") {
     onNavigate("customer_management");
     return;
   }
-  onNavigate("my_tasks", buildDrilldownSearch({ status: "active" }));
+  onNavigate(target, buildDrilldownSearch({ status: "active" }));
 }
 
 function navigateReview(
   key: string,
+  mode: WorkbenchMode,
   user: PublicUser | undefined,
   onNavigate: (key: SecondaryMenuKey, search?: string) => void
 ): void {
@@ -305,9 +308,15 @@ function navigateReview(
     return;
   }
   onNavigate(
-    user?.role === "sales" ? "my_tasks" : "team_tasks",
+    taskDrilldownTarget(mode, user),
     buildDrilldownSearch({ status: key === "done" ? "done" : "blocked" })
   );
+}
+
+function taskDrilldownTarget(mode: WorkbenchMode, user: PublicUser | undefined): SecondaryMenuKey {
+  if (mode === "myTasks") return "my_tasks";
+  if (mode === "teamTasks") return "team_tasks";
+  return user?.role === "sales" ? "my_tasks" : "team_tasks";
 }
 
 function mapMetrics(metrics: WorkbenchMetric[] | undefined, tasks: WorkbenchTask[]): DashboardKpi[] {

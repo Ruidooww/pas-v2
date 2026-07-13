@@ -151,13 +151,46 @@ describe("App", () => {
 
     render(<App />);
 
-    fireEvent.click(await screen.findByRole("button", { name: "查看高优先级明细" }));
+    expect((await screen.findAllByText("方案初稿")).length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole("button", { name: "查看高优先级明细" }));
 
-    expect((await screen.findAllByRole("heading", { name: "我的待办" })).length).toBeGreaterThan(0);
-    expect(window.location.pathname).toBe("/workbench/my-tasks");
+    expect((await screen.findAllByRole("heading", { name: "团队任务" })).length).toBeGreaterThan(0);
+    expect(window.location.pathname).toBe("/workbench/team-tasks");
     expect(window.location.search).toBe("?priority=high");
     expect((await screen.findAllByText("方案初稿")).length).toBeGreaterThan(0);
     expect(screen.queryByText("模板复核阻塞项")).toBeNull();
+  });
+
+  it("keeps metric drilldowns within the current task scope", async () => {
+    localStorage.setItem("pas.access-token", "token");
+    window.history.pushState({}, "", "/workbench/team-tasks");
+    vi.stubGlobal("fetch", vi.fn(mockAdminFetch));
+
+    render(<App />);
+    expect((await screen.findAllByRole("heading", { name: "团队任务" })).length).toBeGreaterThan(0);
+
+    fireEvent.click(await screen.findByRole("button", { name: "查看高优先级明细" }));
+    expect(window.location.pathname).toBe("/workbench/team-tasks");
+    expect(window.location.search).toBe("?priority=high");
+
+    fireEvent.click(screen.getByRole("button", { name: "查看待处理任务明细" }));
+    expect(window.location.pathname).toBe("/workbench/team-tasks");
+    expect(window.location.search).toBe("?status=active");
+  });
+
+  it("keeps review drilldowns within my task scope", async () => {
+    localStorage.setItem("pas.access-token", "token");
+    window.history.pushState({}, "", "/workbench/my-tasks");
+    vi.stubGlobal("fetch", vi.fn(mockAdminFetch));
+
+    render(<App />);
+    expect((await screen.findAllByRole("heading", { name: "我的待办" })).length).toBeGreaterThan(0);
+    expect(await screen.findByRole("button", { name: "查看阻塞中明细" })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "查看阻塞中明细" }));
+
+    expect(window.location.pathname).toBe("/workbench/my-tasks");
+    expect(window.location.search).toBe("?status=blocked");
   });
 
   it("preserves proposal context when drilling from the review summary", async () => {
