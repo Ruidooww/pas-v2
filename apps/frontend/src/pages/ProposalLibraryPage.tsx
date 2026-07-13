@@ -1,13 +1,20 @@
 import { useEffect, useState } from "react";
-import { Alert, Card, Space, Tag, Typography } from "antd";
+import { Alert, Button, Card, Space, Tag, Typography } from "antd";
 import { api } from "../api";
 import { EmptyState } from "../components/EmptyState";
+import { MetricDrilldown } from "../components/MetricDrilldown";
 import { PlainList as List } from "../components/PlainList";
+import { useDrilldownQuery } from "../drilldown";
 import type { ProposalLibraryItem } from "../types";
+
+const proposalDrilldownSchema = { source: ["all", "generated"] } as const;
 
 export function ProposalLibraryPage() {
   const [items, setItems] = useState<ProposalLibraryItem[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [drilldown, updateDrilldown] = useDrilldownQuery(proposalDrilldownSchema);
+  const visibleItems = drilldown.source === "generated" ? items.filter((item) => item.source === "generated") : items;
+  const activeFilter = drilldown.source === "generated" ? "生成方案" : drilldown.source === "all" ? "全部方案" : undefined;
 
   useEffect(() => {
     api<ProposalLibraryItem[]>("/api/internal/proposals/library")
@@ -24,24 +31,31 @@ export function ProposalLibraryPage() {
           <Typography.Paragraph type="secondary">汇总已生成方案，正式模板到位后承接导出与复用。</Typography.Paragraph>
         </div>
         <div className="workbench-metric-grid">
-          <div className="workbench-metric">
+          <MetricDrilldown className="workbench-metric" label="方案数" onClick={() => updateDrilldown({ source: "all" })}>
             <Typography.Text type="secondary">方案数</Typography.Text>
             <strong>{items.length}</strong>
             <Typography.Text type="secondary">当前账号可见</Typography.Text>
-          </div>
-          <div className="workbench-metric">
+          </MetricDrilldown>
+          <MetricDrilldown className="workbench-metric" label="生成方案" onClick={() => updateDrilldown({ source: "generated" })}>
             <Typography.Text type="secondary">生成方案</Typography.Text>
             <strong>{items.filter((item) => item.source === "generated").length}</strong>
             <Typography.Text type="secondary">当前账号可见</Typography.Text>
-          </div>
+          </MetricDrilldown>
         </div>
       </section>
 
       {error && <Alert type="error" title={error} closable onClose={() => setError(null)} />}
 
+      {activeFilter && (
+        <Space className="drilldown-filter-summary" wrap>
+          <Tag color="blue">当前筛选：{activeFilter}</Tag>
+          <Button type="link" size="small" onClick={() => updateDrilldown({})}>清除筛选</Button>
+        </Space>
+      )}
+
       <Card className="pas-panel" title="方案条目">
         <List
-          dataSource={items}
+          dataSource={visibleItems}
           locale={{
             emptyText: (
               <EmptyState

@@ -10,9 +10,12 @@ import {
   Statistic,
   Tabs,
   Tag,
+  Space,
   Typography
 } from "antd";
 import { api } from "../api";
+import { MetricDrilldown } from "../components/MetricDrilldown";
+import { useDrilldownQuery } from "../drilldown";
 import type { BusinessFlowKind, BusinessFlowRecord, BusinessMetrics } from "../types";
 
 const kindLabels: Record<BusinessFlowKind, string> = {
@@ -39,6 +42,8 @@ type BusinessFlowsPageProps = {
   mode?: BusinessFlowPageMode;
 };
 
+const businessDrilldownSchema = { records: ["all", "pending_inputs", "in_progress"] } as const;
+
 export function BusinessFlowsPage({ mode = "opportunities" }: BusinessFlowsPageProps) {
   const [records, setRecords] = useState<BusinessFlowRecord[]>([]);
   const [metrics, setMetrics] = useState<BusinessMetrics>({ definitions: [], counters: [] });
@@ -46,6 +51,7 @@ export function BusinessFlowsPage({ mode = "opportunities" }: BusinessFlowsPageP
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<BusinessFlowTabKey>(firstBusinessFlowTab(mode));
+  const [drilldown, updateDrilldown] = useDrilldownQuery(businessDrilldownSchema);
   const [opportunityText, setOpportunityText] = useState(
     "客户：华信精工；需求：终端数据防泄漏；预算：38万；时间：2026-09；联系人：周明；阶段：方案；来源：销售记录"
   );
@@ -95,6 +101,8 @@ export function BusinessFlowsPage({ mode = "opportunities" }: BusinessFlowsPageP
   const latestOpportunity = lastRecord?.kind === "opportunity" ? lastRecord : undefined;
   const latestMeeting = lastRecord?.kind === "meeting" ? lastRecord : undefined;
   const visibleTabs = businessFlowTabsForMode(mode);
+  const visibleRecords = filterBusinessRecords(records, drilldown.records);
+  const activeFilter = businessFilterLabel(drilldown.records);
 
   return (
     <div className="pas-page-stack">
@@ -102,27 +110,34 @@ export function BusinessFlowsPage({ mode = "opportunities" }: BusinessFlowsPageP
 
       <Row gutter={[12, 12]} className="business-flow-metrics">
         <Col xs={24} md={8}>
-          <Card className="pas-panel">
+          <MetricDrilldown className="pas-panel business-flow-metric" label="业务记录" onClick={() => updateDrilldown({ records: "all" })}>
             <Statistic title="业务记录" value={records.length} />
-          </Card>
+          </MetricDrilldown>
         </Col>
         <Col xs={24} md={8}>
-          <Card className="pas-panel">
+          <MetricDrilldown className="pas-panel business-flow-metric" label="待外部输入" onClick={() => updateDrilldown({ records: "pending_inputs" })}>
             <Statistic
               title="待外部输入"
               value={records.filter((record) => record.pendingInputs.length > 0).length}
             />
-          </Card>
+          </MetricDrilldown>
         </Col>
         <Col xs={24} md={8}>
-          <Card className="pas-panel">
+          <MetricDrilldown className="pas-panel business-flow-metric" label="确认与同步" onClick={() => updateDrilldown({ records: "in_progress" })}>
             <Statistic
               title="确认与同步"
               value={records.filter((record) => record.status === "confirmed" || record.status === "sync_pending").length}
             />
-          </Card>
+          </MetricDrilldown>
         </Col>
       </Row>
+
+      {activeFilter && (
+        <Space className="drilldown-filter-summary" wrap>
+          <Tag color="blue">当前筛选：{activeFilter}</Tag>
+          <Button type="link" size="small" onClick={() => updateDrilldown({})}>清除筛选</Button>
+        </Space>
+      )}
 
       <Card className="pas-panel">
         <Tabs
@@ -397,11 +412,11 @@ export function BusinessFlowsPage({ mode = "opportunities" }: BusinessFlowsPageP
       {lastRecord && <BusinessFlowResult record={lastRecord} />}
 
       <Card className="pas-panel" title="最近业务记录">
-        {records.length === 0 ? (
+          {visibleRecords.length === 0 ? (
           <Typography.Text type="secondary">暂无业务记录</Typography.Text>
         ) : (
           <div className="business-flow-list">
-            {records
+            {visibleRecords
               .slice()
               .reverse()
               .slice(0, 8)
@@ -424,6 +439,21 @@ export function BusinessFlowsPage({ mode = "opportunities" }: BusinessFlowsPageP
       </Card>
     </div>
   );
+}
+
+function filterBusinessRecords(records: BusinessFlowRecord[], filter?: string): BusinessFlowRecord[] {
+  if (filter === "pending_inputs") return records.filter((record) => record.pendingInputs.length > 0);
+  if (filter === "in_progress") {
+    return records.filter((record) => record.status === "confirmed" || record.status === "sync_pending");
+  }
+  return records;
+}
+
+function businessFilterLabel(filter?: string): string | undefined {
+  if (filter === "all") return "全部业务记录";
+  if (filter === "pending_inputs") return "待外部输入";
+  if (filter === "in_progress") return "确认与同步";
+  return undefined;
 }
 
 function businessFlowTabsForMode(mode: BusinessFlowPageMode): BusinessFlowTabKey[] {

@@ -156,6 +156,8 @@ describe("App", () => {
     expect((await screen.findAllByRole("heading", { name: "我的待办" })).length).toBeGreaterThan(0);
     expect(window.location.pathname).toBe("/workbench/my-tasks");
     expect(window.location.search).toBe("?priority=high");
+    expect((await screen.findAllByText("方案初稿")).length).toBeGreaterThan(0);
+    expect(screen.queryByText("模板复核阻塞项")).toBeNull();
   });
 
   it("shows the business flow console from the business first-level menu", async () => {
@@ -175,6 +177,24 @@ describe("App", () => {
     expect(await screen.findByText("业务记录")).toBeTruthy();
     expect(screen.queryByText("会议")).toBeNull();
     expect(screen.queryByText("合同")).toBeNull();
+  });
+
+  it("drills from the customer insight pool metric into customer management", async () => {
+    localStorage.setItem("pas.access-token", "token");
+    vi.stubGlobal("fetch", vi.fn(mockAdminFetch));
+
+    render(<App />);
+
+    fireEvent.click(await screen.findByText("客户作战"));
+    const customerInsightMenuItem = (await screen.findAllByText("客户画像")).find((element) =>
+      element.closest('[role="menuitem"]')
+    );
+    expect(customerInsightMenuItem).toBeTruthy();
+    fireEvent.click(customerInsightMenuItem as HTMLElement);
+    fireEvent.click(await screen.findByRole("button", { name: "查看客户池明细" }));
+
+    expect((await screen.findAllByRole("heading", { name: "客户管理" })).length).toBeGreaterThan(0);
+    expect(window.location.pathname).toBe("/customers");
   });
 
   it("shows only analytics metrics from the analytics first-level menu", async () => {

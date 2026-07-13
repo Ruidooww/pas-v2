@@ -13,15 +13,18 @@ import {
   Typography
 } from "antd";
 import { api } from "../api";
+import { MetricDrilldown } from "../components/MetricDrilldown";
 import { PlainList as List } from "../components/PlainList";
 import { loadCustomers } from "../customer-api";
+import { buildDrilldownSearch } from "../drilldown";
 import type {
   CrmCustomerSummary,
   CustomerAnalysisResult,
   ExportDownloadResponse,
   ExportFormat,
   ExportJob,
-  ProposalJob
+  ProposalJob,
+  SecondaryMenuKey
 } from "../types";
 
 const POLL_INTERVAL_MS = 1500;
@@ -29,7 +32,13 @@ const MAX_POLLS = 200;
 
 export type WorkbenchPageMode = "customerInsights" | "proposalTasks";
 
-export function WorkbenchPage({ mode = "customerInsights" }: { mode?: WorkbenchPageMode }) {
+export function WorkbenchPage({
+  mode = "customerInsights",
+  onNavigate = () => undefined
+}: {
+  mode?: WorkbenchPageMode;
+  onNavigate?: (key: SecondaryMenuKey, search?: string) => void;
+}) {
   const [customers, setCustomers] = useState<CrmCustomerSummary[]>([]);
   const [customerId, setCustomerId] = useState<string | undefined>();
   const [analysis, setAnalysis] = useState<CustomerAnalysisResult | null>(null);
@@ -178,7 +187,7 @@ export function WorkbenchPage({ mode = "customerInsights" }: { mode?: WorkbenchP
       };
   const workbenchMetrics = isCustomerInsights
     ? [
-        { label: "客户池", value: String(customers.length), hint: "CRM 可选客户" },
+        { label: "客户池", value: String(customers.length), hint: "CRM 可选客户", target: "customer_management" as const },
         {
           label: "当前客户",
           value: selectedCustomer?.name ?? "未选择",
@@ -191,7 +200,7 @@ export function WorkbenchPage({ mode = "customerInsights" }: { mode?: WorkbenchP
         }
       ]
     : [
-        { label: "客户池", value: String(customers.length), hint: "CRM 可选客户" },
+        { label: "客户池", value: String(customers.length), hint: "CRM 可选客户", target: "customer_management" as const },
         {
           label: "方案任务",
           value: proposalJob ? statusText(proposalJob.status) : "未启动",
@@ -200,7 +209,9 @@ export function WorkbenchPage({ mode = "customerInsights" }: { mode?: WorkbenchP
         {
           label: "导出包",
           value: exportJob ? `${completedExports}/${exportJob.formats.length}` : "未生成",
-          hint: "docx / pptx / xlsx"
+          hint: "docx / pptx / xlsx",
+          target: exportJob ? ("export_jobs" as const) : undefined,
+          search: exportJob ? buildDrilldownSearch({ result: "completed" }) : undefined
         }
       ];
 
@@ -220,11 +231,24 @@ export function WorkbenchPage({ mode = "customerInsights" }: { mode?: WorkbenchP
         </div>
         <div className="workbench-metric-grid">
           {workbenchMetrics.map((metric) => (
-            <div className="workbench-metric" key={metric.label}>
-              <Typography.Text type="secondary">{metric.label}</Typography.Text>
-              <strong>{metric.value}</strong>
-              <Typography.Text type="secondary">{metric.hint}</Typography.Text>
-            </div>
+            metric.target ? (
+              <MetricDrilldown
+                className="workbench-metric"
+                key={metric.label}
+                label={metric.label}
+                onClick={() => metric.target && onNavigate(metric.target, metric.search)}
+              >
+                <Typography.Text type="secondary">{metric.label}</Typography.Text>
+                <strong>{metric.value}</strong>
+                <Typography.Text type="secondary">{metric.hint}</Typography.Text>
+              </MetricDrilldown>
+            ) : (
+              <div className="workbench-metric" key={metric.label}>
+                <Typography.Text type="secondary">{metric.label}</Typography.Text>
+                <strong>{metric.value}</strong>
+                <Typography.Text type="secondary">{metric.hint}</Typography.Text>
+              </div>
+            )
           ))}
         </div>
       </section>

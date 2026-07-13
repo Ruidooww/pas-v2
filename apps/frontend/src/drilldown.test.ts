@@ -1,7 +1,12 @@
-import { describe, expect, it } from "vitest";
-import { buildDrilldownSearch, readDrilldown } from "./drilldown";
+import { act, renderHook } from "@testing-library/react";
+import { afterEach, describe, expect, it } from "vitest";
+import { buildDrilldownSearch, readDrilldown, useDrilldownQuery } from "./drilldown";
+
+const statusSchema = { status: ["all", "open"] } as const;
 
 describe("drilldown query helpers", () => {
+  afterEach(() => window.history.pushState({}, "", "/"));
+
   it("builds a stable query and omits empty values", () => {
     expect(buildDrilldownSearch({ priority: "high", status: undefined, source: "proposal" })).toBe(
       "?priority=high&source=proposal"
@@ -15,5 +20,19 @@ describe("drilldown query helpers", () => {
         status: ["blocked", "done"]
       })
     ).toEqual({ priority: "high" });
+  });
+
+  it("updates the URL and restores values on browser navigation", () => {
+    const { result } = renderHook(() => useDrilldownQuery(statusSchema));
+
+    act(() => result.current[1]({ status: "open" }));
+    expect(result.current[0]).toEqual({ status: "open" });
+    expect(window.location.search).toBe("?status=open");
+
+    act(() => {
+      window.history.pushState({}, "", "/?status=all");
+      window.dispatchEvent(new PopStateEvent("popstate"));
+    });
+    expect(result.current[0]).toEqual({ status: "all" });
   });
 });

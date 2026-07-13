@@ -1,12 +1,19 @@
 import { useEffect, useState } from "react";
 import { Alert, Card, Space, Table, Tag, Typography } from "antd";
 import { EmptyState } from "../components/EmptyState";
+import { MetricDrilldown } from "../components/MetricDrilldown";
 import { loadCustomers } from "../customer-api";
+import { useDrilldownQuery } from "../drilldown";
 import type { CrmCustomerSummary } from "../types";
+
+type CustomerGrouping = "industry" | "region";
+const customerDrilldownSchema = { groupBy: ["industry", "region"] } as const;
 
 export function CustomerManagementPage() {
   const [customers, setCustomers] = useState<CrmCustomerSummary[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [drilldown, updateDrilldown] = useDrilldownQuery(customerDrilldownSchema);
+  const groupBy = drilldown.groupBy as CustomerGrouping | undefined;
 
   useEffect(() => {
     loadCustomers()
@@ -23,25 +30,36 @@ export function CustomerManagementPage() {
           <Typography.Paragraph type="secondary">当前使用内置客户样例池，真实 CRM 接口就绪后替换数据源。</Typography.Paragraph>
         </div>
         <div className="workbench-metric-grid">
-          <div className="workbench-metric">
+          <MetricDrilldown className="workbench-metric" label="客户数" onClick={() => selectGrouping(undefined)}>
             <Typography.Text type="secondary">客户数</Typography.Text>
             <strong>{customers.length}</strong>
             <Typography.Text type="secondary">客户样例池</Typography.Text>
-          </div>
-          <div className="workbench-metric">
+          </MetricDrilldown>
+          <MetricDrilldown className="workbench-metric" label="行业数" onClick={() => selectGrouping("industry")}>
             <Typography.Text type="secondary">行业数</Typography.Text>
             <strong>{new Set(customers.map((customer) => customer.industry)).size}</strong>
             <Typography.Text type="secondary">样例维度</Typography.Text>
-          </div>
-          <div className="workbench-metric">
+          </MetricDrilldown>
+          <MetricDrilldown className="workbench-metric" label="区域数" onClick={() => selectGrouping("region")}>
             <Typography.Text type="secondary">区域数</Typography.Text>
             <strong>{new Set(customers.map((customer) => customer.region)).size}</strong>
             <Typography.Text type="secondary">售前覆盖</Typography.Text>
-          </div>
+          </MetricDrilldown>
         </div>
       </section>
 
       {error && <Alert type="error" title={error} closable onClose={() => setError(null)} />}
+
+      {groupBy && (
+        <Card className="pas-panel drilldown-group-panel">
+          <Typography.Title level={4}>{groupBy === "industry" ? "行业分布" : "区域分布"}</Typography.Title>
+          <Space wrap>
+            {groupCustomers(customers, groupBy).map((item) => (
+              <Tag color="blue" key={item.label}>{`${item.label}：${item.count}`}</Tag>
+            ))}
+          </Space>
+        </Card>
+      )}
 
       <Card className="pas-panel" title="客户列表">
         <Table
@@ -69,5 +87,20 @@ export function CustomerManagementPage() {
         />
       </Card>
     </Space>
+  );
+
+  function selectGrouping(next: CustomerGrouping | undefined): void {
+    updateDrilldown({ groupBy: next });
+  }
+}
+
+function groupCustomers(customers: CrmCustomerSummary[], groupBy: CustomerGrouping) {
+  const counts = new Map<string, number>();
+  for (const customer of customers) {
+    const label = customer[groupBy];
+    counts.set(label, (counts.get(label) ?? 0) + 1);
+  }
+  return Array.from(counts, ([label, count]) => ({ label, count })).sort(
+    (left, right) => right.count - left.count || left.label.localeCompare(right.label)
   );
 }

@@ -362,9 +362,9 @@ function renderActiveContent(
     case "customerManagement":
       return <CustomerManagementPage />;
     case "customerInsights":
-      return <WorkbenchPage mode="customerInsights" />;
+      return <WorkbenchPage mode="customerInsights" onNavigate={onNavigate} />;
     case "proposalTasks":
-      return <WorkbenchPage mode="proposalTasks" />;
+      return <WorkbenchPage mode="proposalTasks" onNavigate={onNavigate} />;
     case "proposalLibrary":
       return <ProposalLibraryPage />;
     case "exportJobs":
@@ -398,7 +398,7 @@ function renderActiveContent(
     case "menuConfig":
       return <MenuConfigPage />;
     default:
-      return <WorkbenchPage mode="proposalTasks" />;
+      return <WorkbenchPage mode="proposalTasks" onNavigate={onNavigate} />;
   }
 }
 

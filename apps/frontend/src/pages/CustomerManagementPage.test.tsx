@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { clearCustomerCache } from "../customer-api";
 import { CustomerManagementPage } from "./CustomerManagementPage";
@@ -9,6 +9,7 @@ describe("CustomerManagementPage", () => {
     clearCustomerCache();
     vi.unstubAllGlobals();
     localStorage.clear();
+    window.history.pushState({}, "", "/customers");
   });
 
   it("explains the mock customer pool when no customer rows are available", async () => {
@@ -66,6 +67,30 @@ describe("CustomerManagementPage", () => {
 
     const customerListCalls = fetchMock.mock.calls.filter(([input]) => String(input) === "/api/crm/customers");
     expect(customerListCalls).toHaveLength(1);
+  });
+
+  it("drills into grouped industry counts and preserves the grouping query", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        jsonResponse({
+          customers: [
+            { customerId: "customer-1", name: "Acme", industry: "Manufacturing", region: "East", accountOwner: "Alice" },
+            { customerId: "customer-2", name: "Beta", industry: "Finance", region: "East", accountOwner: "Bob" },
+            { customerId: "customer-3", name: "Gamma", industry: "Manufacturing", region: "South", accountOwner: "Carol" }
+          ]
+        })
+      )
+    );
+
+    render(<CustomerManagementPage />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "查看行业数明细" }));
+
+    expect(await screen.findByRole("heading", { name: "行业分布" })).toBeTruthy();
+    expect(screen.getByText("Manufacturing：2")).toBeTruthy();
+    expect(screen.getByText("Finance：1")).toBeTruthy();
+    expect(window.location.search).toBe("?groupBy=industry");
   });
 });
 

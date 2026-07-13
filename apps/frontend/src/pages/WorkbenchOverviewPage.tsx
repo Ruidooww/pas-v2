@@ -8,13 +8,17 @@ import {
   SafetyCertificateOutlined,
   SyncOutlined
 } from "@ant-design/icons";
-import { Alert, Avatar, Card, Empty, Tag, Typography } from "antd";
+import { Alert, Avatar, Button, Card, Empty, Space, Tag, Typography } from "antd";
 import { api } from "../api";
 import { MetricDrilldown } from "../components/MetricDrilldown";
-import { buildDrilldownSearch } from "../drilldown";
+import { buildDrilldownSearch, useDrilldownQuery } from "../drilldown";
 import type { PublicUser, SecondaryMenuKey, WorkbenchActivity, WorkbenchMetric, WorkbenchOverview, WorkbenchTask, WorkbenchTaskScope } from "../types";
 
 type WorkbenchMode = "overview" | "myTasks" | "teamTasks";
+const taskDrilldownSchema = {
+  priority: ["high"],
+  status: ["active", "blocked", "done"]
+} as const;
 
 type WorkbenchOverviewPageProps = {
   mode: WorkbenchMode;
@@ -69,6 +73,7 @@ export function WorkbenchOverviewPage({ mode, user, onNavigate }: WorkbenchOverv
   const [error, setError] = useState<string | null>(null);
   const copy = modeCopy[mode];
   const displayName = user?.displayName || "当前用户";
+  const [taskDrilldown, updateTaskDrilldown] = useDrilldownQuery(taskDrilldownSchema);
 
   useEffect(() => {
     setError(null);
@@ -92,16 +97,17 @@ export function WorkbenchOverviewPage({ mode, user, onNavigate }: WorkbenchOverv
   }, [mode]);
 
   const kpis = useMemo(() => mapMetrics(overview?.metrics, tasks), [overview?.metrics, tasks]);
+  const visibleTasks = useMemo(() => filterTasks(tasks, taskDrilldown), [taskDrilldown, tasks]);
   const dashboardTasks = useMemo(
-    () => tasks.map(mapTaskToDashboard).slice(0, 4),
-    [tasks]
+    () => visibleTasks.map(mapTaskToDashboard).slice(0, 4),
+    [visibleTasks]
   );
   const activities = useMemo(
     () => (overview?.activities?.length ? mapActivities(overview.activities) : []),
     [overview?.activities]
   );
-  const reviewSummary = useMemo(() => buildReviewSummary(tasks), [tasks]);
-  const riskReviews = useMemo(() => buildRiskReviews(tasks), [tasks]);
+  const reviewSummary = useMemo(() => buildReviewSummary(visibleTasks), [visibleTasks]);
+  const riskReviews = useMemo(() => buildRiskReviews(visibleTasks), [visibleTasks]);
   const displayDate = overview?.generatedAt ? new Date(overview.generatedAt) : new Date();
 
   return (
@@ -114,6 +120,19 @@ export function WorkbenchOverviewPage({ mode, user, onNavigate }: WorkbenchOverv
           </div>
           <Typography.Text className="dashboard-date">{formatDashboardDate(displayDate)}</Typography.Text>
         </header>
+
+        {mode !== "overview" && activeTaskFilterLabel(taskDrilldown) && (
+          <Space className="drilldown-filter-summary" wrap>
+            <Tag color="blue">当前筛选：{activeTaskFilterLabel(taskDrilldown)}</Tag>
+            <Button
+              type="link"
+              size="small"
+              onClick={() => updateTaskDrilldown({})}
+            >
+              清除筛选
+            </Button>
+          </Space>
+        )}
 
         {error && <Alert className="dashboard-alert" type="error" message={error} closable onClose={() => setError(null)} />}
 
@@ -237,6 +256,23 @@ export function WorkbenchOverviewPage({ mode, user, onNavigate }: WorkbenchOverv
       </aside>
     </section>
   );
+}
+
+function filterTasks(tasks: WorkbenchTask[], drilldown: Record<string, string>): WorkbenchTask[] {
+  return tasks.filter((task) => {
+    if (drilldown.priority && task.priority !== drilldown.priority) return false;
+    if (drilldown.status === "active" && task.status === "done") return false;
+    if (drilldown.status && drilldown.status !== "active" && task.status !== drilldown.status) return false;
+    return true;
+  });
+}
+
+function activeTaskFilterLabel(drilldown: Record<string, string>): string | undefined {
+  if (drilldown.priority === "high") return "高优先级";
+  if (drilldown.status === "active") return "待处理";
+  if (drilldown.status === "blocked") return "阻塞";
+  if (drilldown.status === "done") return "已完成";
+  return undefined;
 }
 
 function navigateKpi(
