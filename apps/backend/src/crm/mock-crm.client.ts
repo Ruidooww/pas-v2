@@ -129,6 +129,8 @@ const demoCustomerContexts: CrmCustomerContext[] = [
 ];
 
 export class MockCrmClient implements CrmClient {
+  async checkHealth(): Promise<void> {}
+
   async listCustomers(): Promise<CrmCustomerSummary[]> {
     return demoCustomerContexts.map(toSummary);
   }

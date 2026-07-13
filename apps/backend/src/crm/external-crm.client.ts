@@ -1,3 +1,4 @@
+import { Logger } from "@nestjs/common";
 import type { CrmConfig } from "./crm.config";
 import { CrmClientError, type CrmErrorCode } from "./crm.errors";
 import type {
@@ -11,21 +12,36 @@ import type {
 
 type FetchResponse = { ok: boolean; status: number; json?: () => Promise<unknown> };
 export type CrmFetcher = (url: string, init?: RequestInit) => Promise<FetchResponse>;
+type CrmLogger = Pick<Logger, "warn">;
+type CrmReadOperation =
+  | "customer_list"
+  | "customer_detail"
+  | "owners"
+  | "contacts"
+  | "followups"
+  | "opportunities"
+  | "health";
 
 const PAGE_SIZE = 100;
 const MAX_PAGES = 100;
 
 export class ExternalCrmClient implements CrmClient {
   private readonly fetcher: CrmFetcher;
+  private readonly logger: CrmLogger;
 
-  constructor(private readonly config: CrmConfig, fetcher?: CrmFetcher) {
+  constructor(private readonly config: CrmConfig, fetcher?: CrmFetcher, logger?: CrmLogger) {
     this.fetcher = fetcher ?? ((url, init) => fetch(url, init));
+    this.logger = logger ?? new Logger(ExternalCrmClient.name);
+  }
+
+  async checkHealth(): Promise<void> {
+    await this.loadArray("health", "/users/options");
   }
 
   async listCustomers(): Promise<CrmCustomerSummary[]> {
     const [owners, customers] = await Promise.all([
       this.loadOwners(),
-      this.loadPagedRecords("/customers")
+      this.loadPagedRecords("customer_list", "/customers")
     ]);
     return customers.map((customer) => mapCustomerSummary(customer, owners)).filter(isDefined);
   }
@@ -38,7 +54,7 @@ export class ExternalCrmClient implements CrmClient {
     const encoded = encodeURIComponent(customerId);
     let detail: Record<string, unknown>;
     try {
-      detail = await this.loadObject(`/customers/${encoded}`, true);
+      detail = await this.loadObject("customer_detail", `/customers/${encoded}`, true);
     } catch (error) {
       if (error instanceof CrmClientError && error.code === "CRM_NOT_FOUND") return undefined;
       throw error;
@@ -46,9 +62,9 @@ export class ExternalCrmClient implements CrmClient {
 
     const [owners, contacts, followUps, opportunities] = await Promise.all([
       this.loadOwners(),
-      this.loadArray(`/customers/${encoded}/contacts`),
-      this.loadPagedRecords(`/customers/${encoded}/followups`),
-      this.loadPagedRecords(`/opportunities?customerId=${encoded}`)
+      this.loadArray("contacts", `/customers/${encoded}/contacts`),
+      this.loadPagedRecords("followups", `/customers/${encoded}/followups`),
+      this.loadPagedRecords("opportunities", `/opportunities?customerId=${encoded}`)
     ]);
     const summary = mapCustomerSummary(detail, owners);
     if (!summary) throw invalidResponse();
@@ -63,7 +79,7 @@ export class ExternalCrmClient implements CrmClient {
   }
 
   private async loadOwners(): Promise<Map<string, string>> {
-    const rows = await this.loadArray("/users/options");
+    const rows = await this.loadArray("owners", "/users/options");
     return new Map(
       rows
         .map((row) => [stringValue(row.id), stringValue(row.name)] as const)
@@ -71,17 +87,20 @@ export class ExternalCrmClient implements CrmClient {
     );
   }
 
-  private async loadPagedRecords(path: string): Promise<Record<string, unknown>[]> {
-    const first = await this.loadPage(path, 1);
+  private async loadPagedRecords(
+    operation: CrmReadOperation,
+    path: string
+  ): Promise<Record<string, unknown>[]> {
+    const first = await this.loadPage(operation, path, 1);
     const rows = [...first.rows];
     for (let page = 2; page <= first.totalPages; page += 1) {
-      rows.push(...(await this.loadPage(path, page)).rows);
+      rows.push(...(await this.loadPage(operation, path, page)).rows);
     }
     return rows;
   }
 
-  private async loadPage(path: string, page: number) {
-    const body = recordValue(await this.request(withPagination(path, page)));
+  private async loadPage(operation: CrmReadOperation, path: string, page: number) {
+    const body = recordValue(await this.request(operation, withPagination(path, page)));
     if (!body || !Array.isArray(body.data)) throw invalidResponse();
     const meta = recordValue(body.meta);
     const totalPages = meta?.totalPages;
@@ -96,41 +115,84 @@ export class ExternalCrmClient implements CrmClient {
     return { rows: body.data.map(recordValue).filter(isDefined), totalPages };
   }
 
-  private async loadArray(path: string): Promise<Record<string, unknown>[]> {
-    const body = recordValue(await this.request(path));
+  private async loadArray(
+    operation: CrmReadOperation,
+    path: string
+  ): Promise<Record<string, unknown>[]> {
+    const body = recordValue(await this.request(operation, path));
     if (!body || !Array.isArray(body.data)) throw invalidResponse();
     return body.data.map(recordValue).filter(isDefined);
   }
 
-  private async loadObject(path: string, allowNotFound = false): Promise<Record<string, unknown>> {
-    const body = recordValue(await this.request(path, allowNotFound));
+  private async loadObject(
+    operation: CrmReadOperation,
+    path: string,
+    allowNotFound = false
+  ): Promise<Record<string, unknown>> {
+    const body = recordValue(await this.request(operation, path, allowNotFound));
     const data = recordValue(body?.data);
     if (!data) throw invalidResponse();
     return data;
   }
 
-  private async request(path: string, allowNotFound = false): Promise<unknown> {
-    let response: FetchResponse;
-    try {
-      response = await this.fetcher(`${this.config.baseUrl}${path}`, {
-        method: "GET",
-        redirect: "error",
-        headers: { Accept: "application/json", Authorization: `Bearer ${this.config.apiToken}` },
-        signal: AbortSignal.timeout(this.config.timeoutMs)
-      });
-    } catch (error) {
-      if (error instanceof Error && (error.name === "AbortError" || error.name === "TimeoutError")) {
-        throw new CrmClientError("CRM_UNAVAILABLE", "CRM request timed out");
+  private async request(
+    operation: CrmReadOperation,
+    path: string,
+    allowNotFound = false
+  ): Promise<unknown> {
+    for (let attempt = 1; attempt <= 2; attempt += 1) {
+      let response: FetchResponse;
+      try {
+        response = await this.fetcher(`${this.config.baseUrl}${path}`, {
+          method: "GET",
+          redirect: "error",
+          headers: { Accept: "application/json", Authorization: `Bearer ${this.config.apiToken}` },
+          signal: AbortSignal.timeout(this.config.timeoutMs)
+        });
+      } catch (error) {
+        if (attempt === 1) {
+          this.logRetry(operation, transportReason(error));
+          continue;
+        }
+        throw transportError(error);
       }
-      throw new CrmClientError("CRM_UNAVAILABLE", "CRM is unavailable");
+      if (!response.ok) {
+        if (attempt === 1 && isRetryableStatus(response.status)) {
+          this.logRetry(operation, `http_${response.status}`);
+          continue;
+        }
+        throw httpError(response.status, allowNotFound);
+      }
+      try {
+        return await response.json?.();
+      } catch {
+        throw invalidResponse();
+      }
     }
-    if (!response.ok) throw httpError(response.status, allowNotFound);
-    try {
-      return await response.json?.();
-    } catch {
-      throw invalidResponse();
-    }
+    throw new CrmClientError("CRM_UNAVAILABLE", "CRM is unavailable");
   }
+
+  private logRetry(operation: CrmReadOperation, reason: string): void {
+    this.logger.warn(`CRM read retry operation=${operation} attempt=2 reason=${reason}`);
+  }
+}
+
+function isRetryableStatus(status: number): boolean {
+  return status === 429 || status >= 500;
+}
+
+function transportReason(error: unknown): "timeout" | "network" {
+  return isTimeoutError(error) ? "timeout" : "network";
+}
+
+function transportError(error: unknown): CrmClientError {
+  return isTimeoutError(error)
+    ? new CrmClientError("CRM_UNAVAILABLE", "CRM request timed out")
+    : new CrmClientError("CRM_UNAVAILABLE", "CRM is unavailable");
+}
+
+function isTimeoutError(error: unknown): boolean {
+  return error instanceof Error && (error.name === "AbortError" || error.name === "TimeoutError");
 }
 
 function withPagination(path: string, page: number): string {

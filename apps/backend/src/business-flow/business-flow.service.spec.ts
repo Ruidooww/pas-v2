@@ -275,6 +275,7 @@ describe("BusinessFlowService", () => {
 
 function createService(overrides: { proposalService?: { generate: (request: unknown) => Promise<ProposalJob> } } = {}) {
   const crmClient: CrmClient = {
+    checkHealth: vi.fn(),
     listCustomers: vi.fn(),
     getCustomer: vi.fn(async () => createCustomer()),
     getCustomerContext: vi.fn(async () => createCustomer())

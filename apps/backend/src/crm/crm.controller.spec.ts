@@ -25,6 +25,19 @@ const customerContext: CrmCustomerContext = {
 };
 
 describe("CrmController", () => {
+  it("reports read-only CRM health without returning CRM data", async () => {
+    const client = {
+      checkHealth: vi.fn().mockResolvedValue(undefined)
+    } as unknown as CrmClient;
+
+    await expect(new CrmController(client, externalConfig).getHealth()).resolves.toEqual({
+      source: "external",
+      access: "read_only",
+      status: "ok"
+    });
+    expect(client.checkHealth).toHaveBeenCalledOnce();
+  });
+
   it("lists customers through the CRM client", async () => {
     const client = {
       listCustomers: vi.fn().mockResolvedValue([

@@ -17,12 +17,28 @@ type CustomerListResponse = {
   customers: CrmCustomerSummary[];
 };
 
+type CrmHealthResponse = {
+  source: CrmConfig["clientMode"];
+  access: "read_only";
+  status: "ok";
+};
+
 @Controller("api/crm")
 export class CrmController {
   constructor(
     @Inject(CRM_CLIENT) private readonly crmClient: CrmClient,
     @Inject(CRM_CONFIG) private readonly crmConfig: CrmConfig
   ) {}
+
+  @Get("health")
+  async getHealth(): Promise<CrmHealthResponse> {
+    await this.execute(() => this.crmClient.checkHealth());
+    return {
+      source: this.crmConfig.clientMode,
+      access: "read_only",
+      status: "ok"
+    };
+  }
 
   @Get("customers")
   async listCustomers(): Promise<CustomerListResponse> {

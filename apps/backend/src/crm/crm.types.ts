@@ -40,6 +40,7 @@ export type CrmCustomerContext = CrmCustomerSummary & {
 };
 
 export type CrmClient = {
+  checkHealth(): Promise<void>;
   listCustomers(): Promise<CrmCustomerSummary[]>;
   getCustomer(customerId: string): Promise<CrmCustomerContext | undefined>;
   getCustomerContext(customerId: string): Promise<CrmCustomerContext | undefined>;
