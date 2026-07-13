@@ -301,22 +301,41 @@ describe("App", () => {
   });
 
   it("shows existing proposal jobs from the proposal generation page", async () => {
+    const originalScrollIntoView = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "scrollIntoView");
+    const scrollIntoView = vi.fn();
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+      configurable: true,
+      value: scrollIntoView
+    });
     localStorage.setItem("pas.access-token", "token");
     vi.stubGlobal("fetch", vi.fn(mockAdminFetch));
 
-    render(<App />);
+    try {
+      render(<App />);
 
-    fireEvent.click(await screen.findByText("方案生产"));
-    const proposalMenuItem = (await screen.findAllByText("方案生成")).find((element) =>
-      element.closest('[role="menuitem"]')
-    );
-    expect(proposalMenuItem).toBeTruthy();
-    fireEvent.click(proposalMenuItem as HTMLElement);
+      fireEvent.click(await screen.findByText("方案生产"));
+      const proposalMenuItem = (await screen.findAllByText("方案生成")).find((element) =>
+        element.closest('[role="menuitem"]')
+      );
+      expect(proposalMenuItem).toBeTruthy();
+      fireEvent.click(proposalMenuItem as HTMLElement);
 
-    expect((await screen.findAllByRole("heading", { name: "方案生成" })).length).toBeGreaterThan(0);
-    expect(await screen.findByText("最近方案任务")).toBeTruthy();
-    expect(await screen.findByText("demo-huaxin-manufacturing")).toBeTruthy();
-    expect(await screen.findByText("proposal-job-1")).toBeTruthy();
+      expect((await screen.findAllByRole("heading", { name: "方案生成" })).length).toBeGreaterThan(0);
+      expect(await screen.findByText("最近方案任务")).toBeTruthy();
+      expect(await screen.findByText("demo-huaxin-manufacturing")).toBeTruthy();
+      expect(await screen.findByText("proposal-job-1")).toBeTruthy();
+
+      fireEvent.click(screen.getByRole("button", { name: "查看进度" }));
+
+      expect(await screen.findByText("方案生成进度")).toBeTruthy();
+      expect(scrollIntoView).toHaveBeenCalledWith({ behavior: "smooth", block: "start" });
+    } finally {
+      if (originalScrollIntoView) {
+        Object.defineProperty(HTMLElement.prototype, "scrollIntoView", originalScrollIntoView);
+      } else {
+        Reflect.deleteProperty(HTMLElement.prototype, "scrollIntoView");
+      }
+    }
   });
 
   it("opens the secondary page that matches the current browser path", async () => {

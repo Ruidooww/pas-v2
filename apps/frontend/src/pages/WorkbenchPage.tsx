@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import {
   Alert,
   Button,
@@ -53,6 +54,7 @@ export function WorkbenchPage({
   const [error, setError] = useState<string | null>(null);
   const [proposalDrilldown, updateProposalDrilldown] = useDrilldownQuery(proposalDrilldownSchema);
   const pollCount = useRef(0);
+  const proposalProgressRef = useRef<HTMLDivElement>(null);
   const isCustomerInsights = mode === "customerInsights";
   const isProposalTasks = mode === "proposalTasks";
 
@@ -115,6 +117,11 @@ export function WorkbenchPage({
   const handlePollError = (err: unknown) => {
     setGenerating(false);
     setError(err instanceof Error ? err.message : "查询生成进度失败");
+  };
+
+  const showProposalProgress = (job: ProposalJob) => {
+    flushSync(() => setProposalJob(job));
+    proposalProgressRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   const generate = async () => {
@@ -321,21 +328,23 @@ export function WorkbenchPage({
       )}
 
       {isProposalTasks && proposalJob && (
-        <Card className="pas-panel" title="方案生成进度">
-          <Steps
-            size="small"
-            orientation="vertical"
-            items={proposalJob.progress.map((record) => ({
-              title: record.message,
-              status:
-                record.status === "failed" ? "error" : record.status === "completed" ? "finish" : "process",
-              description: record.at
-            }))}
-          />
-          {proposalJob.status === "failed" && (
-            <Alert type="error" title={`生成失败：${proposalJob.failureReason ?? "未知原因"}`} />
-          )}
-        </Card>
+        <div ref={proposalProgressRef} style={{ scrollMarginTop: 88 }}>
+          <Card className="pas-panel" title="方案生成进度">
+            <Steps
+              size="small"
+              orientation="vertical"
+              items={proposalJob.progress.map((record) => ({
+                title: record.message,
+                status:
+                  record.status === "failed" ? "error" : record.status === "completed" ? "finish" : "process",
+                description: record.at
+              }))}
+            />
+            {proposalJob.status === "failed" && (
+              <Alert type="error" title={`生成失败：${proposalJob.failureReason ?? "未知原因"}`} />
+            )}
+          </Card>
+        </div>
       )}
 
       {isProposalTasks && (
@@ -358,7 +367,7 @@ export function WorkbenchPage({
                         {(latestProgress?.message ?? "暂无进度") + " · " + formatDateTime(job.updatedAt)}
                       </Typography.Text>
                     </Space>
-                    <Button size="small" onClick={() => setProposalJob(job)}>
+                    <Button size="small" onClick={() => showProposalProgress(job)}>
                       查看进度
                     </Button>
                   </div>
