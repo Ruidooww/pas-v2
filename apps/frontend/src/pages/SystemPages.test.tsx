@@ -20,6 +20,28 @@ describe("system pages", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
     localStorage.clear();
+    window.history.pushState({}, "", "/");
+  });
+
+  it("filters account rows from the administrator metric", async () => {
+    vi.stubGlobal("fetch", vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      if (String(input) === "/api/internal/auth/users" && (!init?.method || init.method === "GET")) {
+        return Promise.resolve(jsonResponse([
+          adminUser,
+          { ...adminUser, userId: "sales-1", username: "sales", displayName: "Sales User", role: "sales" }
+        ]));
+      }
+      return mockSystemFetch(input, init);
+    }));
+
+    render(<AccountsPage />);
+    expect(await screen.findByText("Sales User")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "查看管理员明细" }));
+
+    expect(screen.getByText("Admin")).toBeTruthy();
+    expect(screen.queryByText("Sales User")).toBeNull();
+    expect(window.location.search).toBe("?accounts=admin");
   });
 
   it("loads accounts and sends active-state updates", async () => {
@@ -146,6 +168,36 @@ describe("system pages", () => {
     expect(screen.getByText("auth_session / admin-1")).toBeTruthy();
   });
 
+  it("filters failed audit events from the summary metric", async () => {
+    vi.stubGlobal("fetch", vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      if (String(input) === "/api/internal/audit/events") {
+        return Promise.resolve(jsonResponse([
+          ...createAuditEvents(),
+          {
+            auditId: "audit-2",
+            action: "menu.update",
+            actorUserId: "admin-1",
+            objectType: "menu",
+            objectId: "system",
+            result: "failure",
+            failureReason: "denied",
+            occurredAt: "2026-07-07T00:00:00.000Z"
+          }
+        ]));
+      }
+      return mockSystemFetch(input, init);
+    }));
+
+    render(<AuditLogsPage />);
+    expect(await screen.findByText("login")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "查看失败事件明细" }));
+
+    expect(screen.getByText("menu.update")).toBeTruthy();
+    expect(screen.queryByText("login")).toBeNull();
+    expect(window.location.search).toBe("?result=failure");
+  });
+
   it("loads data and attachment path status", async () => {
     vi.stubGlobal("fetch", vi.fn(mockSystemFetch));
 
@@ -154,6 +206,31 @@ describe("system pages", () => {
     expect(await screen.findByText("文件存储")).toBeTruthy();
     expect(screen.getByText("C:\\pas-files")).toBeTruthy();
     expect(screen.getByText("10 B")).toBeTruthy();
+  });
+
+  it("filters missing data paths from the summary metric", async () => {
+    const overview = createSystemOverview();
+    vi.stubGlobal("fetch", vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      if (String(input) === "/api/internal/system/overview") {
+        return Promise.resolve(jsonResponse({
+          ...overview,
+          paths: [
+            ...overview.paths,
+            { label: "临时目录", path: "C:\\pas-temp", exists: false, writable: false, fileCount: 0, totalBytes: 0, truncated: false }
+          ]
+        }));
+      }
+      return mockSystemFetch(input, init);
+    }));
+
+    render(<DataAttachmentsPage />);
+    expect(await screen.findByText("文件存储")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "查看缺失路径明细" }));
+
+    expect(screen.getByText("临时目录")).toBeTruthy();
+    expect(screen.queryByText("文件存储")).toBeNull();
+    expect(window.location.search).toBe("?paths=missing");
   });
 
   it("loads sanitized system settings", async () => {
@@ -166,6 +243,31 @@ describe("system pages", () => {
     expect(screen.getByText("登录页品牌")).toBeTruthy();
     expect(screen.getAllByText("configured").length).toBeGreaterThan(0);
     expect(screen.queryByText("ragflow-secret")).toBeNull();
+  });
+
+  it("filters missing settings from the pending metric", async () => {
+    const overview = createSystemOverview();
+    vi.stubGlobal("fetch", vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      if (String(input) === "/api/internal/system/overview") {
+        return Promise.resolve(jsonResponse({
+          ...overview,
+          settings: [
+            ...overview.settings,
+            { group: "llm", key: "LLM_API_KEY", label: "LLM API Key", value: "missing", status: "missing", secret: true }
+          ]
+        }));
+      }
+      return mockSystemFetch(input, init);
+    }));
+
+    render(<SystemSettingsPage />);
+    expect(await screen.findByText("RAGFlow 地址")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "查看待处理明细" }));
+
+    expect(screen.getByText("LLM API Key")).toBeTruthy();
+    expect(screen.queryByText("RAGFlow 地址")).toBeNull();
+    expect(window.location.search).toBe("?settings=missing");
   });
 
   it("saves login branding settings", async () => {

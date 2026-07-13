@@ -35,4 +35,13 @@ describe("drilldown query helpers", () => {
     });
     expect(result.current[0]).toEqual({ status: "all" });
   });
+
+  it("syncs a query pushed by the application router on rerender", () => {
+    const { result, rerender } = renderHook(() => useDrilldownQuery(statusSchema));
+
+    window.history.pushState({}, "", "/?status=open");
+    rerender();
+
+    expect(result.current[0]).toEqual({ status: "open" });
+  });
 });

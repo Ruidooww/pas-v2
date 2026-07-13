@@ -26,6 +26,11 @@ export function readDrilldown(search: string, schema: DrilldownSchema): Record<s
 export function useDrilldownQuery(schema: DrilldownSchema) {
   const readCurrent = useCallback(() => readDrilldown(window.location.search, schema), [schema]);
   const [values, setValues] = useState<Record<string, string>>(readCurrent);
+  const currentSearch = window.location.search;
+
+  useEffect(() => {
+    setValues(readDrilldown(currentSearch, schema));
+  }, [currentSearch, schema]);
 
   useEffect(() => {
     const restore = () => setValues(readCurrent());

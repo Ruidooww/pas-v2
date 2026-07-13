@@ -1,6 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Alert, Card, Input, Select, Space, Spin, Tag, Typography } from "antd";
 import { api } from "../api";
+import { MetricDrilldown } from "../components/MetricDrilldown";
+import { useDrilldownQuery } from "../drilldown";
 import type { AuditEvent } from "../types";
 
 const RESULT_OPTIONS = [
@@ -8,13 +10,16 @@ const RESULT_OPTIONS = [
   { label: "success", value: "success" },
   { label: "failure", value: "failure" }
 ];
+const auditDrilldownSchema = { result: ["all", "success", "failure"] } as const;
 
 export function AuditLogsPage() {
   const [events, setEvents] = useState<AuditEvent[]>([]);
   const [query, setQuery] = useState("");
-  const [result, setResult] = useState<"all" | AuditEvent["result"]>("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [drilldown, updateDrilldown] = useDrilldownQuery(auditDrilldownSchema);
+  const eventListRef = useRef<HTMLDivElement>(null);
+  const result = (drilldown.result as "all" | AuditEvent["result"] | undefined) ?? "all";
 
   useEffect(() => {
     void refreshEvents();
@@ -44,21 +49,25 @@ export function AuditLogsPage() {
           <Typography.Title level={3}>审计日志</Typography.Title>
           <Typography.Text type="secondary">追踪登录、权限、菜单和系统操作的可审计记录。</Typography.Text>
         </div>
-        <div className="system-hero-stat">
+        <MetricDrilldown className="system-hero-stat" label="事件总数" onClick={() => {
+          setQuery("");
+          updateDrilldown({ result: "all" });
+        }}>
           <Typography.Text type="secondary">事件总数</Typography.Text>
           <strong>{events.length}</strong>
-        </div>
-        <div className="system-hero-stat">
+        </MetricDrilldown>
+        <MetricDrilldown className="system-hero-stat" label="当前结果" onClick={() => eventListRef.current?.scrollIntoView?.({ block: "start" })}>
           <Typography.Text type="secondary">当前结果</Typography.Text>
           <strong>{filteredEvents.length}</strong>
-        </div>
-        <div className="system-hero-stat">
+        </MetricDrilldown>
+        <MetricDrilldown className="system-hero-stat" label="失败事件" onClick={() => updateDrilldown({ result: "failure" })}>
           <Typography.Text type="secondary">失败事件</Typography.Text>
           <strong>{failureEvents}</strong>
-        </div>
+        </MetricDrilldown>
       </section>
 
       <Card
+        ref={eventListRef}
         className="pas-panel"
         title="事件列表"
         extra={
@@ -70,7 +79,7 @@ export function AuditLogsPage() {
               value={query}
               onChange={(event) => setQuery(event.target.value)}
             />
-            <Select aria-label="结果" options={RESULT_OPTIONS} value={result} onChange={setResult} />
+            <Select aria-label="结果" options={RESULT_OPTIONS} value={result} onChange={(value) => updateDrilldown({ result: value })} />
           </Space>
         }
       >

@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { Alert, Button, Card, Col, Descriptions, Input, Row, Select, Spin, Statistic, Tag, Typography } from "antd";
+import { Alert, Button, Card, Col, Descriptions, Input, Row, Select, Space, Spin, Statistic, Tag, Typography } from "antd";
 import { api } from "../api";
-import type { PlatformChannelKind, PlatformOverview, PlatformSkill, PublicUser } from "../types";
+import { MetricDrilldown } from "../components/MetricDrilldown";
+import { useDrilldownQuery } from "../drilldown";
+import type { PlatformChannelKind, PlatformOverview, PlatformSkill, PublicUser, SecondaryMenuKey } from "../types";
 
 const channelOptions: Array<{ value: PlatformChannelKind; label: string }> = [
   { value: "web", label: "Web" },
@@ -32,12 +34,25 @@ const platformSections: Array<{ key: PlatformSectionKey; label: string }> = [
   { key: "tenant", label: "多组织/商业化预留" },
   { key: "security", label: "平台安全与审计" }
 ];
+const platformDrilldownSchema = {
+  platform: ["active_channels", "approved_skills", "enabled_products"],
+  metric: ["sales_funnel", "win_rate", "pending_inputs", "channel_contribution", "agent_workflow_runs", "cip_signals"]
+} as const;
 
-export function PlatformPage({ user, mode }: { user: PublicUser; mode: PlatformPageMode }) {
+export function PlatformPage({
+  user,
+  mode,
+  onNavigate = () => undefined
+}: {
+  user: PublicUser;
+  mode: PlatformPageMode;
+  onNavigate?: (key: SecondaryMenuKey) => void;
+}) {
   const [overview, setOverview] = useState<PlatformOverview | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<PlatformSectionKey>("channels");
+  const [drilldown, updateDrilldown] = useDrilldownQuery(platformDrilldownSchema);
   const [channel, setChannel] = useState<PlatformChannelKind>("feishu");
   const [messageText, setMessageText] = useState("请基于华信精工资料生成方案");
   const [skillName, setSkillName] = useState("Proposal Brief Builder");
@@ -49,6 +64,13 @@ export function PlatformPage({ user, mode }: { user: PublicUser; mode: PlatformP
   useEffect(() => {
     void refresh();
   }, []);
+
+  useEffect(() => {
+    if (mode !== "governance") return;
+    if (drilldown.platform === "active_channels") setActiveSection("channels");
+    if (drilldown.platform === "approved_skills") setActiveSection("skills");
+    if (drilldown.platform === "enabled_products") setActiveSection("products");
+  }, [drilldown.platform, mode]);
 
   const pendingSkill = useMemo(
     () => overview?.skills.find((skill) => skill.status === "pending_approval"),
@@ -128,18 +150,18 @@ export function PlatformPage({ user, mode }: { user: PublicUser; mode: PlatformP
               : "管理渠道入口、Agent/Skill、产品能力和平台级安全边界。"}
           </Typography.Text>
         </div>
-        <div className="system-hero-stat">
+        <MetricDrilldown className="system-hero-stat" label="活跃渠道" onClick={() => updateDrilldown({ platform: "active_channels" })}>
           <Typography.Text type="secondary">活跃渠道</Typography.Text>
           <strong>{activeChannels}</strong>
-        </div>
-        <div className="system-hero-stat">
+        </MetricDrilldown>
+        <MetricDrilldown className="system-hero-stat" label="已批准 Skill" onClick={() => updateDrilldown({ platform: "approved_skills" })}>
           <Typography.Text type="secondary">已批准 Skill</Typography.Text>
           <strong>{approvedSkills}</strong>
-        </div>
-        <div className="system-hero-stat">
+        </MetricDrilldown>
+        <MetricDrilldown className="system-hero-stat" label="启用产品" onClick={() => updateDrilldown({ platform: "enabled_products" })}>
           <Typography.Text type="secondary">启用产品</Typography.Text>
           <strong>{enabledProducts}</strong>
-        </div>
+        </MetricDrilldown>
       </section>
 
       {isAnalyticsMode && (
@@ -147,7 +169,9 @@ export function PlatformPage({ user, mode }: { user: PublicUser; mode: PlatformP
           <Row gutter={[12, 12]}>
             {overview.dashboard.cards.map((card) => (
               <Col xs={12} md={8} xl={6} key={card.key}>
-                <Statistic title={card.title} value={card.value} suffix={card.unit} />
+                <MetricDrilldown className="platform-analytics-metric" label={card.title} onClick={() => updateDrilldown({ metric: card.key })}>
+                  <Statistic title={card.title} value={card.value} suffix={card.unit} />
+                </MetricDrilldown>
               </Col>
             ))}
           </Row>
@@ -161,6 +185,10 @@ export function PlatformPage({ user, mode }: { user: PublicUser; mode: PlatformP
         </Card>
       )}
 
+      {isAnalyticsMode && (drilldown.metric || drilldown.platform) && (
+        <PlatformDrilldownDetail overview={overview} metric={drilldown.metric} platform={drilldown.platform} />
+      )}
+
       {!isAnalyticsMode && (
         <nav className="platform-tertiary-nav" aria-label="平台接入三级菜单">
           {platformSections.map((section) => (
@@ -168,7 +196,10 @@ export function PlatformPage({ user, mode }: { user: PublicUser; mode: PlatformP
               className={section.key === activeSection ? "is-active" : undefined}
               key={section.key}
               type="button"
-              onClick={() => setActiveSection(section.key)}
+              onClick={() => {
+                setActiveSection(section.key);
+                updateDrilldown({});
+              }}
             >
               {section.label}
             </button>
@@ -202,7 +233,7 @@ export function PlatformPage({ user, mode }: { user: PublicUser; mode: PlatformP
             </Button>
           </div>
           <div className="platform-list">
-            {overview.channels.map((item) => (
+            {overview.channels.filter((item) => drilldown.platform !== "active_channels" || item.status === "active").map((item) => (
               <div className="platform-list-item" key={item.channelId}>
                 <Typography.Text strong>{item.name}</Typography.Text>
                 <Tag color={item.status === "active" ? "green" : "orange"}>{item.status}</Tag>
@@ -274,7 +305,7 @@ export function PlatformPage({ user, mode }: { user: PublicUser; mode: PlatformP
               </Button>
             </div>
           </div>
-          <SkillList skills={overview.skills} />
+          <SkillList skills={overview.skills.filter((skill) => drilldown.platform !== "approved_skills" || skill.status === "approved")} />
         </Card>
       )}
 
@@ -312,7 +343,7 @@ export function PlatformPage({ user, mode }: { user: PublicUser; mode: PlatformP
             )}
           </div>
           <div className="platform-list">
-            {overview.products.map((product) => (
+            {overview.products.filter((product) => drilldown.platform !== "enabled_products" || product.status === "enabled").map((product) => (
               <div className="platform-list-item" key={product.productId}>
                 <div>
                   <Typography.Text strong>{product.name}</Typography.Text>
@@ -377,7 +408,9 @@ export function PlatformPage({ user, mode }: { user: PublicUser; mode: PlatformP
 
       {!isAnalyticsMode && activeSection === "security" && (
         <Card className="pas-panel platform-section-panel" title="平台安全与审计">
-          <Statistic title="Audit Events" value={overview.security.totalEvents} />
+          <MetricDrilldown className="platform-security-metric" label="Audit Events" onClick={() => onNavigate("audit_logs")}>
+            <Statistic title="Audit Events" value={overview.security.totalEvents} />
+          </MetricDrilldown>
           <div className="platform-list">
             {overview.security.permissionBoundaryChecks.map((check) => (
               <div className="platform-list-item" key={check.key}>
@@ -390,6 +423,62 @@ export function PlatformPage({ user, mode }: { user: PublicUser; mode: PlatformP
       )}
     </div>
   );
+}
+
+function PlatformDrilldownDetail({
+  overview,
+  metric,
+  platform
+}: {
+  overview: PlatformOverview;
+  metric?: string;
+  platform?: string;
+}) {
+  const card = overview.dashboard.cards.find((item) => item.key === metric);
+  const rows = platformDetailRows(overview, platform, metric);
+  const title = platform
+    ? platform === "active_channels"
+      ? "活跃渠道明细"
+      : platform === "approved_skills"
+        ? "已批准 Skill 明细"
+        : "启用产品明细"
+    : `${card?.title ?? "运营指标"}明细`;
+  const methodology = metric ? overview.dashboard.methodology.find((item) => item.key === metric)?.description : undefined;
+
+  return (
+    <Card className="pas-panel platform-section-panel">
+      <Typography.Title level={4}>{title}</Typography.Title>
+      <Space wrap>
+        {rows.map((row) => <Tag color="blue" key={`${row.label}-${row.value}`}>{`${row.label}：${row.value}`}</Tag>)}
+      </Space>
+      {rows.length === 0 && methodology && <Typography.Paragraph type="secondary">{methodology}</Typography.Paragraph>}
+      {rows.length === 0 && !methodology && card && (
+        <Typography.Text type="secondary">{card.title}：{card.value}{card.unit}</Typography.Text>
+      )}
+    </Card>
+  );
+}
+
+function platformDetailRows(overview: PlatformOverview, platform?: string, metric?: string) {
+  if (platform === "active_channels") {
+    return overview.channels.filter((item) => item.status === "active").map((item) => ({ label: item.name, value: item.status }));
+  }
+  if (platform === "approved_skills") {
+    return overview.skills.filter((item) => item.status === "approved").map((item) => ({ label: item.name, value: item.status }));
+  }
+  if (platform === "enabled_products") {
+    return overview.products.filter((item) => item.status === "enabled").map((item) => ({ label: item.name, value: item.status }));
+  }
+  if (metric === "sales_funnel" || metric === "win_rate") {
+    return overview.dashboard.drilldowns.salesFunnel.map((item) => ({ label: item.stage, value: item.count }));
+  }
+  if (metric === "channel_contribution") {
+    return overview.dashboard.drilldowns.channelContribution.map((item) => ({ label: item.channel, value: item.count }));
+  }
+  if (metric === "cip_signals") {
+    return overview.cipSignals.map((item) => ({ label: signalLabels[item.type] ?? item.type, value: item.severity }));
+  }
+  return [];
 }
 
 function SkillList({ skills }: { skills: PlatformSkill[] }) {

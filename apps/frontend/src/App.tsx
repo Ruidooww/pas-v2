@@ -376,9 +376,9 @@ function renderActiveContent(
     case "business":
       return <BusinessFlowsPage mode={businessModeForSecondary(activeSecondaryKey)} />;
     case "platform":
-      return <PlatformPage user={user} mode="analytics" />;
+      return <PlatformPage user={user} mode="analytics" onNavigate={onNavigate} />;
     case "platformGovernance":
-      return <PlatformPage user={user} mode="governance" />;
+      return <PlatformPage user={user} mode="governance" onNavigate={onNavigate} />;
     case "knowledge":
       return <KnowledgeBlocksPage />;
     case "documents":

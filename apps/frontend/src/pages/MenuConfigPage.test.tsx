@@ -7,6 +7,7 @@ describe("MenuConfigPage", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
     localStorage.clear();
+    window.history.pushState({}, "", "/system/menus");
   });
 
   it("lists fixed first-level menus and selected secondary items", async () => {
@@ -55,6 +56,20 @@ describe("MenuConfigPage", () => {
     expect(roleSelect).toBeDisabled();
     expect(screen.getAllByText("admin").length).toBeGreaterThan(0);
     expect(screen.queryByText("sales")).toBeNull();
+  });
+
+  it("filters the selected group to customized rows from the summary metric", async () => {
+    vi.stubGlobal("fetch", vi.fn(mockMenuConfigFetch));
+
+    render(<MenuConfigPage />);
+    fireEvent.click(await screen.findByRole("button", { name: "系统设置" }));
+    expect(await screen.findByText("平台接入")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "查看本组改动明细" }));
+
+    expect(screen.getByText("AI 模型接入")).toBeTruthy();
+    expect(screen.queryByText("平台接入")).toBeNull();
+    expect(window.location.search).toBe("?menus=custom");
   });
 });
 

@@ -160,6 +160,20 @@ describe("App", () => {
     expect(screen.queryByText("模板复核阻塞项")).toBeNull();
   });
 
+  it("preserves proposal context when drilling from the review summary", async () => {
+    localStorage.setItem("pas.access-token", "token");
+    vi.stubGlobal("fetch", vi.fn(mockAdminFetch));
+
+    render(<App />);
+
+    expect((await screen.findAllByText("方案初稿")).length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole("button", { name: "查看方案相关明细" }));
+
+    expect((await screen.findAllByRole("heading", { name: "方案生成" })).length).toBeGreaterThan(0);
+    expect(await screen.findByText("当前下钻：方案相关")).toBeTruthy();
+    expect(window.location.search).toBe("?source=proposal");
+  });
+
   it("shows the business flow console from the business first-level menu", async () => {
     localStorage.setItem("pas.access-token", "token");
     vi.stubGlobal("fetch", vi.fn(mockAdminFetch));

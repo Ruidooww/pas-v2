@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Alert, Button, Card, Input, InputNumber, Select, Space, Spin, Switch, Tag, Typography } from "antd";
 import { api } from "../api";
+import { MetricDrilldown } from "../components/MetricDrilldown";
+import { useDrilldownQuery } from "../drilldown";
 import type {
   MenuConfiguration,
   PrimaryMenuDefinition,
@@ -26,6 +28,7 @@ const ROLE_OPTIONS: Array<{ label: string; value: Role }> = [
   { label: "technical", value: "technical" },
   { label: "admin", value: "admin" }
 ];
+const menuDrilldownSchema = { menus: ["primary", "visible", "custom"] } as const;
 
 export function MenuConfigPage() {
   const [config, setConfig] = useState<MenuConfiguration | null>(null);
@@ -34,6 +37,7 @@ export function MenuConfigPage() {
   const [loading, setLoading] = useState(true);
   const [savingKey, setSavingKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [drilldown, updateDrilldown] = useDrilldownQuery(menuDrilldownSchema);
 
   useEffect(() => {
     void refreshConfig();
@@ -53,6 +57,14 @@ export function MenuConfigPage() {
     config && selectedPrimary
       ? config.overrides.filter((override) => override.primaryKey === selectedPrimary.key).length
       : 0;
+  const displayedRows = rows.filter((row) => {
+    if (drilldown.menus === "visible") return row.visible;
+    if (drilldown.menus === "custom" && config && selectedPrimary) {
+      return Boolean(findOverride(config.overrides, selectedPrimary.key, row.key));
+    }
+    return true;
+  });
+  const activeFilter = menuFilterLabel(drilldown.menus);
 
   if (loading) {
     return (
@@ -71,19 +83,26 @@ export function MenuConfigPage() {
           <Typography.Title level={3}>菜单配置</Typography.Title>
           <Typography.Text type="secondary">一级菜单固定，二级菜单支持展示名称、角色、排序和默认入口调整。</Typography.Text>
         </div>
-        <div className="system-hero-stat">
+        <MetricDrilldown className="system-hero-stat" label="一级菜单" onClick={() => updateDrilldown({ menus: "primary" })}>
           <Typography.Text type="secondary">一级菜单</Typography.Text>
           <strong>{config?.defaults.length ?? 0}</strong>
-        </div>
-        <div className="system-hero-stat">
+        </MetricDrilldown>
+        <MetricDrilldown className="system-hero-stat" label="本组可见" onClick={() => updateDrilldown({ menus: "visible" })}>
           <Typography.Text type="secondary">本组可见</Typography.Text>
           <strong>{visibleRows}</strong>
-        </div>
-        <div className="system-hero-stat">
+        </MetricDrilldown>
+        <MetricDrilldown className="system-hero-stat" label="本组改动" onClick={() => updateDrilldown({ menus: "custom" })}>
           <Typography.Text type="secondary">本组改动</Typography.Text>
           <strong>{customRows}</strong>
-        </div>
+        </MetricDrilldown>
       </section>
+
+      {activeFilter && (
+        <Space className="drilldown-filter-summary" wrap>
+          <Tag color="blue">当前下钻：{activeFilter}</Tag>
+          <Button type="link" size="small" onClick={() => updateDrilldown({})}>清除筛选</Button>
+        </Space>
+      )}
 
       <div className="menu-config-layout">
         <Card className="pas-panel menu-config-primary" title="固定一级菜单">
@@ -111,7 +130,7 @@ export function MenuConfigPage() {
           }
         >
           <div className="menu-config-secondary-list">
-            {rows.map((row) => (
+            {displayedRows.map((row) => (
               <div className="menu-config-secondary-item" key={row.key}>
                 <div className="menu-config-secondary-main">
                   <Space orientation="vertical" size={2}>
@@ -256,6 +275,13 @@ export function MenuConfigPage() {
       return next;
     });
   }
+}
+
+function menuFilterLabel(menus?: string): string | undefined {
+  if (menus === "primary") return "一级菜单";
+  if (menus === "visible") return "本组可见";
+  if (menus === "custom") return "本组改动";
+  return undefined;
 }
 
 function toRow(

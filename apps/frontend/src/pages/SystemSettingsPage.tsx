@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { Alert, Button, Card, Descriptions, Form, Input, Spin, Tag, Typography } from "antd";
+import { Alert, Button, Card, Descriptions, Form, Input, Space, Spin, Tag, Typography } from "antd";
 import { api } from "../api";
+import { MetricDrilldown } from "../components/MetricDrilldown";
+import { useDrilldownQuery } from "../drilldown";
 import type { LoginBranding, SystemOverview, SystemSettingItem, UpdateLoginBrandingRequest } from "../types";
 
 const GROUP_TITLES: Record<SystemSettingItem["group"], string> = {
@@ -11,6 +13,7 @@ const GROUP_TITLES: Record<SystemSettingItem["group"], string> = {
   database: "数据库",
   export: "导出"
 };
+const settingsDrilldownSchema = { settings: ["all", "configured", "missing"] } as const;
 
 export function SystemSettingsPage() {
   const [overview, setOverview] = useState<SystemOverview | null>(null);
@@ -18,6 +21,7 @@ export function SystemSettingsPage() {
   const [savingBranding, setSavingBranding] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [form] = Form.useForm<UpdateLoginBrandingRequest>();
+  const [drilldown, updateDrilldown] = useDrilldownQuery(settingsDrilldownSchema);
 
   useEffect(() => {
     void refreshOverview();
@@ -29,16 +33,18 @@ export function SystemSettingsPage() {
     }
   }, [form, overview?.branding]);
 
+  const settings = overview?.settings ?? [];
+  const visibleSettings = filterSettings(settings, drilldown.settings);
   const groupedSettings = useMemo(() => {
     const groups = new Map<SystemSettingItem["group"], SystemSettingItem[]>();
-    for (const item of overview?.settings ?? []) {
+    for (const item of visibleSettings) {
       groups.set(item.group, [...(groups.get(item.group) ?? []), item]);
     }
     return Array.from(groups.entries());
-  }, [overview]);
-  const settings = overview?.settings ?? [];
+  }, [visibleSettings]);
   const configuredSettings = settings.filter((item) => item.status === "configured" || item.status === "enabled").length;
   const missingSettings = settings.filter((item) => item.status === "missing" || item.status === "disabled").length;
+  const activeFilter = settingsFilterLabel(drilldown.settings);
 
   return (
     <div className="system-page">
@@ -49,19 +55,26 @@ export function SystemSettingsPage() {
           <Typography.Title level={3}>系统设置</Typography.Title>
           <Typography.Text type="secondary">集中查看外部服务、存储、数据库和导出链路配置状态。</Typography.Text>
         </div>
-        <div className="system-hero-stat">
+        <MetricDrilldown className="system-hero-stat" label="配置项" onClick={() => updateDrilldown({ settings: "all" })}>
           <Typography.Text type="secondary">配置项</Typography.Text>
           <strong>{settings.length}</strong>
-        </div>
-        <div className="system-hero-stat">
+        </MetricDrilldown>
+        <MetricDrilldown className="system-hero-stat" label="已配置" onClick={() => updateDrilldown({ settings: "configured" })}>
           <Typography.Text type="secondary">已配置</Typography.Text>
           <strong>{configuredSettings}</strong>
-        </div>
-        <div className="system-hero-stat">
+        </MetricDrilldown>
+        <MetricDrilldown className="system-hero-stat" label="待处理" onClick={() => updateDrilldown({ settings: "missing" })}>
           <Typography.Text type="secondary">待处理</Typography.Text>
           <strong>{missingSettings}</strong>
-        </div>
+        </MetricDrilldown>
       </section>
+
+      {activeFilter && (
+        <Space className="drilldown-filter-summary" wrap>
+          <Tag color="blue">当前筛选：{activeFilter}</Tag>
+          <Button type="link" size="small" onClick={() => updateDrilldown({})}>清除筛选</Button>
+        </Space>
+      )}
 
       <Card className="pas-panel" title="系统设置">
         {loading ? (
@@ -161,6 +174,23 @@ export function SystemSettingsPage() {
       setSavingBranding(false);
     }
   }
+}
+
+function filterSettings(settings: SystemSettingItem[], filter?: string): SystemSettingItem[] {
+  if (filter === "configured") {
+    return settings.filter((item) => item.status === "configured" || item.status === "enabled");
+  }
+  if (filter === "missing") {
+    return settings.filter((item) => item.status === "missing" || item.status === "disabled");
+  }
+  return settings;
+}
+
+function settingsFilterLabel(filter?: string): string | undefined {
+  if (filter === "all") return "全部配置项";
+  if (filter === "configured") return "已配置";
+  if (filter === "missing") return "待处理";
+  return undefined;
 }
 
 function brandingFormValues(branding: LoginBranding): UpdateLoginBrandingRequest {

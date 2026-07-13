@@ -16,7 +16,7 @@ import { api } from "../api";
 import { MetricDrilldown } from "../components/MetricDrilldown";
 import { PlainList as List } from "../components/PlainList";
 import { loadCustomers } from "../customer-api";
-import { buildDrilldownSearch } from "../drilldown";
+import { buildDrilldownSearch, useDrilldownQuery } from "../drilldown";
 import type {
   CrmCustomerSummary,
   CustomerAnalysisResult,
@@ -29,6 +29,7 @@ import type {
 
 const POLL_INTERVAL_MS = 1500;
 const MAX_POLLS = 200;
+const proposalDrilldownSchema = { source: ["proposal"] } as const;
 
 export type WorkbenchPageMode = "customerInsights" | "proposalTasks";
 
@@ -50,6 +51,7 @@ export function WorkbenchPage({
   const [exportJob, setExportJob] = useState<ExportJob | null>(null);
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [proposalDrilldown, updateProposalDrilldown] = useDrilldownQuery(proposalDrilldownSchema);
   const pollCount = useRef(0);
   const isCustomerInsights = mode === "customerInsights";
   const isProposalTasks = mode === "proposalTasks";
@@ -252,6 +254,13 @@ export function WorkbenchPage({
           ))}
         </div>
       </section>
+
+      {isProposalTasks && proposalDrilldown.source === "proposal" && (
+        <Space className="drilldown-filter-summary" wrap>
+          <Tag color="blue">当前下钻：方案相关</Tag>
+          <Button type="link" size="small" onClick={() => updateProposalDrilldown({})}>清除下钻</Button>
+        </Space>
+      )}
 
       <Card className="pas-panel pas-toolbar-panel" title={pageCopy.title}>
         <Space className="workbench-toolbar" wrap>
