@@ -45,7 +45,7 @@ export function CustomerManagementPage() {
           <MetricDrilldown className="workbench-metric" label="行业数" onClick={() => selectGrouping("industry")}>
             <Typography.Text type="secondary">行业数</Typography.Text>
             <strong>{new Set(customers.map((customer) => customer.industry)).size}</strong>
-            <Typography.Text type="secondary">样例维度</Typography.Text>
+            <Typography.Text type="secondary">{isExternal ? "CRM 维度" : "样例维度"}</Typography.Text>
           </MetricDrilldown>
           <MetricDrilldown className="workbench-metric" label="区域数" onClick={() => selectGrouping("region")}>
             <Typography.Text type="secondary">区域数</Typography.Text>

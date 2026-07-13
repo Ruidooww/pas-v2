@@ -47,7 +47,7 @@ describe("CustomerManagementPage", () => {
     expect(await screen.findByText("Acme")).toBeInTheDocument();
     expect(screen.getAllByText("CRM 数据").length).toBeGreaterThan(0);
     expect(screen.getAllByText(/CRM 客户池/).length).toBeGreaterThan(0);
-    expect(screen.queryByText("样例")).not.toBeInTheDocument();
+    expect(screen.queryAllByText(/样例/)).toHaveLength(0);
   });
 
   it("shares the customer list request across pages for the same token", async () => {
