@@ -6,7 +6,9 @@ describe("WorkbenchService", () => {
     const service = new WorkbenchService();
     const overview = service.getOverview();
 
-    expect(overview.metrics.map((metric) => metric.key)).toContain("active_tasks");
+    expect(overview.metrics).toContainEqual(
+      expect.objectContaining({ key: "pending_tasks", label: "待处理任务", value: 2 })
+    );
     expect(overview.tasks.length).toBeGreaterThan(0);
     expect(overview.activities.length).toBeGreaterThan(0);
   });

@@ -17,7 +17,7 @@ import type { PublicUser, SecondaryMenuKey, WorkbenchActivity, WorkbenchMetric, 
 type WorkbenchMode = "overview" | "myTasks" | "teamTasks";
 const taskDrilldownSchema = {
   priority: ["high"],
-  status: ["active", "blocked", "done"]
+  status: ["pending", "blocked", "done"]
 } as const;
 
 type WorkbenchOverviewPageProps = {
@@ -261,15 +261,14 @@ export function WorkbenchOverviewPage({ mode, user, onNavigate }: WorkbenchOverv
 function filterTasks(tasks: WorkbenchTask[], drilldown: Record<string, string>): WorkbenchTask[] {
   return tasks.filter((task) => {
     if (drilldown.priority && task.priority !== drilldown.priority) return false;
-    if (drilldown.status === "active" && task.status === "done") return false;
-    if (drilldown.status && drilldown.status !== "active" && task.status !== drilldown.status) return false;
+    if (drilldown.status && task.status !== drilldown.status) return false;
     return true;
   });
 }
 
 function activeTaskFilterLabel(drilldown: Record<string, string>): string | undefined {
   if (drilldown.priority === "high") return "高优先级";
-  if (drilldown.status === "active") return "待处理";
+  if (drilldown.status === "pending") return "待处理";
   if (drilldown.status === "blocked") return "阻塞";
   if (drilldown.status === "done") return "已完成";
   return undefined;
@@ -290,11 +289,17 @@ function navigateKpi(
     onNavigate(target, buildDrilldownSearch({ status: "blocked" }));
     return;
   }
+  if (key === "completed") {
+    onNavigate(target, buildDrilldownSearch({ status: "done" }));
+    return;
+  }
   if (key === "customers") {
     onNavigate("customer_management");
     return;
   }
-  onNavigate(target, buildDrilldownSearch({ status: "active" }));
+  if (key === "pending_tasks") {
+    onNavigate(target, buildDrilldownSearch({ status: "pending" }));
+  }
 }
 
 function navigateReview(
@@ -330,7 +335,7 @@ function mapMetrics(metrics: WorkbenchMetric[] | undefined, tasks: WorkbenchTask
   }
 
   return [
-    { key: "active_tasks", label: "待处理任务", value: tasks.filter((task) => task.status !== "done").length, hint: "来自工作台队列" },
+    { key: "pending_tasks", label: "待处理任务", value: tasks.filter((task) => task.status === "pending").length, hint: "来自工作台队列" },
     { key: "high_priority", label: "高优先级", value: tasks.filter((task) => task.priority === "high").length, hint: "今日优先推进" },
     { key: "blocked", label: "阻塞项", value: tasks.filter((task) => task.status === "blocked").length, hint: "需要业务输入" },
     { key: "completed", label: "已完成", value: tasks.filter((task) => task.status === "done").length, hint: "当前视图统计" }

@@ -161,7 +161,7 @@ describe("App", () => {
     expect(screen.queryByText("模板复核阻塞项")).toBeNull();
   });
 
-  it("keeps metric drilldowns within the current task scope", async () => {
+  it("keeps metric drilldowns within the current task scope and filters pending tasks exactly", async () => {
     localStorage.setItem("pas.access-token", "token");
     window.history.pushState({}, "", "/workbench/team-tasks");
     vi.stubGlobal("fetch", vi.fn(mockAdminFetch));
@@ -175,7 +175,30 @@ describe("App", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "查看待处理任务明细" }));
     expect(window.location.pathname).toBe("/workbench/team-tasks");
-    expect(window.location.search).toBe("?status=active");
+    expect(window.location.search).toBe("?status=pending");
+    expect((await screen.findAllByText("画像补充")).length).toBeGreaterThan(0);
+    expect(screen.queryByText("方案初稿")).toBeNull();
+    expect(screen.queryByText("模板复核阻塞项")).toBeNull();
+  });
+
+  it("maps the completed metric to completed tasks", async () => {
+    localStorage.setItem("pas.access-token", "token");
+    window.history.pushState({}, "", "/workbench/team-tasks");
+    vi.stubGlobal("fetch", vi.fn(mockAdminFetch));
+
+    render(<App />);
+    expect((await screen.findAllByRole("heading", { name: "团队任务" })).length).toBeGreaterThan(0);
+
+    const completedKpi = (await screen.findAllByRole("button", { name: "查看已完成明细" })).find((button) =>
+      button.classList.contains("dashboard-kpi")
+    );
+    expect(completedKpi).toBeTruthy();
+    fireEvent.click(completedKpi!);
+
+    expect(window.location.pathname).toBe("/workbench/team-tasks");
+    expect(window.location.search).toBe("?status=done");
+    expect((await screen.findAllByText("已交付方案归档")).length).toBeGreaterThan(0);
+    expect(screen.queryByText("画像补充")).toBeNull();
   });
 
   it("keeps review drilldowns within my task scope", async () => {
@@ -539,7 +562,7 @@ function createWorkbenchOverview(): WorkbenchOverview {
   return {
     generatedAt: "2026-07-07T00:00:00.000Z",
     metrics: [
-      { key: "active_tasks", label: "待处理任务", value: 2, hint: "mock" },
+      { key: "pending_tasks", label: "待处理任务", value: 1, hint: "mock" },
       { key: "high_priority", label: "高优先级", value: 1, hint: "mock" }
     ],
     tasks: [
@@ -562,6 +585,26 @@ function createWorkbenchOverview(): WorkbenchOverview {
         priority: "medium",
         dueAt: "2026-07-10",
         source: "manual"
+      },
+      {
+        taskId: "task-3",
+        title: "画像补充",
+        customerName: "融盛金服",
+        owner: "售前一组",
+        status: "pending",
+        priority: "medium",
+        dueAt: "2026-07-09",
+        source: "crm"
+      },
+      {
+        taskId: "task-4",
+        title: "已交付方案归档",
+        customerName: "华信精工",
+        owner: "Admin",
+        status: "done",
+        priority: "low",
+        dueAt: "2026-07-07",
+        source: "proposal"
       }
     ],
     activities: [
